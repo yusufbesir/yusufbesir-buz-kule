@@ -55,3 +55,11 @@ test('paket: P duraklatır ve devam ettirir', () => {
   e.tus('keydown', 'KeyP'); assert.equal(e.acik.duraklat, true);
   e.tus('keydown', 'KeyP'); assert.equal(e.acik.duraklat, false);
 });
+
+test('paket: oyun kolu A düğmesi menüden oyunu başlatır', () => {
+  const e = ortam(); let a = false; e.kutu.navigator = { getGamepads: () => [{ connected: true, axes: [0], buttons: Array.from({ length: 16 }, (_, i) => ({ pressed: i === 0 && a })) }] };
+  vm.createContext(e.kutu);
+  vm.runInContext(fs.readFileSync(new URL('../uygulama/src/buz-kule.js', import.meta.url), 'utf8'), e.kutu);
+  let ms = 0; const kare = () => { ms += 20; e.kareler.shift()(ms); };
+  kare(); assert.notEqual(e.acik.menu, false); a = true; kare(); assert.equal(e.acik.menu, false, 'A düğmesi oyunu başlatmadı');
+});

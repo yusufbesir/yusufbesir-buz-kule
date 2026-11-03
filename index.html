@@ -66,6 +66,11 @@ kbd{font:600 12px ui-monospace,Consolas,monospace;background:rgba(31,51,40,.08);
 .iz.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
 .iz-ad{font-weight:600}.iz-ek{font:600 12px ui-monospace,Consolas,monospace;color:var(--yazi-soluk)}
 .iz:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
+.liste{margin:0;padding:0;list-style:none;font:600 13px ui-monospace,Consolas,monospace;color:var(--yazi-soluk);counter-reset:s}
+.liste li{display:flex;justify-content:space-between;gap:12px;padding:3px 8px;border-radius:8px;counter-increment:s}
+.liste li::before{content:counter(s) '.';width:22px;color:var(--yazi-soluk)}
+.liste li b{margin-left:auto;color:var(--yazi);font-weight:700}
+.liste li.yeni{background:rgba(123,92,196,.16);color:var(--yazi)}
 ul{margin:0;padding-left:18px}li{margin:4px 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.giris,.giris .metin{opacity:1;transform:none}.kart{transform:none}}
 </style>
@@ -88,6 +93,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <section class="panel" id="p-oyna" role="tabpanel" aria-labelledby="t-oyna">
         <p class="etiket" style="margin:0 0 4px">en iyi skor</p><p class="skor" id="m-en">0</p>
         <p class="ince" style="margin:2px 0 0">Kristal cüzdanı: <b id="m-kristal">0</b> ◆</p>
+        <p class="etiket" style="margin:10px 0 4px">skor tablosu</p><ol class="liste" id="m-liste"></ol>
         <button class="dugme" id="basla" type="button" style="margin-top:12px">Başla <kbd>Space</kbd></button>
       </section>
       <section class="panel" id="p-magaza" role="tabpanel" aria-labelledby="t-magaza" hidden>
@@ -100,6 +106,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <div class="satir"><label class="etiket" for="a-parilti">Parıltı</label><output id="o-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-parcacik">Parçacık</label><output id="o-parcacik"></output><input id="a-parcacik" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-sarsinti">Ekran sarsıntısı</label><output id="o-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-hud">Oyun içi bilgi (HUD)</label><output id="o-hud"></output><input id="a-hud" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-ses">Ses</label><output id="o-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
         <div class="satir"><span class="etiket">Karakter</span><span></span><div class="karakterler" id="karakterler" role="group" aria-label="Karakter seçimi"></div></div>
         <button class="dugme ikincil" id="a-sifirla" type="button">Varsayılana dön</button>
@@ -129,6 +136,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <p class="ince"><span id="s-kat">0</span> kat &nbsp;•&nbsp; en iyi <span id="s-en">0</span></p>
       <p class="ince rekor" id="s-rekor" hidden>★ Yeni rekor</p>
       <p class="ince">+<span id="s-kristal">0</span> ◆ kristal cüzdana eklendi</p>
+      <ol class="liste" id="s-liste"></ol>
       <button class="dugme" id="tekrar" type="button" style="margin-top:14px">Tekrar dene <kbd>Space</kbd></button>
     </div>
   </div>

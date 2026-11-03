@@ -1,6 +1,7 @@
 // description: Buz Kule oyun içi HUD (kompakt, yarı saydam yumuşak açık cam kartlar; oyuncu üst kenara yaklaşınca solar). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
 import { W, SAAT, skor } from './oyun.js';
+import { AYAR } from './ayar.js';
 
 const YAZI = '"Inter", "Segoe UI", system-ui, sans-serif', MONO = 'ui-monospace, "JetBrains Mono", Consolas, monospace', SERIF = '"Instrument Serif", Georgia, serif';
 const YESIL = '#1F3328', SOLUK = '#6B7A6F';
@@ -19,7 +20,8 @@ const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 
 
 export function hudCiz(c, o, en) {
   // Oyuncu ekranın üst kısmındayken (yukarı zıplama) HUD neredeyse görünmez olur, görüşü kapatmaz.
-  const ekranY = o.y - o.kamY, gorunur = Math.max(0.16, Math.min(1, (ekranY - 70) / 150)) * 0.92;
+  const ekranY = o.y - o.kamY, gorunur = Math.max(0.16, Math.min(1, (ekranY - 70) / 150)) * 0.92 * Math.min(1.2, AYAR.hud); // HUD yoğunluğu ayardan (0 = sürekli bilgi kapalı)
+  if (AYAR.hud <= 0.02) return;
   c.save(); c.globalAlpha = gorunur;
   // sol hap: skor, kat, kristal
   kartHud(c, 92, 8, 214, 32);
