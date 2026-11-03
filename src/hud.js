@@ -36,6 +36,18 @@ export function hudCiz(c, o, en) {
     c.fillStyle = g; yuvarlakHud(c, 18, 272 - h, 18, Math.max(h, 2), 6); c.fill();
     metinHud(c, 'x' + k.zip, 27, 302, '700 13px ' + MONO, YESIL, 'center');
   }
+  // toplanan kristaller
+  kartHud(c, 94, 72, 92, 28); c.fillStyle = '#7B5CC4'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 93); c.lineTo(104, 86); c.closePath(); c.fill();
+  c.fillStyle = '#C9B8F0'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 87); c.closePath(); c.fill();
+  metinHud(c, '× ' + o.alinan.size, 124, 91, '700 13px ' + MONO, YESIL);
+  if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı (alarm saati)
+    const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 15px ' + MONO;
+    const g = c.measureText(ad).width + 40; kartHud(c, W / 2 - g / 2 + 40, 76, g, 34); metinHud(c, ad, W / 2 + 60, 99, '700 15px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;
+  }
+  if (o.rozet) { // 50 katta bir büyük kilometre taşı yazısı
+    const a = Math.min(1, o.rozet.guc / 25), s = 1 + 0.12 * Math.sin(o.rozet.guc * 0.2); c.save(); c.globalAlpha = a; c.translate(W / 2, 230); c.scale(s, s);
+    c.font = 'italic 400 64px ' + SERIF; const g = c.measureText(o.rozet.metin).width + 60; kartHud(c, -g / 2, -56, g, 84); metinHud(c, o.rozet.metin, 0, 0, 'italic 400 64px ' + SERIF, '#7B5CC4', 'center'); c.restore();
+  }
   if (o.mesaj && o.mesaj.guc > 0) { // ödül adı: cam hap
     const a = Math.min(1, o.mesaj.guc / 20), y = 140 - (60 - o.mesaj.guc) * 0.4, ad = o.mesaj.ad + '!';
     c.globalAlpha = a; c.font = 'italic 400 40px ' + SERIF; const g = c.measureText(ad).width + 44;

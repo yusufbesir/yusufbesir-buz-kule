@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Buz Kule görsel önizleme</title>
+<!-- description: Geliştirme aracı: dört temanın arka plan, duvar, basamak ve kristal çizimini yan yana gösterir (kök dizinden sunucuyla açılır). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
+<body style="margin:0;background:#111"><canvas id="c" width="1920" height="720" style="width:1920px;height:720px"></canvas>
+<script type="module">
+import { arkaPlan, duvarlar, platform, kristalCiz } from '../src/gorsel.js';
+const c = document.getElementById('c').getContext('2d');
+[0, 100, 200, 300].forEach((kat, i) => {
+  c.save(); c.translate(i * 480, 0); c.scale(0.75, 0.75); c.beginPath(); c.rect(0, 0, 640, 480); c.clip();
+  arkaPlan(c, 640, 480, 0, kat); duvarlar(c, 640, 480, 0, kat);
+  [[110, 380, 200, 10], [300, 300, 130, 11], [180, 220, 280, 12], [380, 140, 90, 13]].forEach(([x, y, g, n], j) => platform(c, x, y, g, kat + j, j === 2, kat + n));
+  kristalCiz(c, 340, 262, kat); c.restore();
+});
+</script>

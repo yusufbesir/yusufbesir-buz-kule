@@ -7,21 +7,21 @@ import vm from 'node:vm';
 function ortam() {
   const dinleyiciler = {}, kareler = [], acik = {}, elemanlar = {};
   const ctx = new Proxy({}, {
-    get: (_, k) => (k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : k === 'measureText' ? () => ({ width: 100 }) : () => {}),
+    get: (_, k) => ((k === 'createLinearGradient' || k === 'createRadialGradient') ? () => ({ addColorStop() {} }) : k === 'measureText' ? () => ({ width: 100 }) : () => {}),
     set: () => true,
   });
   const eleman = (id) => elemanlar[id] ||= {
     id, hidden: false, value: '', textContent: '', style: {}, offsetLeft: 4, offsetWidth: 80, clientWidth: 300, offsetParent: { clientWidth: 300 }, tabIndex: 0, attrs: {},
     classList: { toggle: (ad, durum) => { if (ad === 'acik') acik[id] = !!durum; }, add() {}, remove() {} },
     setAttribute(a, v) { this.attrs[a] = v; }, addEventListener(ad, f) { (this['_' + ad] ||= []).push(f); }, focus() {}, blur() {},
-    getContext: () => ctx,
+    getContext: () => ctx, getBoundingClientRect: () => ({ width: 640, height: 480 }), appendChild() {}, width: 640, height: 480,
   };
   const kutu = {
-    document: { getElementById: eleman, activeElement: null },
+    document: { getElementById: eleman, createElement: () => eleman('yeni' + Object.keys(elemanlar).length), activeElement: null },
     addEventListener: (ad, f) => { (dinleyiciler[ad] ||= []).push(f); },
     requestAnimationFrame: (f) => { kareler.push(f); },
     localStorage: { getItem: () => null, setItem() {} },
-    AudioContext: undefined, Image: undefined, Math: Object.create(Math), console,
+    AudioContext: undefined, Image: undefined, setTimeout: () => 0, Math: Object.create(Math), console,
   };
   kutu.globalThis = kutu; kutu.window = kutu;
   return { kutu, dinleyiciler, kareler, acik, eleman };

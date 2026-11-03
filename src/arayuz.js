@@ -1,10 +1,19 @@
 // description: Tarayıcı girişi, durum makinesi (menü/oyun/duraklat/bitiş), HTML katmanları (sekmeler, canlı ayar paneli) ve oyun döngüsü. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
-import { AYAR, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
+import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
 
 const kimlik = (a) => document.getElementById(a);
-const c = kimlik('c').getContext('2d'); const k = {};
+const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
+// Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
+let olcek = 1;
+function boyutla() {
+  const r = tuval.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(320, Math.min(2560, Math.round(r.width * dpr)));
+  if (tuval.width !== w) { tuval.width = w; tuval.height = Math.round(w * 3 / 4); }
+  olcek = tuval.width / 640;
+}
+boyutla(); addEventListener('resize', boyutla);
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
 ayarYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
@@ -65,7 +74,18 @@ function ayarYaz() {
 for (const a of ayarAnahtarlari) {
   kimlik('a-' + a).addEventListener('input', (e) => { AYAR[a] = Number(e.target.value); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; ayarKaydet(); });
 }
-kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); });
+kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); });
+// Karakter seçici (Kenney CC0 beş karakter)
+const karakterAdlari = ['Yeşil', 'Kâşif', 'Kızıl', 'Asker', 'Zombi'], karakterDugmeleri = [];
+function karakterIsaretle() { karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.karakter === i)); b.className = 'karakter' + (AYAR.karakter === i ? ' secili' : ''); }); }
+KARAKTERLER.forEach((ad, i) => {
+  const b = document.createElement('button'), im = document.createElement('img');
+  b.type = 'button'; b.setAttribute('aria-label', 'Karakter: ' + karakterAdlari[i]); b.title = karakterAdlari[i];
+  im.src = './varlik/kenney/karakter/' + ad + '/stand.png'; im.alt = ''; b.appendChild(im);
+  b.addEventListener('click', () => { AYAR.karakter = i; ayarKaydet(); karakterIsaretle(); });
+  kimlik('karakterler').appendChild(b); karakterDugmeleri.push(b);
+});
+karakterIsaretle();
 ayarYaz();
 kimlik('a-not').textContent = AYAR.azaltilmisHareket ? 'Sistem "hareketi azalt" ayarın açık: sarsıntı kapalı, parçacık azaltıldı, animasyonlar donuk.' : 'Ayarlar canlı uygulanır ve kaydedilir; oyun kuralları değişmez.';
 
@@ -94,6 +114,7 @@ function dongu(ms) {
     if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft, sag: k.ArrowRight, zipla: k.Space }); if (o.bitti) oyunBitti(); }
     acc -= DT;
   }
+  c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
   ciz(c, o);
   if (durum !== 'baslik') hudCiz(c, o, en);
   requestAnimationFrame(dongu);

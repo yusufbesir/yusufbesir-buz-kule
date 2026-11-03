@@ -53,6 +53,12 @@ input[type=range]{accent-color:var(--vurgu);width:100%}
 .ince{color:var(--yazi-soluk);font-size:14px;margin:6px 0 0}
 .rekor{color:#7B5CC4;font-weight:700}
 kbd{font:600 12px ui-monospace,Consolas,monospace;background:rgba(31,51,40,.08);border-radius:6px;padding:2px 6px}
+.karakterler{grid-column:1/-1;display:flex;gap:6px;margin-top:4px}
+.karakter{flex:1;height:58px;border:2px solid transparent;border-radius:14px;background:rgba(31,51,40,.06);cursor:pointer;padding:2px;display:grid;place-items:center;transition:transform var(--sure) var(--yay),border-color var(--sure) var(--yay)}
+.karakter img{height:50px;width:auto;image-rendering:auto}
+.karakter:hover{transform:translateY(-3px)}
+.karakter.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
+.karakter:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
 ul{margin:0;padding-left:18px}li{margin:4px 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.giris,.giris .metin{opacity:1;transform:none}.kart{transform:none}}
 </style>
@@ -80,6 +86,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <div class="satir"><label class="etiket" for="a-parcacik">Parçacık</label><output id="o-parcacik"></output><input id="a-parcacik" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-sarsinti">Ekran sarsıntısı</label><output id="o-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-ses">Ses</label><output id="o-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
+        <div class="satir"><span class="etiket">Karakter</span><span></span><div class="karakterler" id="karakterler" role="group" aria-label="Karakter seçimi"></div></div>
         <button class="dugme ikincil" id="a-sifirla" type="button">Varsayılana dön</button>
         <p class="ince" id="a-not"></p>
       </section>
@@ -87,7 +94,8 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <ul class="ince" style="margin-top:0">
           <li><kbd>←</kbd> <kbd>→</kbd> koş; ne kadar hızlıysan o kadar yükseğe zıplarsın.</li>
           <li><kbd>Space</kbd> zıpla. Duvardan dönünce hızın çoğu korunur.</li>
-          <li>Üst üste en az 2 kat zıplayarak kombo yap; sayaç dolmadan yeni kombo zıplaması gerekir.</li>
+          <li>Üst üste en az 2 kat zıplayarak kombo yap; hızlı zıplayınca karakter takla atar. Sayaç dolmadan yeni kombo zıplaması gerekir.</li>
+          <li>Süzülen buz kristallerine dokun: her biri +25 puan.</li>
           <li><kbd>P</kbd> duraklat, <kbd>R</kbd> yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</li>
         </ul>
       </section>
