@@ -80,6 +80,37 @@ function skorEkle(skor, kat) {
   return SKORLAR.indexOf(kayit) + 1;
 }
 
+// ---- basarim ----
+// description: Buz Kule başarımları (kalıcı); açılınca kristal ödülü verir. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
+const BASARIMLAR = Object.freeze([
+  { id: 'kat10', ad: 'İlk basamaklar', acik: 'Kat 10\'a ulaş', odul: 5, sart: (o) => o.enYuksek >= 10 },
+  { id: 'kat50', ad: 'Yarı yol', acik: 'Kat 50\'ye ulaş', odul: 20, sart: (o) => o.enYuksek >= 50 },
+  { id: 'kat100', ad: 'Bulutların üstü', acik: 'Kat 100\'e ulaş', odul: 50, sart: (o) => o.enYuksek >= 100 },
+  { id: 'kristal10', ad: 'Kristal avcısı', acik: 'Tek oyunda 10 kristal topla', odul: 15, sart: (o) => o.alinan.size >= 10 },
+  { id: 'kombo20', ad: 'Zincirleme', acik: 'Tek kombo ile 20 kat çık', odul: 25, sart: (o) => o.enIyiKombo >= 20 },
+  { id: 'yay3', ad: 'Fırlatıldım', acik: 'Tek oyunda 3 yaydan fırla', odul: 10, sart: (o) => o.yaySayisi >= 3 },
+  { id: 'dayanikli', ad: 'Dayanıklı', acik: '2 dakika hayatta kal', odul: 15, sart: (o) => o.kare >= 6000 },
+]);
+const BASARIM_ANAHTAR = 'buzkule.basarim';
+const ACIK = new Set();
+const BILDIRIM = []; // ekrandaki bildirimler: { ad, odul, guc }
+
+function basarimYukle() {
+  try { const k = JSON.parse(localStorage.getItem(BASARIM_ANAHTAR) || '[]'); if (Array.isArray(k)) for (const id of k) if (BASARIMLAR.some(b => b.id === id)) ACIK.add(id); } catch { /* kayıt yoksa boş */ }
+}
+// Her karede çağrılır; yalnız kilitli başarımlara bakar. Yeni açılanların kimliklerini döndürür.
+function basarimKontrol(o) {
+  const yeni = [];
+  for (const b of BASARIMLAR) {
+    if (ACIK.has(b.id) || !b.sart(o)) continue;
+    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
+  }
+  if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
+  return yeni;
+}
+const bildirimAdim = () => { for (let i = BILDIRIM.length - 1; i >= 0; i--) if (--BILDIRIM[i].guc <= 0) BILDIRIM.splice(i, 1); };
+
 // ---- fizik ----
 // description: Buz Kule fizik çekirdeği (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 // Sabitler mekanikler.md dosyasındaki gözlemlerden; orijinal kod kopyalanmadı.
@@ -127,7 +158,9 @@ function katUret(kat, rnd = Math.random) {
   const kristal = kat > 0 && rnd() < 0.3, kristalX = rnd(); // toplanabilir kristal: katların ~%30'unda, basamağın üstünde yüzer
   // güç öğesi (kristalsiz katların ~%7'sinde): 'saat' kaymayı yavaşlatır, 'miknatis' yakındaki kristalleri çeker
   const gucZar = rnd(), guc = kat > 4 && !kristal && gucZar < 0.07 ? (gucZar < 0.035 ? 'saat' : 'miknatis') : null;
-  return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc };
+  // basamak türü (kat 15'ten sonra; numaralı ve tam genişlik katlar hep normal): 'kirilgan' basılınca kırılır, 'yay' yukarı fırlatır
+  const turZar = rnd(), tur = kat >= 15 && kat % 10 !== 0 && w < SATIR_KARO ? (turZar < 0.08 ? 'kirilgan' : turZar < 0.14 ? 'yay' : 'normal') : 'normal';
+  return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc, tur };
 }
 
 // ---- puan ----
@@ -180,6 +213,8 @@ const olumSesi = () => bip(400, 60, 0.6, 'sawtooth', 0.08);
 const kristalSesi = () => { bip(900, 1500, 0.12, 'sine', 0.08); setTimeout(() => bip(1300, 2000, 0.14, 'sine', 0.06), 70); };
 const hizSesi = () => { for (let i = 0; i < 4; i++) setTimeout(() => bip(1500, 1500, 0.07, 'square', 0.05), i * 130); }; // alarm saati
 const gucSesi = () => { bip(500, 900, 0.1, 'triangle', 0.08); setTimeout(() => bip(900, 1400, 0.16, 'triangle', 0.08), 90); };
+const yaySesi = () => { bip(300, 1200, 0.22, 'square', 0.07); };
+const kirmaSesi = () => { bip(900, 200, 0.18, 'sawtooth', 0.06); setTimeout(() => bip(500, 120, 0.2, 'triangle', 0.05), 70); };
 
 // ---- gorsel ----
 // description: Buz Kule görsel katmanı: aurora gökyüzü, kristal siluetleri, taş duvarlar ve mesaleCizler, temaya göre detaylı basamaklar (buz, ametist, ahşap, yosunlu taş), kristal toplanabilirleri, parçacıklar (prosedürel vektör çizim; yüksek çözünürlükte keskin). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
@@ -385,9 +420,31 @@ function platformYosun(c, x, y, gen, n, no, t) {
   c.lineCap = 'butt';
 }
 
-function platform(c, x, y, gen, kat, no, n) {
+// Basamak türü ayrıntısı: kırılgan (çatlak, titreme) ve yay (kırmızı yaylı pedal).
+function turDetay(c, x, y, gen, n, tur, kirilma) {
+  if (tur === 'kirilgan') {
+    c.save(); c.strokeStyle = 'rgba(20,50,90,' + (0.45 + 0.5 * kirilma) + ')'; c.lineWidth = 1.5 + kirilma * 1.5; c.lineCap = 'round';
+    const adet = 3 + Math.floor(kirilma * 5);
+    for (let i = 0; i < adet; i++) {
+      const px = x + 12 + hash(n * 19 + i * 7) * (gen - 24); c.beginPath(); c.moveTo(px, y + 1); c.lineTo(px - 4, y + 8); c.lineTo(px + 3, y + 14); c.lineTo(px - 2, y + 21); c.stroke();
+    }
+    c.restore();
+    if (kirilma > 0.2) { c.fillStyle = 'rgba(255,120,80,' + Math.min(0.9, kirilma) + ')'; c.font = '800 12px "Segoe UI", system-ui, sans-serif'; c.textAlign = 'center'; c.fillText('!', x + gen / 2, y - 8); c.textAlign = 'left'; }
+  } else if (tur === 'yay') {
+    const mx = x + gen / 2, sik = 0;
+    c.fillStyle = '#c62828'; yuvarlak(c, mx - 22, y - 9, 44, 10, 5); c.fill();               // kırmızı pedal
+    c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(mx - 16, y - 7, 32, 2);
+    c.strokeStyle = '#eceff1'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(mx - 12, y + 1 + sik);
+    for (let i = 0; i < 4; i++) { c.lineTo(mx + (i % 2 ? -12 : 12), y + 1 + sik + i * 1.5 + 3); } c.stroke();                // yay zikzağı
+  }
+}
+
+function platform(c, x, y, gen, kat, no, n, tur = 'normal', kirilma = 0) {
   const t = tema(kat), tn = temaNo(kat);
+  if (kirilma > 0) { c.save(); c.translate((hash(zaman + n) - 0.5) * 3 * kirilma, 0); } // basılınca titrer
   if (tn === 0) platformBuz(c, x, y, gen, n, no, t); else if (tn === 1) platformAmetist(c, x, y, gen, n, no, t); else if (tn === 2) platformTahta(c, x, y, gen, n, no, t); else platformYosun(c, x, y, gen, n, no, t);
+  turDetay(c, x, y, gen, n, tur, kirilma);
+  if (kirilma > 0) c.restore();
   if (no) { // her 10. kat: zincirle asılı numara levhası
     c.strokeStyle = 'rgba(30,20,10,0.8)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x + 14, y + 20); c.lineTo(x + 14, y + 27); c.moveTo(x + 38, y + 20); c.lineTo(x + 38, y + 27); c.stroke();
     const g = c.createLinearGradient(0, y + 26, 0, y + 42); g.addColorStop(0, '#ffe39a'); g.addColorStop(1, '#d9a02a');
@@ -456,6 +513,8 @@ const AYAK = 10;     // ayak yarı genişliği: basamak kenarından bu kadar ta�
 const COYOTE = 6;           // basamaktan yürüyerek çıktıktan sonra hâlâ zıplayabilme süresi (kare)
 const TAMPON = 7;           // inişten hemen önce basılan zıplama tuşu bu kadar kare hatırlanır
 const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
+const KIRILMA = 30;         // kırılgan basamak: üstünde bu kadar kare durulursa kırılır (0,6 sn)
+const YAY_HIZI = 27;        // yay basamak: inişte yukarı fırlatma hızı (normal zıplamanın en fazla 24,4 hızından yüksek, ~6 kat)
 
 function yeniOyun(rnd = Math.random) {
   const katlar = new Map();
@@ -465,6 +524,7 @@ function yeniOyun(rnd = Math.random) {
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
+    kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
   };
 }
 
@@ -501,6 +561,7 @@ function adim(o, giris) {
   if (o.havada && o.vy >= 0) {
     for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
       const f = o.kat(n), py = katY(n), [kx0, kx1] = basamakAralik(f);
+      if (o.kirik.has(n)) continue; // kırılan basamaktan geçilir
       const t = o.y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (o.y - eskiY))) : 1, xk = eskiX + (o.x - eskiX) * t;
       const uzerinde = (x) => x >= kx0 - AYAK && x <= kx1 + AYAK;
       if (n === 0 ? true : (eskiY <= py && o.y >= py && (uzerinde(xk) || uzerinde(o.x)))) {
@@ -511,16 +572,24 @@ function adim(o, giris) {
         const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
         if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); }
+        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+        if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
+          o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
+          yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
+        }
         break;
       }
     }
   }
+  if (!o.havada && o.katNo > 0 && o.kat(o.katNo).tur === 'kirilgan') { // kırılgan basamakta durdukça sayaç artar, dolunca basamak kırılır
+    if (o.sayacKat === o.katNo) o.sayac++; else { o.sayacKat = o.katNo; o.sayac = 1; }
+    if (o.sayac >= KIRILMA) { o.kirik.add(o.katNo); o.havada = true; o.coyote = 0; kirmaSesi(); parcacikEkle(o.x, o.y, 22, '#cfeeff', 3.5); }
+  } else if (!o.havada) { o.sayac = 0; o.sayacKat = -1; }
   if (!o.havada && o.katNo > 0) { // basamağın dışına tamamen çıktıysa düşer; coyote süresi boyunca hâlâ zıplayabilir
     const [kx0, kx1] = basamakAralik(o.kat(o.katNo));
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
-  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); } }
+  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
   for (let n = Math.max(1, taban - 1 - (cekim ? 1 : 0)); n <= taban + 2 + (cekim ? 1 : 0); n++) {
@@ -559,7 +628,8 @@ function ciz(c, o) {
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK) - 1), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
   for (let n = ilk; n <= son; n++) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
-    if (n === 0) platform(c, 85, sy, 470, 0, true, 0); else platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n);
+    if (n === 0) platform(c, 85, sy, 470, 0, true, 0);
+    else if (!o.kirik.has(n)) platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n, f.tur, o.sayacKat === n ? o.sayac / KIRILMA : 0);
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
@@ -609,6 +679,7 @@ function karakterCiz(c, o) {
 // ---- hud ----
 // description: Buz Kule oyun içi HUD (kompakt, yarı saydam yumuşak açık cam kartlar; oyuncu üst kenara yaklaşınca solar). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
+
 
 
 const YAZI = '"Inter", "Segoe UI", system-ui, sans-serif', MONO = 'ui-monospace, "JetBrains Mono", Consolas, monospace', SERIF = '"Instrument Serif", Georgia, serif';
@@ -661,6 +732,11 @@ function hudCiz(c, o, en) {
     c.fillStyle = g; yuvarlakHud(c, 19, 250 - h, 12, Math.max(h, 2), 5); c.fill();
     metinHud(c, 'x' + k.zip, 25, 92, '700 10px ' + MONO, YESIL, 'center'); c.restore();
   }
+  BILDIRIM.slice(0, 2).forEach((b, i) => { // başarım bildirimi (yukarıdan kayan cam hap)
+    const a = Math.min(1, b.guc / 20, (200 - b.guc) / 12); c.save(); c.globalAlpha = Math.max(0, a); c.font = '700 12px ' + MONO;
+    const ad = '★ ' + b.ad + '  +' + b.odul + ' ◆', g = c.measureText(ad).width + 36; kartHud(c, W / 2 - g / 2, 112 + i * 34, g, 28, 14);
+    metinHud(c, ad, W / 2, 130 + i * 34, '700 12px ' + MONO, '#7B5CC4', 'center'); c.restore();
+  });
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı (alarm saati)
     const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 13px ' + MONO;
     const g = c.measureText(ad).width + 32; kartHud(c, W / 2 - g / 2, 76, g, 28, 14); metinHud(c, ad, W / 2, 95, '700 13px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;
@@ -678,6 +754,7 @@ function hudCiz(c, o, en) {
 
 // ---- arayuz ----
 // description: Tarayıcı girişi, durum makinesi (menü/oyun/duraklat/bitiş), HTML katmanları (sekmeler, canlı ayar paneli) ve oyun döngüsü. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 
 
 
@@ -703,7 +780,7 @@ function boyutla() {
 boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna', sonSira = 0;
-ayarYukle(); cuzdanYukle(); skorlariYukle();
+ayarYukle(); cuzdanYukle(); skorlariYukle(); basarimYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
 
 kimlik('m-en').textContent = String(en);
@@ -715,7 +792,7 @@ function katmanGoster(ad) {
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
   durum = d; katmanGoster(durumKatman[d]);
-  if (d === 'baslik') { kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); }
+  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
     kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira);
@@ -733,7 +810,7 @@ function oyunBitti() {
 }
 
 // ---- Sekmeler (gösterge: ön kenar önce, arka kenar gecikmeli) ----
-const sekmeAdlari = ['oyna', 'magaza', 'ayar', 'nasil'];
+const sekmeAdlari = ['oyna', 'magaza', 'basarim', 'ayar', 'nasil'];
 const gosterge = kimlik('gosterge');
 function gostergeKonumla(hedef, yonSag) {
   const sol = hedef.offsetLeft, sag = hedef.offsetParent ? hedef.offsetParent.clientWidth - hedef.offsetLeft - hedef.offsetWidth : 0;
@@ -764,6 +841,15 @@ function listeYaz(ol, adet, vurgu) {
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);
   });
 }
+// ---- Başarımlar ----
+function basarimYaz() {
+  const ol = kimlik('b-liste'); if (!ol) return; ol.textContent = ''; kimlik('b-sayi').textContent = ACIK.size + ' / ' + BASARIMLAR.length;
+  for (const b of BASARIMLAR) {
+    const li = document.createElement('li'), a = document.createElement('span'), r = document.createElement('b'), acik = ACIK.has(b.id);
+    a.textContent = (acik ? '★ ' : '☆ ') + b.ad + ' — ' + b.acik; r.textContent = acik ? 'alındı' : '+' + b.odul + ' ◆';
+    li.className = acik ? 'yeni' : ''; li.appendChild(a); li.appendChild(r); ol.appendChild(li);
+  }
+}
 // ---- Mağaza: iz renkleri (kristalle açılır, yalnız görünüm) ----
 const izDugmeleri = [];
 function magazaYaz() {
@@ -782,7 +868,7 @@ IZLER.forEach((iz, i) => {
   b.addEventListener('click', () => { if (!CUZDAN.acik.includes(i)) izAl(i); izSec(i); magazaYaz(); });
   kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek });
 });
-magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0);
+magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); basarimYaz();
 
 // ---- Canlı ayar paneli ----
 const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses'];
@@ -843,8 +929,8 @@ function dongu(ms) {
   if (kol.start && !oncekiStart) { if (durum === 'oyun') durumDegistir('duraklat'); else if (durum === 'duraklat') durumDegistir('oyun'); }
   oncekiA = kol.a; oncekiStart = kol.start;
   while (acc >= DT) {
-    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla }); if (o.bitti) oyunBitti(); }
-    acc -= DT;
+    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla }); if (o.bitti) oyunBitti(); else basarimKontrol(o); }
+    bildirimAdim(); acc -= DT;
   }
   c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
   ciz(c, o);

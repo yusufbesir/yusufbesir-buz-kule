@@ -3,6 +3,7 @@ import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
 import { SKORLAR, skorlariYukle, skorEkle } from './skorlar.js';
+import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
 const kimlik = (a) => document.getElementById(a);
@@ -25,7 +26,7 @@ function boyutla() {
 boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna', sonSira = 0;
-ayarYukle(); cuzdanYukle(); skorlariYukle();
+ayarYukle(); cuzdanYukle(); skorlariYukle(); basarimYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
 
 kimlik('m-en').textContent = String(en);
@@ -37,7 +38,7 @@ function katmanGoster(ad) {
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
   durum = d; katmanGoster(durumKatman[d]);
-  if (d === 'baslik') { kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); }
+  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
     kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira);
@@ -55,7 +56,7 @@ function oyunBitti() {
 }
 
 // ---- Sekmeler (gösterge: ön kenar önce, arka kenar gecikmeli) ----
-const sekmeAdlari = ['oyna', 'magaza', 'ayar', 'nasil'];
+const sekmeAdlari = ['oyna', 'magaza', 'basarim', 'ayar', 'nasil'];
 const gosterge = kimlik('gosterge');
 function gostergeKonumla(hedef, yonSag) {
   const sol = hedef.offsetLeft, sag = hedef.offsetParent ? hedef.offsetParent.clientWidth - hedef.offsetLeft - hedef.offsetWidth : 0;
@@ -86,6 +87,15 @@ function listeYaz(ol, adet, vurgu) {
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);
   });
 }
+// ---- Başarımlar ----
+function basarimYaz() {
+  const ol = kimlik('b-liste'); if (!ol) return; ol.textContent = ''; kimlik('b-sayi').textContent = ACIK.size + ' / ' + BASARIMLAR.length;
+  for (const b of BASARIMLAR) {
+    const li = document.createElement('li'), a = document.createElement('span'), r = document.createElement('b'), acik = ACIK.has(b.id);
+    a.textContent = (acik ? '★ ' : '☆ ') + b.ad + ' — ' + b.acik; r.textContent = acik ? 'alındı' : '+' + b.odul + ' ◆';
+    li.className = acik ? 'yeni' : ''; li.appendChild(a); li.appendChild(r); ol.appendChild(li);
+  }
+}
 // ---- Mağaza: iz renkleri (kristalle açılır, yalnız görünüm) ----
 const izDugmeleri = [];
 function magazaYaz() {
@@ -104,7 +114,7 @@ IZLER.forEach((iz, i) => {
   b.addEventListener('click', () => { if (!CUZDAN.acik.includes(i)) izAl(i); izSec(i); magazaYaz(); });
   kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek });
 });
-magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0);
+magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); basarimYaz();
 
 // ---- Canlı ayar paneli ----
 const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses'];
@@ -165,8 +175,8 @@ function dongu(ms) {
   if (kol.start && !oncekiStart) { if (durum === 'oyun') durumDegistir('duraklat'); else if (durum === 'duraklat') durumDegistir('oyun'); }
   oncekiA = kol.a; oncekiStart = kol.start;
   while (acc >= DT) {
-    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla }); if (o.bitti) oyunBitti(); }
-    acc -= DT;
+    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla }); if (o.bitti) oyunBitti(); else basarimKontrol(o); }
+    bildirimAdim(); acc -= DT;
   }
   c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
   ciz(c, o);

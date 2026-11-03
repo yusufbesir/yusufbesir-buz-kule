@@ -27,3 +27,15 @@ test('mağaza: yetersiz kristalle alınmaz, alınca düşer ve seçilir; kayıt 
   const e = await import('../src/magaza.js?d=' + Math.random()); e.cuzdanYukle();
   assert.equal(e.CUZDAN.kristal, 60); assert.deepEqual(e.CUZDAN.acik.sort(), [0, 1]); assert.equal(e.CUZDAN.secili, 1);
 });
+
+test('başarım: koşul sağlanınca bir kez açılır, kristal ödülü verir, kalıcı kaydedilir', async () => {
+  const d = depo(); const m = await import('../src/magaza.js?e=' + Math.random()); const b = await import('../src/basarim.js?f=' + Math.random());
+  // basarim.js magaza.js'i kendi sorgu parametresiyle yeniden yüklemez; ortak modülü kullanan sürümden ödül okunur
+  const { CUZDAN } = await import('../src/magaza.js');
+  const once = CUZDAN.kristal; const o = { enYuksek: 12, alinan: new Set(), enIyiKombo: 0, yaySayisi: 0, kare: 10 };
+  const yeni = b.basarimKontrol(o); assert.deepEqual(yeni, ['kat10']); assert.equal(CUZDAN.kristal - once, 5);
+  assert.deepEqual(b.basarimKontrol(o), [], 'ikinci kez açılmamalı');
+  assert.ok(JSON.parse(d['buzkule.basarim']).includes('kat10')); assert.equal(b.BILDIRIM.length, 1);
+  o.enYuksek = 120; o.yaySayisi = 3; o.enIyiKombo = 25; o.alinan = new Set(Array.from({ length: 10 }, (_, i) => i)); o.kare = 7000;
+  assert.equal(b.basarimKontrol(o).length, 6, 'kalan altı başarım açılmalı');
+});

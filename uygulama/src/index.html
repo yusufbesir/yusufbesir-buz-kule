@@ -33,7 +33,7 @@ h1,h2{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight
 /* Sekme göstergesi: ön kenar önce, arka kenar gecikmeli (esneyip oturur) */
 .sekmeler{position:relative;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(31,51,40,.07);margin:0 0 14px}
 .sekme-gosterge{position:absolute;top:4px;bottom:4px;border-radius:999px;background:var(--vurgu);left:4px;width:80px}
-.sekme{position:relative;z-index:1;flex:1;padding:8px 10px;border:0;background:none;color:var(--yazi);cursor:pointer;border-radius:999px;font-family:inherit;font-weight:600;font-size:14px;line-height:1.2}
+.sekme{position:relative;z-index:1;flex:1;padding:8px 6px;border:0;background:none;color:var(--yazi);cursor:pointer;border-radius:999px;font-family:inherit;font-weight:600;font-size:13px;line-height:1.2}
 .sekme[aria-selected=true]{color:var(--zemin)}
 .sekme:focus-visible,.dugme:focus-visible,input[type=range]:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
 .panel[hidden]{display:none}
@@ -87,6 +87,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <span class="sekme-gosterge" id="gosterge" aria-hidden="true"></span>
         <button class="sekme" role="tab" id="t-oyna" aria-selected="true" aria-controls="p-oyna" data-sekme="oyna">Oyna</button>
         <button class="sekme" role="tab" id="t-magaza" aria-selected="false" aria-controls="p-magaza" data-sekme="magaza" tabindex="-1">Mağaza</button>
+        <button class="sekme" role="tab" id="t-basarim" aria-selected="false" aria-controls="p-basarim" data-sekme="basarim" tabindex="-1">Başarım</button>
         <button class="sekme" role="tab" id="t-ayar" aria-selected="false" aria-controls="p-ayar" data-sekme="ayar" tabindex="-1">Ayarlar</button>
         <button class="sekme" role="tab" id="t-nasil" aria-selected="false" aria-controls="p-nasil" data-sekme="nasil" tabindex="-1">Nasıl</button>
       </div>
@@ -101,6 +102,11 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <p class="etiket" style="margin:10px 0 6px">iz rengi</p>
         <div class="izler" id="izler" role="group" aria-label="İz rengi seçimi"></div>
         <p class="ince">Oyunda topladığın kristaller buraya eklenir. İz rengi yalnız görünümü değiştirir.</p>
+      </section>
+      <section class="panel" id="p-basarim" role="tabpanel" aria-labelledby="t-basarim" hidden>
+        <p class="etiket" style="margin:0 0 4px">başarımlar</p><p class="skor"><span id="b-sayi">0</span></p>
+        <ol class="liste" id="b-liste" style="margin-top:8px"></ol>
+        <p class="ince">Her başarım ilk açıldığında kristal ödülü verir.</p>
       </section>
       <section class="panel" id="p-ayar" role="tabpanel" aria-labelledby="t-ayar" hidden>
         <div class="satir"><label class="etiket" for="a-parilti">Parıltı</label><output id="o-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
@@ -118,6 +124,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
           <li><kbd>Space</kbd> zıpla. Duvardan dönünce hızın çoğu korunur.</li>
           <li>Üst üste en az 2 kat zıplayarak kombo yap; hızlı zıplayınca karakter takla atar. Sayaç dolmadan yeni kombo zıplaması gerekir.</li>
           <li>Süzülen buz kristallerine dokun: her biri +25 puan, ayrıca mağazada harcanır.</li>
+          <li>Çatlak buz basamak 0,6 sn sonra kırılır, hızlı geç. Kırmızı yaylı basamak seni yukarı fırlatır ve taklaya sokar.</li>
           <li>Saat kuleyi yavaşlatır, mıknatıs yakındaki kristalleri çeker. Basamak kenarlarında kısa süre tutunur ve kenardan düşerken bile zıplayabilirsin.</li>
           <li><kbd>P</kbd> duraklat, <kbd>R</kbd> yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</li>
         </ul>

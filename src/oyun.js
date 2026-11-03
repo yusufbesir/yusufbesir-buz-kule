@@ -2,7 +2,7 @@
 import { yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
 import { yeniPuan, inis, kare, toplam } from './puan.js';
-import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi } from './ses.js';
+import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, kirmaSesi } from './ses.js';
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
@@ -14,6 +14,8 @@ export const AYAK = 10;     // ayak yarı genişliği: basamak kenarından bu ka
 const COYOTE = 6;           // basamaktan yürüyerek çıktıktan sonra hâlâ zıplayabilme süresi (kare)
 const TAMPON = 7;           // inişten hemen önce basılan zıplama tuşu bu kadar kare hatırlanır
 const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
+const KIRILMA = 30;         // kırılgan basamak: üstünde bu kadar kare durulursa kırılır (0,6 sn)
+const YAY_HIZI = 27;        // yay basamak: inişte yukarı fırlatma hızı (normal zıplamanın en fazla 24,4 hızından yüksek, ~6 kat)
 
 export function yeniOyun(rnd = Math.random) {
   const katlar = new Map();
@@ -23,6 +25,7 @@ export function yeniOyun(rnd = Math.random) {
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
+    kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
   };
 }
 
@@ -59,6 +62,7 @@ export function adim(o, giris) {
   if (o.havada && o.vy >= 0) {
     for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
       const f = o.kat(n), py = katY(n), [kx0, kx1] = basamakAralik(f);
+      if (o.kirik.has(n)) continue; // kırılan basamaktan geçilir
       const t = o.y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (o.y - eskiY))) : 1, xk = eskiX + (o.x - eskiX) * t;
       const uzerinde = (x) => x >= kx0 - AYAK && x <= kx1 + AYAK;
       if (n === 0 ? true : (eskiY <= py && o.y >= py && (uzerinde(xk) || uzerinde(o.x)))) {
@@ -69,16 +73,24 @@ export function adim(o, giris) {
         const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
         if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); }
+        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+        if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
+          o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
+          yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
+        }
         break;
       }
     }
   }
+  if (!o.havada && o.katNo > 0 && o.kat(o.katNo).tur === 'kirilgan') { // kırılgan basamakta durdukça sayaç artar, dolunca basamak kırılır
+    if (o.sayacKat === o.katNo) o.sayac++; else { o.sayacKat = o.katNo; o.sayac = 1; }
+    if (o.sayac >= KIRILMA) { o.kirik.add(o.katNo); o.havada = true; o.coyote = 0; kirmaSesi(); parcacikEkle(o.x, o.y, 22, '#cfeeff', 3.5); }
+  } else if (!o.havada) { o.sayac = 0; o.sayacKat = -1; }
   if (!o.havada && o.katNo > 0) { // basamağın dışına tamamen çıktıysa düşer; coyote süresi boyunca hâlâ zıplayabilir
     const [kx0, kx1] = basamakAralik(o.kat(o.katNo));
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
-  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); } }
+  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
   for (let n = Math.max(1, taban - 1 - (cekim ? 1 : 0)); n <= taban + 2 + (cekim ? 1 : 0); n++) {
@@ -117,7 +129,8 @@ export function ciz(c, o) {
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK) - 1), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
   for (let n = ilk; n <= son; n++) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
-    if (n === 0) platform(c, 85, sy, 470, 0, true, 0); else platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n);
+    if (n === 0) platform(c, 85, sy, 470, 0, true, 0);
+    else if (!o.kirik.has(n)) platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n, f.tur, o.sayacKat === n ? o.sayac / KIRILMA : 0);
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }

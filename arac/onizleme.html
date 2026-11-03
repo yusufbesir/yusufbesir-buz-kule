@@ -7,7 +7,7 @@ const c = document.getElementById('c').getContext('2d');
 [0, 100, 200, 300].forEach((kat, i) => {
   c.save(); c.translate(i * 480, 0); c.scale(0.75, 0.75); c.beginPath(); c.rect(0, 0, 640, 480); c.clip();
   arkaPlan(c, 640, 480, 0, kat); duvarlar(c, 640, 480, 0, kat);
-  [[110, 380, 200, 10], [300, 300, 130, 11], [180, 220, 280, 12], [380, 140, 90, 13]].forEach(([x, y, g, n], j) => platform(c, x, y, g, kat + j, j === 2, kat + n));
+  [[110, 380, 200, 10, 'normal', 0], [300, 300, 130, 11, 'kirilgan', 0.5], [180, 220, 280, 12, 'yay', 0], [380, 140, 90, 13, 'kirilgan', 0.1]].forEach(([x, y, g, n, tur, k], j) => platform(c, x, y, g, kat + j, j === 2, kat + n, tur, k));
   kristalCiz(c, 340, 262, kat); c.restore();
 });
 </script>

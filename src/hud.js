@@ -2,6 +2,7 @@
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
 import { W, SAAT, skor } from './oyun.js';
 import { AYAR } from './ayar.js';
+import { BILDIRIM } from './basarim.js';
 
 const YAZI = '"Inter", "Segoe UI", system-ui, sans-serif', MONO = 'ui-monospace, "JetBrains Mono", Consolas, monospace', SERIF = '"Instrument Serif", Georgia, serif';
 const YESIL = '#1F3328', SOLUK = '#6B7A6F';
@@ -53,6 +54,11 @@ export function hudCiz(c, o, en) {
     c.fillStyle = g; yuvarlakHud(c, 19, 250 - h, 12, Math.max(h, 2), 5); c.fill();
     metinHud(c, 'x' + k.zip, 25, 92, '700 10px ' + MONO, YESIL, 'center'); c.restore();
   }
+  BILDIRIM.slice(0, 2).forEach((b, i) => { // başarım bildirimi (yukarıdan kayan cam hap)
+    const a = Math.min(1, b.guc / 20, (200 - b.guc) / 12); c.save(); c.globalAlpha = Math.max(0, a); c.font = '700 12px ' + MONO;
+    const ad = '★ ' + b.ad + '  +' + b.odul + ' ◆', g = c.measureText(ad).width + 36; kartHud(c, W / 2 - g / 2, 112 + i * 34, g, 28, 14);
+    metinHud(c, ad, W / 2, 130 + i * 34, '700 12px ' + MONO, '#7B5CC4', 'center'); c.restore();
+  });
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı (alarm saati)
     const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 13px ' + MONO;
     const g = c.measureText(ad).width + 32; kartHud(c, W / 2 - g / 2, 76, g, 28, 14); metinHud(c, ad, W / 2, 95, '700 13px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;

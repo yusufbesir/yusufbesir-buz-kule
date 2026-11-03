@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { yeniOyun, adim } from '../src/oyun.js';
+import { katUret } from '../src/kat.js';
 test('1000 kare rastgele girdiyle çökmeden döner, değerler sonlu', () => {
   let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const o = yeniOyun(rnd);
@@ -87,4 +88,34 @@ test('mıknatıs kristali uzaktan toplar; saat kaymayı yavaşlatır', () => {
   const a = yeniOyun(() => 0.4), b = yeniOyun(() => 0.4); for (const q of [a, b]) { q.enYuksek = 6; q.kaymaBasladi = true; }
   b.saat = 100; for (let i = 0; i < 30; i++) { adim(a, bos); adim(b, bos); }
   assert.ok(b.kamTaban > a.kamTaban, 'saat varken kule daha yavaş kaymalı');
+});
+
+// ---- Basamak türleri ----
+test('kırılgan basamak: üstünde 30 kare durunca kırılır ve oyuncu düşer; kırık basamağa tekrar konulmaz', () => {
+  const { o } = basamakta(); o.kat(1).tur = 'kirilgan';
+  for (let i = 0; i < 29; i++) adim(o, bos);
+  assert.equal(o.havada, false, '29. karede hâlâ basmalı'); assert.equal(o.kirik.has(1), false);
+  adim(o, bos); adim(o, bos); assert.ok(o.kirik.has(1), '30 karede kırılmalı'); assert.equal(o.havada, true);
+  for (let i = 0; i < 60 && o.katNo === 1; i++) adim(o, bos); // aşağı düşer, kırık basamağa konmaz
+  assert.equal(o.katNo, 0, 'kırık basamağa konmamalı, zemine inmeli');
+});
+
+test('kırılgan basamak: çabuk zıplayıp geçen kırılmaz', () => {
+  const { o } = basamakta(); o.kat(1).tur = 'kirilgan';
+  for (let i = 0; i < 10; i++) adim(o, bos);
+  adim(o, { ...bos, zipla: true }); for (let i = 0; i < 60; i++) adim(o, bos);
+  assert.equal(o.kirik.has(1), false);
+});
+
+test('yay basamak: iner inmez yukarı fırlatır ve takla attırır', () => {
+  const { o, x0, x1 } = basamakta(); o.katNo = 0; o.sonInisKat = 0; o.enYuksek = 0; o.kat(1).tur = 'yay';
+  o.havada = true; o.y = 440 - 80 - 10; o.vy = 4; o.x = (x0 + x1) / 2;
+  for (let i = 0; i < 6 && o.yaySayisi === 0; i++) adim(o, bos);
+  assert.equal(o.yaySayisi, 1); assert.ok(o.vy <= -26 && o.havada && o.donuyor, 'yay fırlatmadı');
+});
+
+test('kat üretimi: kırılgan/yay yalnız kat 15 sonrası, numaralı ve tam genişlik katlarda hiç çıkmaz', () => {
+  let s = 3; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; let kirilgan = 0, yay = 0;
+  for (let k = 1; k < 4000; k++) { const f = katUret(k, rnd); if (f.tur !== 'normal') { assert.ok(k >= 15 && k % 10 !== 0 && f.genislikKaro < 30, 'uygunsuz kat ' + k); f.tur === 'kirilgan' ? kirilgan++ : yay++; } }
+  assert.ok(kirilgan > 100 && yay > 100, 'türler hiç çıkmıyor: ' + kirilgan + '/' + yay);
 });
