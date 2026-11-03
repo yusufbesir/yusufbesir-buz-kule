@@ -10,19 +10,19 @@
   --sure:240ms; --yay:cubic-bezier(.2,.9,.25,1.05);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:
+html{height:100%;background:
   radial-gradient(900px 500px at 15% 10%,var(--lavanta),transparent 60%),
   radial-gradient(900px 500px at 85% 90%,var(--adacayi),transparent 60%),var(--zemin);
-  color:var(--yazi);font:16px/1.5 "Inter","Segoe UI",system-ui,sans-serif}
-body{display:grid;place-items:center;overflow:hidden}
+  background-attachment:fixed;color:var(--yazi);font:16px/1.5 "Inter","Segoe UI",system-ui,sans-serif}
+body{margin:0;min-height:100vh;display:grid;place-items:center;overflow:hidden;background:transparent}
 h1,h2{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;letter-spacing:-.01em;margin:0}
 .etiket{font:11px/1 ui-monospace,"JetBrains Mono",Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--yazi-soluk)}
-#sahne{position:relative;width:min(100vw,calc(100vh*4/3),960px);aspect-ratio:4/3;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(31,51,40,.28)}
+#sahne{position:relative;width:min(calc(100vw - 24px),calc((100vh - 24px)*4/3));aspect-ratio:4/3;margin:auto;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(31,51,40,.28)}
 #c{display:block;width:100%;height:100%}
 .katman{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(10,18,40,.46);opacity:0;visibility:hidden;
   transition:opacity var(--sure) var(--yay),visibility 0s linear var(--sure)}
 .katman.acik{opacity:1;visibility:visible;transition:opacity var(--sure) var(--yay),visibility 0s}
-.kart{background:var(--kart);border-radius:var(--kose);box-shadow:var(--golge);padding:20px 22px;width:min(100%,400px);
+.kart{zoom:var(--olcek,1);background:var(--kart);border-radius:var(--kose);box-shadow:var(--golge);padding:20px 22px;width:min(100%,400px);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transform:translateY(12px) scale(.98);
   transition:transform var(--sure) var(--yay),box-shadow var(--sure) var(--yay)}
 .katman.acik .kart{transform:none}

@@ -13,8 +13,11 @@ function boyutla() {
   const w = Math.max(320, Math.min(2560, Math.round(r.width * dpr)));
   if (tuval.width !== w) { tuval.width = w; tuval.height = Math.round(w * 3 / 4); }
   olcek = tuval.width / 640;
+  const sahne = kimlik('sahne'); // menü kartları sahneyle birlikte ölçeklenir (büyük pencerede küçük kalmasın)
+  if (sahne && sahne.style && sahne.style.setProperty) sahne.style.setProperty('--olcek', String(Math.max(0.6, Math.min(2, r.width / 960))));
 }
 boyutla(); addEventListener('resize', boyutla);
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
 ayarYukle(); cuzdanYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }

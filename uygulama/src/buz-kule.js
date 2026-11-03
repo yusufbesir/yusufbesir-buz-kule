@@ -586,7 +586,7 @@ function karakterCiz(c, o) {
 }
 
 // ---- hud ----
-// description: Buz Kule oyun içi HUD (yumuşak açık cam kartlar; tasarım dili arayuz-modernlesme/TASARIM-DILI.css). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Buz Kule oyun içi HUD (kompakt, yarı saydam yumuşak açık cam kartlar; oyuncu üst kenara yaklaşınca solar). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
 
 const YAZI = '"Inter", "Segoe UI", system-ui, sans-serif', MONO = 'ui-monospace, "JetBrains Mono", Consolas, monospace', SERIF = '"Instrument Serif", Georgia, serif';
@@ -596,55 +596,60 @@ function yuvarlakHud(c, x, y, g, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + g, y, x + g, y + h, r); c.arcTo(x + g, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + g, y, r); c.closePath();
 }
-function kartHud(c, x, y, g, h) {
-  c.save(); c.shadowColor = 'rgba(31,51,40,0.22)'; c.shadowBlur = 18; c.shadowOffsetY = 6;
-  c.fillStyle = 'rgba(255,255,255,0.90)'; yuvarlakHud(c, x, y, g, h, 16); c.fill(); c.restore();
-  c.strokeStyle = 'rgba(31,51,40,0.10)'; c.lineWidth = 1; yuvarlakHud(c, x + 0.5, y + 0.5, g - 1, h - 1, 16); c.stroke();
+function kartHud(c, x, y, g, h, r = 12) {
+  c.save(); c.shadowColor = 'rgba(31,51,40,0.18)'; c.shadowBlur = 10; c.shadowOffsetY = 3;
+  c.fillStyle = 'rgba(255,255,255,0.88)'; yuvarlakHud(c, x, y, g, h, r); c.fill(); c.restore();
+  c.strokeStyle = 'rgba(31,51,40,0.10)'; c.lineWidth = 1; yuvarlakHud(c, x + 0.5, y + 0.5, g - 1, h - 1, r); c.stroke();
 }
 function metinHud(c, t, x, y, font, renk, hiza = 'left') { c.font = font; c.textAlign = hiza; c.fillStyle = renk; c.fillText(t, x, y); c.textAlign = 'left'; }
-const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 10px ' + MONO, SOLUK, hiza);
+const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 9px ' + MONO, SOLUK, hiza);
 
 function hudCiz(c, o, en) {
-  kartHud(c, 94, 10, 214, 56);
-  etiketHud(c, 'Skor', 110, 30); metinHud(c, String(skor(o)), 110, 56, '700 26px ' + YAZI, YESIL);
-  etiketHud(c, 'Kat', 240, 30); metinHud(c, String(o.enYuksek), 240, 56, 'italic 400 30px ' + SERIF, '#7B5CC4');
-  kartHud(c, 470, 10, 84, 56); etiketHud(c, 'En iyi', 512, 30, 'center'); metinHud(c, String(Math.max(en, skor(o))), 512, 56, '700 20px ' + YAZI, YESIL, 'center');
-  // sonraki hızlanmaya kalan süre (halka)
-  const oran = (o.kare % SAAT) / SAAT, cx = 592, cy = 38;
-  kartHud(c, 564, 10, 56, 56);
-  c.lineWidth = 5; c.lineCap = 'round'; c.strokeStyle = 'rgba(31,51,40,0.12)'; c.beginPath(); c.arc(cx, cy, 17, 0, 7); c.stroke();
-  c.strokeStyle = o.kaymaBasladi ? '#E58A5C' : '#7B5CC4'; c.beginPath(); c.arc(cx, cy, 17, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, oran) * Math.PI * 2); c.stroke(); c.lineCap = 'butt';
-  metinHud(c, o.kaymaBasladi ? (Math.floor(o.kare / SAAT) + 1) + 'x' : '–', cx, cy + 5, '700 13px ' + MONO, YESIL, 'center');
-  // kombo ölçeri
-  if (o.puan.kombo) {
-    const k = o.puan.kombo; kartHud(c, 10, 76, 34, 236);
-    const h = 188 * (k.sayac / 100), g = c.createLinearGradient(0, 272, 0, 84); g.addColorStop(0, '#F3D5BF'); g.addColorStop(1, '#E58A5C');
-    c.fillStyle = 'rgba(31,51,40,0.08)'; yuvarlakHud(c, 18, 84, 18, 188, 6); c.fill();
-    c.fillStyle = g; yuvarlakHud(c, 18, 272 - h, 18, Math.max(h, 2), 6); c.fill();
-    metinHud(c, 'x' + k.zip, 27, 302, '700 13px ' + MONO, YESIL, 'center');
-  }
-  // toplanan kristaller
-  kartHud(c, 94, 72, 92, 28); c.fillStyle = '#7B5CC4'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 93); c.lineTo(104, 86); c.closePath(); c.fill();
-  c.fillStyle = '#C9B8F0'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 87); c.closePath(); c.fill();
-  metinHud(c, '× ' + o.alinan.size, 124, 91, '700 13px ' + MONO, YESIL);
-  [['saat', o.saat, 480, 'Saat', '#C98A10'], ['miknatis', o.miknatis, 500, 'Mıknatıs', '#D04040']].filter(g => g[1] > 0).forEach((g, i) => { // etkin güç öğeleri
-    const x = 194 + i * 112; kartHud(c, x, 72, 104, 28);
-    c.fillStyle = 'rgba(31,51,40,0.10)'; yuvarlakHud(c, x + 10, 91, 84, 5, 2.5); c.fill();
-    c.fillStyle = g[4]; yuvarlakHud(c, x + 10, 91, Math.max(3, 84 * g[1] / g[2]), 5, 2.5); c.fill();
-    metinHud(c, g[3], x + 10, 86, '700 11px ' + MONO, YESIL);
+  // Oyuncu ekranın üst kısmındayken (yukarı zıplama) HUD neredeyse görünmez olur, görüşü kapatmaz.
+  const ekranY = o.y - o.kamY, gorunur = Math.max(0.16, Math.min(1, (ekranY - 70) / 150)) * 0.92;
+  c.save(); c.globalAlpha = gorunur;
+  // sol hap: skor, kat, kristal
+  kartHud(c, 92, 8, 214, 32);
+  etiketHud(c, 'Skor', 104, 19); metinHud(c, String(skor(o)), 104, 35, '700 16px ' + YAZI, YESIL);
+  etiketHud(c, 'Kat', 188, 19); metinHud(c, String(o.enYuksek), 188, 35, 'italic 400 20px ' + SERIF, '#7B5CC4');
+  c.fillStyle = '#7B5CC4'; c.beginPath(); c.moveTo(250, 17); c.lineTo(255, 24); c.lineTo(250, 31); c.lineTo(245, 24); c.closePath(); c.fill();
+  c.fillStyle = '#C9B8F0'; c.beginPath(); c.moveTo(250, 17); c.lineTo(255, 24); c.lineTo(250, 25); c.closePath(); c.fill();
+  metinHud(c, '× ' + o.alinan.size, 261, 29, '700 12px ' + MONO, YESIL);
+  // sağ hap: en iyi + hızlanma halkası
+  kartHud(c, 438, 8, 117, 32);
+  etiketHud(c, 'En iyi', 449, 19); metinHud(c, String(Math.max(en, skor(o))), 449, 35, '700 14px ' + YAZI, YESIL);
+  const oran = (o.kare % SAAT) / SAAT, cx = 530, cy = 24;
+  c.lineWidth = 4; c.lineCap = 'round'; c.strokeStyle = 'rgba(31,51,40,0.12)'; c.beginPath(); c.arc(cx, cy, 10, 0, 7); c.stroke();
+  c.strokeStyle = o.kaymaBasladi ? '#E58A5C' : '#7B5CC4'; c.beginPath(); c.arc(cx, cy, 10, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, oran) * Math.PI * 2); c.stroke(); c.lineCap = 'butt';
+  if (o.kaymaBasladi) metinHud(c, (Math.floor(o.kare / SAAT) + 1) + 'x', cx, cy + 3.5, '700 9px ' + MONO, YESIL, 'center');
+  // etkin güç öğeleri: küçük süre çubukları
+  [['saat', o.saat, 480, 'Saat', '#C98A10'], ['miknatis', o.miknatis, 500, 'Mıknatıs', '#D04040']].filter(g => g[1] > 0).forEach((g, i) => {
+    const x = 92 + i * 96; kartHud(c, x, 44, 90, 20, 10);
+    c.fillStyle = 'rgba(31,51,40,0.10)'; yuvarlakHud(c, x + 8, 55, 74, 4, 2); c.fill();
+    c.fillStyle = g[4]; yuvarlakHud(c, x + 8, 55, Math.max(3, 74 * g[1] / g[2]), 4, 2); c.fill();
+    metinHud(c, g[3], x + 8, 52, '700 9px ' + MONO, YESIL);
   });
+  c.restore();
+  // kombo ölçeri (duvar üzerinde ince bir çubuk)
+  if (o.puan.kombo) {
+    const k = o.puan.kombo; c.save(); c.globalAlpha = Math.max(0.5, gorunur); kartHud(c, 12, 80, 26, 190, 10);
+    const h = 150 * (k.sayac / 100), g = c.createLinearGradient(0, 252, 0, 100); g.addColorStop(0, '#F3D5BF'); g.addColorStop(1, '#E58A5C');
+    c.fillStyle = 'rgba(31,51,40,0.08)'; yuvarlakHud(c, 19, 100, 12, 150, 5); c.fill();
+    c.fillStyle = g; yuvarlakHud(c, 19, 250 - h, 12, Math.max(h, 2), 5); c.fill();
+    metinHud(c, 'x' + k.zip, 25, 92, '700 10px ' + MONO, YESIL, 'center'); c.restore();
+  }
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı (alarm saati)
-    const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 15px ' + MONO;
-    const g = c.measureText(ad).width + 40; kartHud(c, W / 2 - g / 2 + 40, 76, g, 34); metinHud(c, ad, W / 2 + 60, 99, '700 15px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;
+    const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 13px ' + MONO;
+    const g = c.measureText(ad).width + 32; kartHud(c, W / 2 - g / 2, 76, g, 28, 14); metinHud(c, ad, W / 2, 95, '700 13px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;
   }
   if (o.rozet) { // 50 katta bir büyük kilometre taşı yazısı
-    const a = Math.min(1, o.rozet.guc / 25), s = 1 + 0.12 * Math.sin(o.rozet.guc * 0.2); c.save(); c.globalAlpha = a; c.translate(W / 2, 230); c.scale(s, s);
-    c.font = 'italic 400 64px ' + SERIF; const g = c.measureText(o.rozet.metin).width + 60; kartHud(c, -g / 2, -56, g, 84); metinHud(c, o.rozet.metin, 0, 0, 'italic 400 64px ' + SERIF, '#7B5CC4', 'center'); c.restore();
+    const a = Math.min(1, o.rozet.guc / 25), s = 1 + 0.12 * Math.sin(o.rozet.guc * 0.2); c.save(); c.globalAlpha = a * 0.92; c.translate(W / 2, 230); c.scale(s, s);
+    c.font = 'italic 400 64px ' + SERIF; const g = c.measureText(o.rozet.metin).width + 60; kartHud(c, -g / 2, -56, g, 84, 18); metinHud(c, o.rozet.metin, 0, 0, 'italic 400 64px ' + SERIF, '#7B5CC4', 'center'); c.restore();
   }
-  if (o.mesaj && o.mesaj.guc > 0) { // ödül adı: cam hap
-    const a = Math.min(1, o.mesaj.guc / 20), y = 140 - (60 - o.mesaj.guc) * 0.4, ad = o.mesaj.ad + '!';
-    c.globalAlpha = a; c.font = 'italic 400 40px ' + SERIF; const g = c.measureText(ad).width + 44;
-    kartHud(c, W / 2 - g / 2, y - 40, g, 56); metinHud(c, ad, W / 2, y, 'italic 400 40px ' + SERIF, YESIL, 'center'); c.globalAlpha = 1;
+  if (o.mesaj && o.mesaj.guc > 0) { // ödül adı: cam hap (kısa süreli, ortada)
+    const a = Math.min(1, o.mesaj.guc / 20), y = 150 - (60 - o.mesaj.guc) * 0.4, ad = o.mesaj.ad + '!';
+    c.globalAlpha = a * 0.92; c.font = 'italic 400 36px ' + SERIF; const g = c.measureText(ad).width + 40;
+    kartHud(c, W / 2 - g / 2, y - 36, g, 50, 16); metinHud(c, ad, W / 2, y, 'italic 400 36px ' + SERIF, YESIL, 'center'); c.globalAlpha = 1;
   }
 }
 
@@ -663,8 +668,11 @@ function boyutla() {
   const w = Math.max(320, Math.min(2560, Math.round(r.width * dpr)));
   if (tuval.width !== w) { tuval.width = w; tuval.height = Math.round(w * 3 / 4); }
   olcek = tuval.width / 640;
+  const sahne = kimlik('sahne'); // menü kartları sahneyle birlikte ölçeklenir (büyük pencerede küçük kalmasın)
+  if (sahne && sahne.style && sahne.style.setProperty) sahne.style.setProperty('--olcek', String(Math.max(0.6, Math.min(2, r.width / 960))));
 }
 boyutla(); addEventListener('resize', boyutla);
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
 ayarYukle(); cuzdanYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
