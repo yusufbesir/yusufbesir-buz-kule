@@ -664,14 +664,19 @@ const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
 let olcek = 1;
 function boyutla() {
+  // Sahne boyutu CSS vw/vh yerine gerçekten görünen alana (visualViewport) göre hesaplanır: pencere, yakınlaştırma ya da ekran ölçeği
+  // farklı olsa bile sahne görünen alana sığar ve ortalanır.
+  const sahne = kimlik('sahne'), vv = window.visualViewport;
+  const gw = Math.min(window.innerWidth || 640, (vv && vv.width) || 1e9, (document.documentElement && document.documentElement.clientWidth) || 1e9);
+  const gh = Math.min(window.innerHeight || 480, (vv && vv.height) || 1e9, (document.documentElement && document.documentElement.clientHeight) || 1e9);
+  if (sahne && sahne.style && gw && gh) { const w = Math.max(320, Math.min(gw - 24, (gh - 24) * 4 / 3)); sahne.style.width = Math.floor(w) + 'px'; }
   const r = tuval.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   const w = Math.max(320, Math.min(2560, Math.round(r.width * dpr)));
   if (tuval.width !== w) { tuval.width = w; tuval.height = Math.round(w * 3 / 4); }
   olcek = tuval.width / 640;
-  const sahne = kimlik('sahne'); // menü kartları sahneyle birlikte ölçeklenir (büyük pencerede küçük kalmasın)
   if (sahne && sahne.style && sahne.style.setProperty) sahne.style.setProperty('--olcek', String(Math.max(0.6, Math.min(2, r.width / 960))));
 }
-boyutla(); addEventListener('resize', boyutla);
+boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
 ayarYukle(); cuzdanYukle();
