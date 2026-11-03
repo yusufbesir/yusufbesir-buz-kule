@@ -1,4 +1,4 @@
-// description: WebAudio ile üretilen özgün ses efektleri (dosya yok). sahip: Claude (Icy Tower iş parçacığı)
+// description: WebAudio ile üretilen özgün ses efektleri (dosya yok). sahip: Claude (Buz Kule iş parçacığı)
 let ctx = null;
 function bip(f0, f1, sure, tur = 'square', ses = 0.06) {
   try {

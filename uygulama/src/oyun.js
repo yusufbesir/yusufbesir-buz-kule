@@ -1,4 +1,4 @@
-// description: Oyun döngüsü, kamera ve çizim (özgün kod, kendi çizimleri). sahip: Claude (Icy Tower iş parçacığı)
+// description: Oyun döngüsü, kamera ve çizim (özgün kod, kendi çizimleri). sahip: Claude (Buz Kule iş parçacığı)
 import { SABIT, yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
 import { yeniPuan, inis, kare, toplam } from './puan.js';

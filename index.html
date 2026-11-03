@@ -1,13 +1,6 @@
 <!doctype html><html lang="tr"><meta charset="utf-8"><title>Buz Kule</title><link rel="icon" href="data:,">
-<!-- description: Icy Tower'dan esinlenen özgün klon; sahip: Claude (Icy Tower iş parçacığı) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data:; media-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<!-- description: Buz Kule, özgün dikey zıplama oyunu; sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
 <body style="margin:0;background:#000;display:grid;place-items:center;height:100vh">
 <canvas id="c" width="640" height="480" style="max-width:100%;image-rendering:pixelated"></canvas>
-<script type="module">
-import { yeniOyun, adim, ciz } from './src/oyun.js';
-const c = document.getElementById('c').getContext('2d'); let o = yeniOyun(); const k = {};
-addEventListener('keydown', e => { k[e.code] = 1; if (e.code === 'KeyR') o = yeniOyun(); if (e.code === 'Space') e.preventDefault(); });
-addEventListener('keyup', e => k[e.code] = 0);
-let t = 0, acc = 0; const DT = 20;
-function dongu(ms) { acc += ms - t; t = ms; while (acc >= DT) { adim(o, { sol: k.ArrowLeft, sag: k.ArrowRight, zipla: k.Space }); acc -= DT; } ciz(c, o); requestAnimationFrame(dongu); }
-requestAnimationFrame(ms => { t = ms; dongu(ms); });
-</script></body></html>
+<script type="module" src="./src/arayuz.js"></script></body></html>

@@ -1,4 +1,4 @@
-// description: Prosedürel kat üretimi (özgün kod). sahip: Claude (Icy Tower iş parçacığı)
+// description: Prosedürel kat üretimi (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 export const KARO = 16, KAT_ARALIK = 80, SATIR_KARO = 30;
 export function genislik(kat, rnd) {
   if (kat > 0 && kat % 50 === 0) return SATIR_KARO;

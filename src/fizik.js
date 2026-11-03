@@ -1,4 +1,4 @@
-// description: Icy Tower klonu fizik çekirdeği (özgün kod). sahip: Claude (Icy Tower iş parçacığı)
+// description: Buz Kule fizik çekirdeği (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 // Sabitler mekanikler.md dosyasındaki gözlemlerden; orijinal kod kopyalanmadı.
 export const SABIT = Object.freeze({
   MAKS_VX: 12.2, MAKS_DUSME: 12.2, YERCEKIMI: 0.8,

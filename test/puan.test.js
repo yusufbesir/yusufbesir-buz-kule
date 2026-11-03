@@ -4,12 +4,12 @@ import { yeniPuan, inis, kare, odulAdi, toplam, KOMBO_KARE } from '../src/puan.j
 import { katUret, genislik } from '../src/kat.js';
 
 test('ödül eşikleri', () => {
-  assert.equal(odulAdi(6),'GOOD'); assert.equal(odulAdi(7),'SWEET'); assert.equal(odulAdi(50),'AMAZING'); assert.equal(odulAdi(200),'UNBELIEVABLE');
+  assert.equal(odulAdi(6),'İYİ'); assert.equal(odulAdi(7),'GÜZEL'); assert.equal(odulAdi(50),'İNANILMAZ'); assert.equal(odulAdi(200),'KUSURSUZ');
 });
 test('iki kombo zıplaması sonra tek kat bonus verir', () => {
   const p = yeniPuan(); inis(p, 3); inis(p, 4);
   const o = inis(p, 1);
-  assert.deepEqual(o, { ad: 'SWEET', toplam: 7 });
+  assert.deepEqual(o, { ad: 'GÜZEL', toplam: 7 });
   assert.equal(toplam(p, 10), 100 + 49);
 });
 test('tek zıplamalı kombo bonus vermez', () => {

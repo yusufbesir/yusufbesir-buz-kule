@@ -1,4 +1,4 @@
-// description: Buz Kule özgün görsel katmanı (prosedürel çizim; harici varlık yok). sahip: Claude (Icy Tower iş parçacığı)
+// description: Buz Kule özgün görsel katmanı (prosedürel çizim; harici varlık yok). sahip: Claude (Buz Kule iş parçacığı)
 export const TEMALAR = [
   { ust: '#0b1b3a', alt: '#27527f', duvar: '#2c4a73', tugla: '#1f3556', plat: '#a8e4ff', parilti: '#ffffff' }, // buz mağarası
   { ust: '#1b0f3a', alt: '#5b2e7a', duvar: '#4a2d73', tugla: '#33204f', plat: '#d9b3ff', parilti: '#ffe9ff' }, // mor gece

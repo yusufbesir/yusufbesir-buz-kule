@@ -1,6 +1,6 @@
-// description: Puan ve kombo kuralları (özgün kod). sahip: Claude (Icy Tower iş parçacığı)
+// description: Puan ve kombo kuralları (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 export const KOMBO_KARE = 100;
-const ODULLER = [[200,'UNBELIEVABLE'],[140,'SPLENDID'],[100,'FANTASTIC'],[70,'EXTREME'],[50,'AMAZING'],[35,'WOW'],[25,'SUPER'],[15,'GREAT'],[7,'SWEET'],[0,'GOOD']];
+const ODULLER = [[200,'KUSURSUZ'],[140,'DESTAN'],[100,'EFSANE'],[70,'OLAĞANÜSTÜ'],[50,'İNANILMAZ'],[35,'MUHTEŞEM'],[25,'SÜPER'],[15,'HARİKA'],[7,'GÜZEL'],[0,'İYİ']];
 export const odulAdi = (toplamKat) => ODULLER.find(([e]) => toplamKat >= e)[1];
 
 export function yeniPuan() { return { katPuani: 0, bonus: 0, kombo: null }; }

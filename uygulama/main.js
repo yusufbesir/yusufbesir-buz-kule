@@ -1,11 +1,15 @@
-// description: Buz Kule (Icy Tower'dan esinlenen özgün klon) Electron kabuğu. sahip: Claude (Icy Tower iş parçacığı)
+// description: Buz Kule Electron kabuğu (sertleştirilmiş). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+const ANA = path.join(__dirname, 'src', 'index.html');
 function createWindow() {
   const win = new BrowserWindow({ width: 960, height: 760, title: 'Buz Kule', backgroundColor: '#000000', autoHideMenuBar: true,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, devTools: false, spellcheck: false } });
   Menu.setApplicationMenu(null);
-  win.loadFile(path.join(__dirname, 'src', 'index.html'));
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+  win.webContents.session.setPermissionRequestHandler((_wc, _izin, cb) => cb(false));
+  win.loadFile(ANA);
 }
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());
