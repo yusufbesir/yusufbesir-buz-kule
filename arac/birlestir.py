@@ -1,7 +1,7 @@
 # description: ES modüllerini tek klasik betiğe birleştirir (file:// ve CSP uyumu için). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import re, pathlib
 kok = pathlib.Path(__file__).resolve().parent.parent
-sira = ['ayar', 'magaza', 'skorlar', 'basarim', 'hayalet', 'fizik', 'kat', 'puan', 'ses', 'gorsel', 'oyun', 'hud', 'arayuz']
+sira = ['ayar', 'magaza', 'skorlar', 'basarim', 'hayalet', 'fizik', 'kat', 'puan', 'ses', 'gorsel', 'oyun', 'piksel', 'hud', 'arayuz']
 cikti = ['(() => {', '"use strict";']
 # Modüller tek kapsamda birleşir: aynı üst düzey ad iki dosyada tanımlıysa sessizce ezilir (bir oyun hatasına yol açmıştı). Çakışmayı derlemede yakala.
 adlar = {}

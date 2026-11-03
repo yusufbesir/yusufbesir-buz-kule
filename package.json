@@ -1,1 +1,12 @@
-{"type":"module"}
+{
+  "type": "module",
+  "name": "buz-kule-kaynak",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Buz Kule oyunu kaynak depo (kişisel kullanım)",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "derle": "python arac/birlestir.py",
+    "bot": "node arac/bot.mjs 5"
+  }
+}
