@@ -11,7 +11,7 @@ const ZEMIN_Y = 440;
 export function yeniOyun(rnd = Math.random) {
   const katlar = new Map();
   const kat = (n) => (katlar.has(n) || katlar.set(n, katUret(n, rnd)), katlar.get(n));
-  return { rnd, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kayma: 0, kaymaBasladi: false, kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0, oncekiSpace: false };
+  return { rnd, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false, kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0, oncekiSpace: false };
 }
 
 // y ekranda aşağı artar; kat n platformunun dünya y'si = ZEMIN_Y - n*KAT_ARALIK
@@ -47,17 +47,21 @@ export function adim(o, giris) {
     if (o.katNo > 0 && (o.x < kx0 || o.x > kx1)) o.havada = true;
   }
   { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); } }
-  // Kamera
-  const hedef = o.y - 160;
-  if (hedef < o.kamY) o.kamY = hedef; // oyuncu çok yükselince yukarı çek
+  // Kamera: taban en yüksek kata göre yükselir (ve kayma başlayınca kendiliğinden); zıplama anında oyuncu üst kenara
+  // yaklaşırsa kamera geçici olarak yukarı çıkar, inince tabana yumuşakça döner (tepe noktasına kilitlenmez).
+  o.kamTaban = Math.min(o.kamTaban, katY(o.enYuksek) - 200);
   if (!o.kaymaBasladi && o.enYuksek >= 5) o.kaymaBasladi = true; // kat 5'ten sonra kayma başlar
-  if (o.kaymaBasladi) { o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamY -= o.kayma; }
+  if (o.kaymaBasladi) { o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma; }
+  const kamHedef = Math.min(o.kamTaban, o.y - 100);
+  if (kamHedef < o.kamY) o.kamY = kamHedef; else o.kamY += Math.min(8, kamHedef - o.kamY);
   if (o.y - o.kamY > H) { o.bitti = true; olumSesi(); }
 }
 
 export function skor(o) { return toplam(o.puan, o.enYuksek); }
 
 export function ciz(c, o) {
+  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
+  c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK)), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
   for (let n = ilk; n <= son; n++) {
@@ -65,6 +69,7 @@ export function ciz(c, o) {
     if (n === 0) platform(c, 85, sy, 470, 0, true, 0); else platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n);
   }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
+  c.restore();
 }
 
 // Özgün 10x12 piksel karakter (bere takan, kırmızı eşofmanlı); dönüş yönüne göre aynalanır.
@@ -82,9 +87,16 @@ function pozSec(o) {
 function karakterCiz(c, o) {
   const r = RESIMLER[pozSec(o)], ters = o.vx < -0.5;
   if (r && r.complete && r.naturalWidth > 0) {
-    const g = 48, y = 66, x = Math.round(o.x - g / 2), yy = Math.round(o.y - o.kamY - y + 3);
-    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(o.x, o.y - o.kamY + 1, 16, 4, 0, 0, 7); c.fill();
-    c.save(); if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y); c.restore();
+    // squash & stretch: havada hıza göre uzar, hızlı koşuda hafif eğilir; hızlıyken parıltılı iz bırakır
+    const uzama = o.havada ? Math.max(-0.12, Math.min(0.14, -o.vy * 0.006)) : 0;
+    const g = 48 * (1 - uzama * 0.6), y = 66 * (1 + uzama), x = Math.round(o.x - g / 2), yy = Math.round(o.y - o.kamY - y + 3);
+    if (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14)) parcacikEkle(o.x, o.y - 20, 1, 'rgba(120,220,255,0.8)', 0.6);
+    c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, o.y - o.kamY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
+    const ayakY = o.y - o.kamY; // eğilme ayak noktası etrafında olmalı (üst kenar etrafında değil)
+    c.save(); c.translate(o.x, ayakY); c.rotate(o.havada ? 0 : Math.max(-0.18, Math.min(0.18, o.vx * 0.012)));
+    c.shadowColor = 'rgba(140,230,255,0.9)'; c.shadowBlur = Math.abs(o.vx) > 8 ? 14 : 6; c.translate(-o.x, -ayakY);
+    if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y);
+    c.restore();
     return;
   }
   const x0 = Math.round(o.x - 15), y0 = Math.round(o.y - o.kamY - 36), m = 3;

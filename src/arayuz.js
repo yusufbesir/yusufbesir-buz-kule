@@ -14,7 +14,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyP') durum = durum === 'oyun' ? 'duraklat' : durum === 'duraklat' ? 'oyun' : durum;
 });
 addEventListener('keyup', e => { k[e.code] = 0; });
-function bitir() {
+function oyunBitti() {
   durum = 'bitti'; const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
 }
@@ -22,7 +22,7 @@ let onceki = 0, acc = 0; const DT = 20;
 function dongu(ms) {
   acc += Math.min(100, ms - onceki); onceki = ms; t++;
   while (acc >= DT) {
-    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft, sag: k.ArrowRight, zipla: k.Space }); if (o.bitti) bitir(); }
+    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft, sag: k.ArrowRight, zipla: k.Space }); if (o.bitti) oyunBitti(); }
     acc -= DT;
   }
   ciz(c, o);

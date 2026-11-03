@@ -1,13 +1,17 @@
 // description: Buz Kule arayüzü: HUD, başlık, duraklatma ve bitiş ekranları (prosedürel çizim). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { W, H, SAAT, skor } from './oyun.js';
 
-function yuvarlak(c, x, y, g, h, r) {
+function yuvarlakHud(c, x, y, g, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + g, y, x + g, y + h, r); c.arcTo(x + g, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + g, y, r); c.closePath();
 }
 function panel(c, x, y, g, h) {
-  c.fillStyle = 'rgba(8,16,40,0.62)'; yuvarlak(c, x, y, g, h, 10); c.fill();
-  c.strokeStyle = 'rgba(160,220,255,0.55)'; c.lineWidth = 2; c.stroke();
+  // buzlu cam: üstten alta saydam gradyan, ince parlak kenar ve üst ışık çizgisi
+  const gr = c.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(1, 'rgba(255,255,255,0.05)');
+  c.save(); c.shadowColor = 'rgba(0,0,0,0.45)'; c.shadowBlur = 14; c.fillStyle = 'rgba(6,14,38,0.55)'; yuvarlakHud(c, x, y, g, h, 14); c.fill(); c.restore();
+  c.fillStyle = gr; yuvarlakHud(c, x, y, g, h, 14); c.fill();
+  c.strokeStyle = 'rgba(190,235,255,0.5)'; c.lineWidth = 1.5; yuvarlakHud(c, x + 0.5, y + 0.5, g - 1, h - 1, 14); c.stroke();
+  c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(x + 14, y + 1, g - 28, 1.5);
 }
 const YAZI = '"Segoe UI", system-ui, sans-serif';
 function yazi(c, t, x, y, boy, renk, hiza = 'left', agirlik = 800) {
@@ -29,7 +33,7 @@ export function hudCiz(c, o, en) {
   if (o.puan.kombo) {
     const k = o.puan.kombo; panel(c, 10, 70, 30, 240);
     const h = 196 * (k.sayac / 100), g = c.createLinearGradient(0, 270, 0, 74); g.addColorStop(0, '#ffd24a'); g.addColorStop(1, '#ff5a3c');
-    c.fillStyle = g; yuvarlak(c, 16, 270 - h, 18, Math.max(h, 2), 5); c.fill();
+    c.fillStyle = g; yuvarlakHud(c, 16, 270 - h, 18, Math.max(h, 2), 5); c.fill();
     yazi(c, 'x' + k.zip, 25, 88, 14, '#fff', 'center'); yazi(c, '+' + k.toplam, 25, 300, 13, '#ffd24a', 'center');
   }
   if (o.mesaj && o.mesaj.guc > 0) {
@@ -44,7 +48,8 @@ export function baslikCiz(c, en, t) {
   perde(c);
   const g = c.createLinearGradient(0, 90, 0, 170); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#7fd0ff');
   c.font = '900 76px ' + YAZI; c.textAlign = 'center';
-  c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillText('BUZ KULE', W / 2 + 4, 164); c.fillStyle = g; c.fillText('BUZ KULE', W / 2, 160); c.textAlign = 'left';
+  c.save(); c.shadowColor = 'rgba(100,210,255,0.9)'; c.shadowBlur = 28 + 10 * Math.sin(t * 0.06); c.fillStyle = g; c.fillText('BUZ KULE', W / 2, 160 + Math.sin(t * 0.05) * 3); c.restore();
+  c.textAlign = 'left';
   yazi(c, 'Kuleye tırman, kombo yap, düşme!', W / 2, 200, 18, '#bfe6ff', 'center', 600);
   panel(c, 170, 235, 300, 120);
   yazi(c, '← →   koş', 320, 268, 18, '#fff', 'center', 600);
