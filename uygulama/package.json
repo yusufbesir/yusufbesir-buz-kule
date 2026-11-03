@@ -1,6 +1,6 @@
 {
   "name": "buz-kule",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "Buz Kule - dikey zıplama oyunu",
   "main": "main.js",
   "author": "Yusuf",
@@ -11,7 +11,7 @@
   "build": {
     "appId": "com.yusuf.buzkule",
     "productName": "Buz Kule",
-    "files": ["main.js", "src/index.html", "src/buz-kule.js", "package.json"],
+    "files": ["main.js", "src/index.html", "src/buz-kule.js", "src/varlik/*.png", "package.json"],
     "directories": { "output": "dist" },
     "win": { "target": "nsis" },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false, "deleteAppDataOnUninstall": false, "shortcutName": "Buz Kule", "artifactName": "Buz-Kule-Kurulum-${version}.exe" }

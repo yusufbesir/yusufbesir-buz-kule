@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"D:\\Programlar\\Blender\\blender-4.5.9-windows-x64\\blender.exe\" -b -P \"D:\\Programlar\\IcyTower-klon\\arac\\blender_sprite.py\" -- *)",
+      "PowerShell(& \"D:\\Programlar\\Blender\\blender-4.5.9-windows-x64\\blender.exe\" --version)"
+    ],
+    "deny": [
+      "Read(D:/YusufII/HAFIZAM1/anahtarlar/**)",
+      "Edit(D:/YusufII/HAFIZAM1/anahtarlar/**)",
+      "Write(D:/YusufII/HAFIZAM1/anahtarlar/**)"
+    ]
+  }
+}

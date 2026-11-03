@@ -1,7 +1,7 @@
 # description: ES modüllerini tek klasik betiğe birleştirir (file:// ve CSP uyumu için). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import re, pathlib
 kok = pathlib.Path(__file__).resolve().parent.parent
-sira = ['fizik', 'kat', 'puan', 'ses', 'gorsel', 'oyun', 'arayuz']
+sira = ['fizik', 'kat', 'puan', 'ses', 'gorsel', 'oyun', 'hud', 'arayuz']
 cikti = ['(() => {', '"use strict";']
 for ad in sira:
     kod = (kok / 'src' / f'{ad}.js').read_text(encoding='utf-8')

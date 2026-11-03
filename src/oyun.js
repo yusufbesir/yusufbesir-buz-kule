@@ -19,7 +19,7 @@ const katY = (n) => ZEMIN_Y - n * KAT_ARALIK;
 
 export function adim(o, giris) {
   if (o.bitti) return;
-  o.kare++;
+  o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag);
   if (!o.havada && giris.zipla) { o.vy = zipla(o.vx); o.havada = true; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2); }
   o.x += o.vx;
@@ -37,7 +37,7 @@ export function adim(o, giris) {
         const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
         o.enYuksek = Math.max(o.enYuksek, n);
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = inis(o.puan, fark); if (od) { o.mesaj = od; odulSesi(od.toplam); }
+        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); }
         break;
       }
     }
@@ -46,7 +46,7 @@ export function adim(o, giris) {
     const f = o.kat(o.katNo), kx0 = 85 + (f.xKaro - 5) * KARO, kx1 = kx0 + f.genislikKaro * KARO;
     if (o.katNo > 0 && (o.x < kx0 || o.x > kx1)) o.havada = true;
   }
-  { const od = kare(o.puan); if (od) { o.mesaj = od; odulSesi(od.toplam); } }
+  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); } }
   // Kamera
   const hedef = o.y - 160;
   if (hedef < o.kamY) o.kamY = hedef; // oyuncu çok yükselince yukarı çek
@@ -65,21 +65,23 @@ export function ciz(c, o) {
     if (n === 0) platform(c, 85, sy, 470, 0, true, 0); else platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n);
   }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
-  c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(90, 6, 250, 26);
-  c.fillStyle = '#fff'; c.font = 'bold 16px monospace';
-  c.fillText('SKOR ' + skor(o) + '  KAT ' + o.enYuksek, 98, 24);
-  if (o.puan.kombo) { c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(8, 38, 18, 308); c.fillStyle = '#ffd24a'; c.fillRect(11, 41 + (100 - o.puan.kombo.sayac) * 3, 12, o.puan.kombo.sayac * 3); }
-  if (o.mesaj) { c.fillStyle = '#000'; c.font = 'bold 34px monospace'; c.fillText(o.mesaj.ad + '!', 242, 122); c.fillStyle = '#ffd24a'; c.fillText(o.mesaj.ad + '!', 240, 120); }
-  if (o.bitti) { c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(0, 200, W, 70); c.fillStyle = '#fff'; c.font = 'bold 26px monospace'; c.fillText('OYUN BİTTİ - R ile yeniden', 130, 245); }
 }
 
 // Özgün 10x12 piksel karakter (bere takan, kırmızı eşofmanlı); dönüş yönüne göre aynalanır.
 const SPR = ['..bbbbbb..','.bbbbbbbb.','.bbyyyybb.','..yyeyeyy.','..yyyyyy..','...rrrr...','.rrrrrrrr.','yyrrrrrryy','..rrrrrr..','..rr..rr..','..rr..rr..','.kkk..kkk.'];
 const RENK = { b: '#3a7bd5', y: '#f5c9a0', e: '#222', r: '#d94a4a', k: '#333' };
+const RESIMLER = {};
+if (typeof Image !== 'undefined') for (const ad of ['dur', 'kos', 'zipla']) { const r = new Image(); r.src = './varlik/karakter_' + ad + '.png'; RESIMLER[ad] = r; }
 function karakterCiz(c, o) {
-  const x0 = Math.round(o.x - 15), y0 = Math.round(o.y - o.kamY - 36), m = 3, ters = o.vx < -0.5;
-  for (let r = 0; r < SPR.length; r++) for (let q = 0; q < 10; q++) {
-    const ch = SPR[r][ters ? 9 - q : q]; if (ch === '.') continue;
-    c.fillStyle = RENK[ch]; c.fillRect(x0 + q * m, y0 + r * m, m, m);
+  const poz = o.havada ? 'zipla' : Math.abs(o.vx) > 2 ? 'kos' : 'dur', r = RESIMLER[poz], ters = o.vx < -0.5;
+  if (r && r.complete && r.naturalWidth > 0) { // Blender'dan render edilen özgün karakter
+    const g = 42, y = 56, x = Math.round(o.x - g / 2), yy = Math.round(o.y - o.kamY - y + 4);
+    c.save(); if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y); c.restore();
+    return;
+  }
+  const x0 = Math.round(o.x - 15), y0 = Math.round(o.y - o.kamY - 36), m = 3;
+  for (let r2 = 0; r2 < SPR.length; r2++) for (let q = 0; q < 10; q++) {
+    const ch = SPR[r2][ters ? 9 - q : q]; if (ch === '.') continue;
+    c.fillStyle = RENK[ch]; c.fillRect(x0 + q * m, y0 + r2 * m, m, m);
   }
 }
