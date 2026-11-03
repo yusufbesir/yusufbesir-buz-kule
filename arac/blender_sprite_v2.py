@@ -7,7 +7,9 @@ cikti = sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else os.path.join
 os.makedirs(cikti, exist_ok=True)
 
 def temizle():
+    global CIZGI
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    CIZGI = None  # sahne sıfırlanınca eski malzeme geçersiz olur
 
 def toon(ad, renk, golge=0.55):
     """İki tonlu (toon) malzeme: Diffuse -> ShaderToRGB -> sabit ColorRamp -> Emission. Olmazsa düz malzemeye düşer."""

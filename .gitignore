@@ -2,3 +2,4 @@ node_modules/
 uygulama/node_modules/
 uygulama/dist/
 *.exe
+uygulama/src/varlik/blender-v2/
