@@ -71,11 +71,19 @@ export function ciz(c, o) {
 const SPR = ['..bbbbbb..','.bbbbbbbb.','.bbyyyybb.','..yyeyeyy.','..yyyyyy..','...rrrr...','.rrrrrrrr.','yyrrrrrryy','..rrrrrr..','..rr..rr..','..rr..rr..','.kkk..kkk.'];
 const RENK = { b: '#3a7bd5', y: '#f5c9a0', e: '#222', r: '#d94a4a', k: '#333' };
 const RESIMLER = {};
-if (typeof Image !== 'undefined') for (const ad of ['dur', 'kos', 'zipla']) { const r = new Image(); r.src = './varlik/karakter_' + ad + '.png'; RESIMLER[ad] = r; }
+if (typeof Image !== 'undefined') for (const ad of ['stand', 'walk1', 'walk2', 'jump', 'fall', 'skid', 'cheer1', 'hurt']) { const r = new Image(); r.src = './varlik/kenney/player_' + ad + '.png'; RESIMLER[ad] = r; }
+// Kenney "Platformer Characters" (CC0) Player pozları; kaynak varlik/kenney/LICENSE-Kenney-CC0.txt
+function pozSec(o) {
+  if (o.bitti) return 'hurt';
+  if (o.havada) return o.puan.kombo && o.vy < 0 && o.puan.kombo.zip >= 2 ? 'cheer1' : o.vy < 0 ? 'jump' : 'fall';
+  if (Math.abs(o.vx) > 2) return (o.kare >> 3) & 1 ? 'walk1' : 'walk2';
+  return 'stand';
+}
 function karakterCiz(c, o) {
-  const poz = o.havada ? 'zipla' : Math.abs(o.vx) > 2 ? 'kos' : 'dur', r = RESIMLER[poz], ters = o.vx < -0.5;
-  if (r && r.complete && r.naturalWidth > 0) { // Blender'dan render edilen özgün karakter
-    const g = 42, y = 56, x = Math.round(o.x - g / 2), yy = Math.round(o.y - o.kamY - y + 4);
+  const r = RESIMLER[pozSec(o)], ters = o.vx < -0.5;
+  if (r && r.complete && r.naturalWidth > 0) {
+    const g = 48, y = 66, x = Math.round(o.x - g / 2), yy = Math.round(o.y - o.kamY - y + 3);
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(o.x, o.y - o.kamY + 1, 16, 4, 0, 0, 7); c.fill();
     c.save(); if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y); c.restore();
     return;
   }
