@@ -3,6 +3,7 @@ import { SABIT, yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizi
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
 import { yeniPuan, inis, kare, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi } from './ses.js';
+import { arkaPlan, duvarlar, platform, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 const ZEMIN_Y = 440;
@@ -20,7 +21,7 @@ export function adim(o, giris) {
   if (o.bitti) return;
   o.kare++;
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag);
-  if (!o.havada && giris.zipla) { o.vy = zipla(o.vx); o.havada = true; zipSesi(o.vx); }
+  if (!o.havada && giris.zipla) { o.vy = zipla(o.vx); o.havada = true; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2); }
   o.x += o.vx;
   ({ x: o.x, vx: o.vx } = duvarSekmesi(o.x, o.vx));
   const eskiY = o.y;
@@ -35,6 +36,7 @@ export function adim(o, giris) {
         o.y = py; o.vy = 0; o.havada = false;
         const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
         o.enYuksek = Math.max(o.enYuksek, n);
+        if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
         const od = inis(o.puan, fark); if (od) { o.mesaj = od; odulSesi(od.toplam); }
         break;
       }
@@ -56,21 +58,19 @@ export function adim(o, giris) {
 export function skor(o) { return toplam(o.puan, o.enYuksek); }
 
 export function ciz(c, o) {
-  c.fillStyle = '#12233b'; c.fillRect(0, 0, W, H);
-  c.fillStyle = '#22406b'; c.fillRect(0, 0, 85, H); c.fillRect(555, 0, W - 555, H);
+  arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK)), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
   for (let n = ilk; n <= son; n++) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
-    c.fillStyle = f.no ? '#e8c34a' : '#9fd6ff';
-    if (n === 0) c.fillRect(85, sy, 470, 12); else c.fillRect(85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, 12);
-    if (f.no) { c.fillStyle = '#fff'; c.font = '10px monospace'; c.fillText(String(n), 90, sy - 2); }
+    if (n === 0) platform(c, 85, sy, 470, 0, true, 0); else platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n);
   }
-  karakterCiz(c, o);
-  c.fillStyle = '#fff'; c.font = '16px monospace';
-  c.fillText('SKOR ' + skor(o) + '  KAT ' + o.enYuksek, 95, 24);
-  if (o.puan.kombo) { c.fillStyle = '#ffd24a'; c.fillRect(10, 40 + (100 - o.puan.kombo.sayac) * 3, 14, o.puan.kombo.sayac * 3); }
-  if (o.mesaj) { c.fillStyle = '#ffd24a'; c.font = '28px monospace'; c.fillText(o.mesaj.ad + '!', 240, 120); }
-  if (o.bitti) { c.fillStyle = '#fff'; c.font = '28px monospace'; c.fillText('OYUN BİTTİ - R ile yeniden', 140, 240); }
+  karakterCiz(c, o); parcacikCiz(c, o.kamY);
+  c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(90, 6, 250, 26);
+  c.fillStyle = '#fff'; c.font = 'bold 16px monospace';
+  c.fillText('SKOR ' + skor(o) + '  KAT ' + o.enYuksek, 98, 24);
+  if (o.puan.kombo) { c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(8, 38, 18, 308); c.fillStyle = '#ffd24a'; c.fillRect(11, 41 + (100 - o.puan.kombo.sayac) * 3, 12, o.puan.kombo.sayac * 3); }
+  if (o.mesaj) { c.fillStyle = '#000'; c.font = 'bold 34px monospace'; c.fillText(o.mesaj.ad + '!', 242, 122); c.fillStyle = '#ffd24a'; c.fillText(o.mesaj.ad + '!', 240, 120); }
+  if (o.bitti) { c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(0, 200, W, 70); c.fillStyle = '#fff'; c.font = 'bold 26px monospace'; c.fillText('OYUN BİTTİ - R ile yeniden', 130, 245); }
 }
 
 // Özgün 10x12 piksel karakter (bere takan, kırmızı eşofmanlı); dönüş yönüne göre aynalanır.
