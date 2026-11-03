@@ -1,37 +1,57 @@
-// description: Birleştirilmiş paket betiğini (uygulama/src/buz-kule.js) sahte tarayıcı ortamında çalıştırır; modül birleştirme hatalarını yakalar. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Birleştirilmiş paket betiğini (uygulama/src/buz-kule.js) sahte tarayıcı ortamında çalıştırır; modül birleştirme hatalarını (ad çakışması vb.) ve menü/bitiş akışını yakalar. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
 function ortam() {
-  const metinler = [], dinleyiciler = {}, kareler = [];
-  const bag = () => new Proxy(function () {}, { get: (_, k) => (k === 'addColorStop' ? () => {} : bag()), apply: () => bag(), set: () => true });
+  const dinleyiciler = {}, kareler = [], acik = {}, elemanlar = {};
   const ctx = new Proxy({}, {
-    get: (_, k) => (k === 'fillText' ? (t) => { metinler.push(String(t)); } : k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : () => {}),
+    get: (_, k) => (k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : k === 'measureText' ? () => ({ width: 100 }) : () => {}),
     set: () => true,
   });
-  const kanvas = { getContext: () => ctx, width: 640, height: 480 };
+  const eleman = (id) => elemanlar[id] ||= {
+    id, hidden: false, value: '', textContent: '', style: {}, offsetLeft: 4, offsetWidth: 80, clientWidth: 300, offsetParent: { clientWidth: 300 }, tabIndex: 0, attrs: {},
+    classList: { toggle: (ad, durum) => { if (ad === 'acik') acik[id] = !!durum; }, add() {}, remove() {} },
+    setAttribute(a, v) { this.attrs[a] = v; }, addEventListener(ad, f) { (this['_' + ad] ||= []).push(f); }, focus() {}, blur() {},
+    getContext: () => ctx,
+  };
   const kutu = {
-    document: { getElementById: () => kanvas },
+    document: { getElementById: eleman, activeElement: null },
     addEventListener: (ad, f) => { (dinleyiciler[ad] ||= []).push(f); },
     requestAnimationFrame: (f) => { kareler.push(f); },
     localStorage: { getItem: () => null, setItem() {} },
     AudioContext: undefined, Image: undefined, Math: Object.create(Math), console,
   };
   kutu.globalThis = kutu; kutu.window = kutu;
-  return { kutu, metinler, dinleyiciler, kareler };
+  return { kutu, dinleyiciler, kareler, acik, eleman };
 }
 
-test('paket: sağ+space basılı tutulunca zıplayıp inmek oyunu bitirmez', () => {
+function yukle() {
   const e = ortam(); let s = 11; e.kutu.Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647;
   vm.createContext(e.kutu);
   vm.runInContext(fs.readFileSync(new URL('../uygulama/src/buz-kule.js', import.meta.url), 'utf8'), e.kutu);
-  const tus = (tur, code) => (e.dinleyiciler[tur] || []).forEach(f => f({ code, repeat: false, preventDefault() {} }));
-  let ms = 0; const kare = () => { ms += 20; const f = e.kareler.shift(); f(ms); };
-  kare(); tus('keydown', 'Space'); tus('keyup', 'Space'); // başlık -> oyun
-  tus('keydown', 'ArrowRight'); tus('keydown', 'Space');
-  for (let i = 0; i < 150; i++) kare(); // 3 sn
-  assert.ok(!e.metinler.includes('KULE SENİ YENDİ'), 'paketlenmiş oyun erken bitti (modül adı çakışması?)');
-  assert.ok(e.metinler.some(t => t.startsWith('SKOR')) || e.metinler.includes('SKOR'), 'HUD çizilmedi');
+  e.tus = (tur, code, hedef = { tagName: 'BODY' }) => (e.dinleyiciler[tur] || []).forEach(f => f({ code, repeat: false, preventDefault() {}, target: hedef }));
+  let ms = 0; e.kare = () => { ms += 20; const f = e.kareler.shift(); f(ms); };
+  return e;
+}
+
+test('paket: Space menüden oyunu başlatır (menü kapanır)', () => {
+  const e = yukle(); e.kare();
+  assert.notEqual(e.acik.menu, false, 'menü başta açık olmalı');
+  e.tus('keydown', 'Space'); e.tus('keyup', 'Space');
+  assert.equal(e.acik.menu, false, 'Space menüyü kapatmadı');
+});
+
+test('paket: sağ+space basılı tutulunca zıplayıp inmek oyunu bitirmez (modül adı çakışması hatası)', () => {
+  const e = yukle(); e.kare();
+  e.tus('keydown', 'Space'); e.tus('keyup', 'Space'); e.tus('keydown', 'ArrowRight'); e.tus('keydown', 'Space');
+  for (let i = 0; i < 150; i++) e.kare(); // 3 sn
+  assert.notEqual(e.acik.sonuc, true, 'paketlenmiş oyun erken bitti (modül adı çakışması?)');
+});
+
+test('paket: P duraklatır ve devam ettirir', () => {
+  const e = yukle(); e.kare(); e.tus('keydown', 'Space'); e.tus('keyup', 'Space');
+  e.tus('keydown', 'KeyP'); assert.equal(e.acik.duraklat, true);
+  e.tus('keydown', 'KeyP'); assert.equal(e.acik.duraklat, false);
 });

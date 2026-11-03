@@ -1,5 +1,24 @@
 (() => {
 "use strict";
+// ---- ayar ----
+// description: Buz Kule kullanıcı ayarları (parıltı, parçacık, sarsıntı, ses) ve azaltılmış hareket desteği. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// Fizik ve oyun kuralları bu ayarlardan etkilenmez; yalnız görünüm ve ses.
+const AZ = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8 });
+const AYAR = { ...VARSAYILAN, azaltilmisHareket: AZ };
+const ANAHTAR = 'buzkule.ayar';
+
+function ayarYukle() {
+  try {
+    const k = JSON.parse(localStorage.getItem(ANAHTAR) || 'null');
+    if (k) for (const a of Object.keys(VARSAYILAN)) if (typeof k[a] === 'number' && k[a] >= 0 && k[a] <= 2) AYAR[a] = k[a];
+  } catch { /* kayıt yoksa varsayılanlar */ }
+}
+function ayarKaydet() {
+  try { localStorage.setItem(ANAHTAR, JSON.stringify({ parilti: AYAR.parilti, parcacik: AYAR.parcacik, sarsinti: AYAR.sarsinti, ses: AYAR.ses })); } catch { /* sessiz */ }
+}
+function ayarSifirla() { Object.assign(AYAR, VARSAYILAN); ayarKaydet(); }
+
 // ---- fizik ----
 // description: Buz Kule fizik çekirdeği (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 // Sabitler mekanikler.md dosyasındaki gözlemlerden; orijinal kod kopyalanmadı.
@@ -77,15 +96,17 @@ function bitir(p) {
 const toplam = (p, enYuksekKat) => enYuksekKat * 10 + p.bonus;
 
 // ---- ses ----
-// description: WebAudio ile üretilen özgün ses efektleri (dosya yok). sahip: Claude (Buz Kule iş parçacığı)
+// description: WebAudio ile üretilen özgün ses efektleri (dosya yok); ses düzeyi ayar.js'den. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 let ctx = null;
 function bip(f0, f1, sure, tur = 'square', ses = 0.06) {
+  if (AYAR.ses <= 0) return;
   try {
     ctx ??= new AudioContext();
     if (ctx.state === 'suspended') ctx.resume();
-    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime, v = Math.max(0.0002, ses * AYAR.ses / 0.8);
     o.type = tur; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + sure);
-    g.gain.setValueAtTime(ses, t); g.gain.exponentialRampToValueAtTime(0.0001, t + sure);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + sure);
     o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + sure);
   } catch { /* ses yoksa oyun sessiz sürer */ }
 }
@@ -95,6 +116,7 @@ const olumSesi = () => bip(400, 60, 0.6, 'sawtooth', 0.08);
 
 // ---- gorsel ----
 // description: Buz Kule modern görsel katmanı: aurora gökyüzü, kristal siluetler, buzlu cam duvarlar, parıltılı platformlar (prosedürel çizim). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 const TEMALAR = [
   { ust: '#050a1f', alt: '#12356a', serit: ['#38f2c8', '#5aa8ff'], plat: '#7fe9ff', koyu: '#1b6f9a', kristal: '#0b2a55' }, // aurora
   { ust: '#12062b', alt: '#4a1a80', serit: ['#c76bff', '#ff6bd5'], plat: '#e0b3ff', koyu: '#7a3fb8', kristal: '#2a0f52' }, // mor gece
@@ -111,7 +133,7 @@ function yuvarlak(c, x, y, g, h, r) {
 }
 
 function arkaPlan(c, W, H, kamY, kat) {
-  zaman++;
+  if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
   const t = tema(kat), g = c.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, t.ust); g.addColorStop(1, t.alt); c.fillStyle = g; c.fillRect(0, 0, W, H);
   // aurora şeritleri (ekleme karışımı, yavaş dalgalanma)
@@ -119,7 +141,7 @@ function arkaPlan(c, W, H, kamY, kat) {
   t.serit.forEach((renk, k) => {
     const y0 = 120 + k * 130 - (kamY * 0.05) % 260;
     const gr = c.createLinearGradient(0, y0 - 70, 0, y0 + 70); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, renk); gr.addColorStop(1, 'rgba(0,0,0,0)');
-    c.globalAlpha = 0.16; c.fillStyle = gr; c.beginPath(); c.moveTo(0, y0 + 80);
+    c.globalAlpha = 0.16 * Math.min(1.5, AYAR.parilti); c.fillStyle = gr; c.beginPath(); c.moveTo(0, y0 + 80);
     for (let x = 0; x <= W; x += 20) c.lineTo(x, y0 + Math.sin(x * 0.012 + zaman * 0.012 + k * 2) * 34 + Math.sin(x * 0.03 - zaman * 0.02) * 10);
     c.lineTo(W, y0 + 160); c.lineTo(0, y0 + 160); c.closePath(); c.fill();
   });
@@ -162,14 +184,14 @@ function duvarlar(c, W, H, kamY, kat) {
     }
     c.globalAlpha = 1;
     // neon kenar çizgisi
-    c.save(); c.shadowColor = t.plat; c.shadowBlur = 12; c.fillStyle = t.plat; c.globalAlpha = 0.85; c.fillRect(ic - (x0 === 0 ? 2 : 0), 0, 2, H); c.restore();
+    c.save(); c.shadowColor = t.plat; c.shadowBlur = 12 * AYAR.parilti; c.fillStyle = t.plat; c.globalAlpha = 0.85; c.fillRect(ic - (x0 === 0 ? 2 : 0), 0, 2, H); c.restore();
   }
 }
 
 function platform(c, x, y, gen, kat, no, n) {
   const t = tema(kat), r = 7, h = 14, renk = no ? '#ffd24a' : t.plat;
   c.save();
-  c.shadowColor = renk; c.shadowBlur = no ? 18 : 12;
+  c.shadowColor = renk; c.shadowBlur = (no ? 18 : 12) * AYAR.parilti;
   const g = c.createLinearGradient(0, y - 2, 0, y + h); g.addColorStop(0, no ? '#fff1b0' : '#ffffff'); g.addColorStop(0.35, renk); g.addColorStop(1, no ? '#c98a10' : t.koyu);
   c.fillStyle = g; yuvarlak(c, x, y - 2, gen, h, r); c.fill(); c.shadowBlur = 0;
   c.fillStyle = 'rgba(255,255,255,0.55)'; yuvarlak(c, x + 5, y - 1, Math.max(8, gen - 10), 3, 1.5); c.fill(); // üst parlama
@@ -184,7 +206,8 @@ function platform(c, x, y, gen, kat, no, n) {
 // Kozmetik parçacık sistemi (parıltılı, oyun mantığını etkilemez).
 const par = [];
 function parcacikEkle(x, y, adet, renk, hiz = 3) {
-  for (let i = 0; i < adet; i++) par.push({ x, y, vx: (Math.random() - 0.5) * hiz * 2, vy: -Math.random() * hiz, om: 24 + Math.random() * 20, renk, boy: 2 + Math.random() * 3 });
+  const say = Math.floor(adet * AYAR.parcacik) + (Math.random() < adet * AYAR.parcacik % 1 ? 1 : 0); // ayar çarpanı; kesirli kısım olasılıkla
+  for (let i = 0; i < say; i++) par.push({ x, y, vx: (Math.random() - 0.5) * hiz * 2, vy: -Math.random() * hiz, om: 24 + Math.random() * 20, renk, boy: 2 + Math.random() * 3 });
 }
 function parcacikCiz(c, kamY) {
   c.save(); c.globalCompositeOperation = 'lighter';
@@ -199,6 +222,7 @@ const parcacikSifirla = () => { par.length = 0; };
 
 // ---- oyun ----
 // description: Oyun döngüsü, kamera ve çizim (özgün kod, kendi çizimleri). sahip: Claude (Buz Kule iş parçacığı)
+
 
 
 
@@ -259,7 +283,7 @@ function adim(o, giris) {
 function skor(o) { return toplam(o.puan, o.enYuksek); }
 
 function ciz(c, o) {
-  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
+  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 * AYAR.sarsinti : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK)), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
@@ -293,7 +317,7 @@ function karakterCiz(c, o) {
     c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, o.y - o.kamY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
     const ayakY = o.y - o.kamY; // eğilme ayak noktası etrafında olmalı (üst kenar etrafında değil)
     c.save(); c.translate(o.x, ayakY); c.rotate(o.havada ? 0 : Math.max(-0.18, Math.min(0.18, o.vx * 0.012)));
-    c.shadowColor = 'rgba(140,230,255,0.9)'; c.shadowBlur = Math.abs(o.vx) > 8 ? 14 : 6; c.translate(-o.x, -ayakY);
+    c.shadowColor = 'rgba(140,230,255,0.9)'; c.shadowBlur = (Math.abs(o.vx) > 8 ? 14 : 6) * AYAR.parilti; c.translate(-o.x, -ayakY);
     if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y);
     c.restore();
     return;
@@ -306,111 +330,148 @@ function karakterCiz(c, o) {
 }
 
 // ---- hud ----
-// description: Buz Kule arayüzü: HUD, başlık, duraklatma ve bitiş ekranları (prosedürel çizim). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Buz Kule oyun içi HUD (yumuşak açık cam kartlar; tasarım dili arayuz-modernlesme/TASARIM-DILI.css). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
+
+const YAZI = '"Inter", "Segoe UI", system-ui, sans-serif', MONO = 'ui-monospace, "JetBrains Mono", Consolas, monospace', SERIF = '"Instrument Serif", Georgia, serif';
+const YESIL = '#1F3328', SOLUK = '#6B7A6F';
 
 function yuvarlakHud(c, x, y, g, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + g, y, x + g, y + h, r); c.arcTo(x + g, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + g, y, r); c.closePath();
 }
-function panel(c, x, y, g, h) {
-  // buzlu cam: üstten alta saydam gradyan, ince parlak kenar ve üst ışık çizgisi
-  const gr = c.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(1, 'rgba(255,255,255,0.05)');
-  c.save(); c.shadowColor = 'rgba(0,0,0,0.45)'; c.shadowBlur = 14; c.fillStyle = 'rgba(6,14,38,0.55)'; yuvarlakHud(c, x, y, g, h, 14); c.fill(); c.restore();
-  c.fillStyle = gr; yuvarlakHud(c, x, y, g, h, 14); c.fill();
-  c.strokeStyle = 'rgba(190,235,255,0.5)'; c.lineWidth = 1.5; yuvarlakHud(c, x + 0.5, y + 0.5, g - 1, h - 1, 14); c.stroke();
-  c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(x + 14, y + 1, g - 28, 1.5);
+function kartHud(c, x, y, g, h) {
+  c.save(); c.shadowColor = 'rgba(31,51,40,0.22)'; c.shadowBlur = 18; c.shadowOffsetY = 6;
+  c.fillStyle = 'rgba(255,255,255,0.90)'; yuvarlakHud(c, x, y, g, h, 16); c.fill(); c.restore();
+  c.strokeStyle = 'rgba(31,51,40,0.10)'; c.lineWidth = 1; yuvarlakHud(c, x + 0.5, y + 0.5, g - 1, h - 1, 16); c.stroke();
 }
-const YAZI = '"Segoe UI", system-ui, sans-serif';
-function yazi(c, t, x, y, boy, renk, hiza = 'left', agirlik = 800) {
-  c.font = agirlik + ' ' + boy + 'px ' + YAZI; c.textAlign = hiza;
-  c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillText(t, x + 2, y + 2); c.fillStyle = renk; c.fillText(t, x, y); c.textAlign = 'left';
-}
+function metinHud(c, t, x, y, font, renk, hiza = 'left') { c.font = font; c.textAlign = hiza; c.fillStyle = renk; c.fillText(t, x, y); c.textAlign = 'left'; }
+const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 10px ' + MONO, SOLUK, hiza);
 
 function hudCiz(c, o, en) {
-  panel(c, 94, 8, 210, 52);
-  yazi(c, 'SKOR', 106, 28, 12, '#8fd0ff', 'left', 700); yazi(c, String(skor(o)), 106, 52, 26, '#ffffff');
-  yazi(c, 'KAT', 232, 28, 12, '#8fd0ff', 'left', 700); yazi(c, String(o.enYuksek), 232, 52, 26, '#ffd24a');
-  panel(c, 478, 8, 76, 52); yazi(c, 'EN İYİ', 516, 28, 11, '#8fd0ff', 'center', 700); yazi(c, String(Math.max(en, skor(o))), 516, 52, 20, '#fff', 'center');
+  kartHud(c, 94, 10, 214, 56);
+  etiketHud(c, 'Skor', 110, 30); metinHud(c, String(skor(o)), 110, 56, '700 26px ' + YAZI, YESIL);
+  etiketHud(c, 'Kat', 240, 30); metinHud(c, String(o.enYuksek), 240, 56, 'italic 400 30px ' + SERIF, '#7B5CC4');
+  kartHud(c, 470, 10, 84, 56); etiketHud(c, 'En iyi', 512, 30, 'center'); metinHud(c, String(Math.max(en, skor(o))), 512, 56, '700 20px ' + YAZI, YESIL, 'center');
   // sonraki hızlanmaya kalan süre (halka)
-  const oran = (o.kare % SAAT) / SAAT, cx = 590, cy = 34;
-  c.lineWidth = 6; c.strokeStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.arc(cx, cy, 18, 0, 7); c.stroke();
-  c.strokeStyle = o.kaymaBasladi ? '#ff7a5a' : '#6fd3ff'; c.beginPath(); c.arc(cx, cy, 18, -Math.PI / 2, -Math.PI / 2 + oran * Math.PI * 2); c.stroke();
-  yazi(c, o.kaymaBasladi ? (Math.floor(o.kare / SAAT) + 1) + 'x' : '-', cx, cy + 5, 14, '#fff', 'center');
+  const oran = (o.kare % SAAT) / SAAT, cx = 592, cy = 38;
+  kartHud(c, 564, 10, 56, 56);
+  c.lineWidth = 5; c.lineCap = 'round'; c.strokeStyle = 'rgba(31,51,40,0.12)'; c.beginPath(); c.arc(cx, cy, 17, 0, 7); c.stroke();
+  c.strokeStyle = o.kaymaBasladi ? '#E58A5C' : '#7B5CC4'; c.beginPath(); c.arc(cx, cy, 17, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, oran) * Math.PI * 2); c.stroke(); c.lineCap = 'butt';
+  metinHud(c, o.kaymaBasladi ? (Math.floor(o.kare / SAAT) + 1) + 'x' : '–', cx, cy + 5, '700 13px ' + MONO, YESIL, 'center');
   // kombo ölçeri
   if (o.puan.kombo) {
-    const k = o.puan.kombo; panel(c, 10, 70, 30, 240);
-    const h = 196 * (k.sayac / 100), g = c.createLinearGradient(0, 270, 0, 74); g.addColorStop(0, '#ffd24a'); g.addColorStop(1, '#ff5a3c');
-    c.fillStyle = g; yuvarlakHud(c, 16, 270 - h, 18, Math.max(h, 2), 5); c.fill();
-    yazi(c, 'x' + k.zip, 25, 88, 14, '#fff', 'center'); yazi(c, '+' + k.toplam, 25, 300, 13, '#ffd24a', 'center');
+    const k = o.puan.kombo; kartHud(c, 10, 76, 34, 236);
+    const h = 188 * (k.sayac / 100), g = c.createLinearGradient(0, 272, 0, 84); g.addColorStop(0, '#F3D5BF'); g.addColorStop(1, '#E58A5C');
+    c.fillStyle = 'rgba(31,51,40,0.08)'; yuvarlakHud(c, 18, 84, 18, 188, 6); c.fill();
+    c.fillStyle = g; yuvarlakHud(c, 18, 272 - h, 18, Math.max(h, 2), 6); c.fill();
+    metinHud(c, 'x' + k.zip, 27, 302, '700 13px ' + MONO, YESIL, 'center');
   }
-  if (o.mesaj && o.mesaj.guc > 0) {
-    c.globalAlpha = Math.min(1, o.mesaj.guc / 20);
-    yazi(c, o.mesaj.ad + '!', W / 2, 130 - (60 - o.mesaj.guc) * 0.4, 40, '#ffd24a', 'center', 900); c.globalAlpha = 1;
+  if (o.mesaj && o.mesaj.guc > 0) { // ödül adı: cam hap
+    const a = Math.min(1, o.mesaj.guc / 20), y = 140 - (60 - o.mesaj.guc) * 0.4, ad = o.mesaj.ad + '!';
+    c.globalAlpha = a; c.font = 'italic 400 40px ' + SERIF; const g = c.measureText(ad).width + 44;
+    kartHud(c, W / 2 - g / 2, y - 40, g, 56); metinHud(c, ad, W / 2, y, 'italic 400 40px ' + SERIF, YESIL, 'center'); c.globalAlpha = 1;
   }
-}
-
-function perde(c) { c.fillStyle = 'rgba(4,10,30,0.72)'; c.fillRect(0, 0, W, H); }
-
-function baslikCiz(c, en, t) {
-  perde(c);
-  const g = c.createLinearGradient(0, 90, 0, 170); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#7fd0ff');
-  c.font = '900 76px ' + YAZI; c.textAlign = 'center';
-  c.save(); c.shadowColor = 'rgba(100,210,255,0.9)'; c.shadowBlur = 28 + 10 * Math.sin(t * 0.06); c.fillStyle = g; c.fillText('BUZ KULE', W / 2, 160 + Math.sin(t * 0.05) * 3); c.restore();
-  c.textAlign = 'left';
-  yazi(c, 'Kuleye tırman, kombo yap, düşme!', W / 2, 200, 18, '#bfe6ff', 'center', 600);
-  panel(c, 170, 235, 300, 120);
-  yazi(c, '← →   koş', 320, 268, 18, '#fff', 'center', 600);
-  yazi(c, 'SPACE   zıpla (hız = yükseklik)', 320, 296, 18, '#fff', 'center', 600);
-  yazi(c, 'P duraklat   R yeniden', 320, 324, 16, '#9fc7ea', 'center', 600);
-  yazi(c, 'EN İYİ SKOR ' + en, 320, 348, 15, '#ffd24a', 'center');
-  if (Math.floor(t / 30) % 2 === 0) yazi(c, 'Başlamak için SPACE', W / 2, 410, 26, '#ffd24a', 'center', 900);
-}
-
-function duraklatCiz(c) {
-  perde(c); yazi(c, 'DURAKLATILDI', W / 2, 230, 44, '#fff', 'center', 900);
-  yazi(c, 'P ile devam   R ile yeniden', W / 2, 272, 18, '#bfe6ff', 'center', 600);
-}
-
-function bitisCiz(c, o, en, yeniRekor) {
-  perde(c); panel(c, 150, 120, 340, 250);
-  yazi(c, 'KULE SENİ YENDİ', W / 2, 165, 30, '#ff8a6a', 'center', 900);
-  yazi(c, 'SKOR', W / 2, 205, 13, '#8fd0ff', 'center', 700); yazi(c, String(skor(o)), W / 2, 245, 44, '#fff', 'center', 900);
-  yazi(c, 'KAT ' + o.enYuksek + '   •   EN İYİ ' + en, W / 2, 280, 18, '#ffd24a', 'center', 700);
-  if (yeniRekor) yazi(c, '★ YENİ REKOR ★', W / 2, 315, 20, '#7dffb0', 'center', 900);
-  yazi(c, 'SPACE ile tekrar dene', W / 2, 352, 18, '#bfe6ff', 'center', 700);
 }
 
 // ---- arayuz ----
-// description: Tarayıcı girişi, durum makinesi (başlık/oyun/duraklat/bitiş) ve oyun döngüsü. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Tarayıcı girişi, durum makinesi (menü/oyun/duraklat/bitiş), HTML katmanları (sekmeler, canlı ayar paneli) ve oyun döngüsü. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 
 
-const c = document.getElementById('c').getContext('2d'); const k = {};
-let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, t = 0;
+
+const kimlik = (a) => document.getElementById(a);
+const c = kimlik('c').getContext('2d'); const k = {};
+let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
+ayarYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
-const basla = () => { o = yeniOyun(); durum = 'oyun'; yeniRekor = false; };
+
+kimlik('m-en').textContent = String(en);
+// ---- HTML katmanları ----
+const katmanlar = { menu: kimlik('menu'), duraklat: kimlik('duraklat'), sonuc: kimlik('sonuc') };
+function katmanGoster(ad) {
+  for (const [a, el] of Object.entries(katmanlar)) { const ac = a === ad; el.classList.toggle('acik', ac); el.setAttribute('aria-hidden', String(!ac)); }
+}
+const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
+function durumDegistir(d) {
+  durum = d; katmanGoster(durumKatman[d]);
+  if (d === 'baslik') { kimlik('m-en').textContent = String(en); }
+  if (d === 'bitti') {
+    kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
+    kimlik('s-rekor').hidden = !yeniRekor;
+  }
+}
+function basla() {
+  o = yeniOyun(); yeniRekor = false; durumDegistir('oyun');
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space odaktaki düğmeyi tekrar tıklamasın
+}
+function oyunBitti() {
+  const s = skor(o);
+  if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
+  durumDegistir('bitti');
+}
+
+// ---- Sekmeler (gösterge: ön kenar önce, arka kenar gecikmeli) ----
+const sekmeAdlari = ['oyna', 'ayar', 'nasil'];
+const gosterge = kimlik('gosterge');
+function gostergeKonumla(hedef, yonSag) {
+  const sol = hedef.offsetLeft, sag = hedef.offsetParent ? hedef.offsetParent.clientWidth - hedef.offsetLeft - hedef.offsetWidth : 0;
+  gosterge.style.transition = AYAR.azaltilmisHareket ? 'none'
+    : yonSag ? 'left 300ms cubic-bezier(.2,.9,.25,1.05) 70ms, right 220ms cubic-bezier(.2,.9,.25,1.05)'
+             : 'left 220ms cubic-bezier(.2,.9,.25,1.05), right 300ms cubic-bezier(.2,.9,.25,1.05) 70ms';
+  gosterge.style.left = sol + 'px'; gosterge.style.right = sag + 'px'; gosterge.style.width = 'auto';
+}
+function sekmeSec(ad, odakla) {
+  const eskiIdx = sekmeAdlari.indexOf(sekme), yeniIdx = sekmeAdlari.indexOf(ad); sekme = ad;
+  for (const a of sekmeAdlari) {
+    const dugme = kimlik('t-' + a), sec = a === ad;
+    dugme.setAttribute('aria-selected', String(sec)); dugme.tabIndex = sec ? 0 : -1; kimlik('p-' + a).hidden = !sec;
+    if (sec) { gostergeKonumla(dugme, yeniIdx >= eskiIdx); if (odakla) dugme.focus(); }
+  }
+}
+for (const a of sekmeAdlari) kimlik('t-' + a).addEventListener('click', () => sekmeSec(a, false));
+kimlik('basla').addEventListener('click', basla);
+kimlik('tekrar').addEventListener('click', basla);
+gostergeKonumla(kimlik('t-oyna'), true);
+
+// ---- Canlı ayar paneli ----
+const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'ses'];
+function ayarYaz() {
+  for (const a of ayarAnahtarlari) { kimlik('a-' + a).value = String(AYAR[a]); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; }
+}
+for (const a of ayarAnahtarlari) {
+  kimlik('a-' + a).addEventListener('input', (e) => { AYAR[a] = Number(e.target.value); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; ayarKaydet(); });
+}
+kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); });
+ayarYaz();
+kimlik('a-not').textContent = AYAR.azaltilmisHareket ? 'Sistem "hareketi azalt" ayarın açık: sarsıntı kapalı, parçacık azaltıldı, animasyonlar donuk.' : 'Ayarlar canlı uygulanır ve kaydedilir; oyun kuralları değişmez.';
+
+// ---- Klavye ----
 addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+  const hedef = e.target && e.target.tagName;
+  if (e.code === 'Space' && hedef !== 'BUTTON' && hedef !== 'INPUT') e.preventDefault();
+  if (e.code.startsWith('Arrow') && hedef !== 'INPUT') e.preventDefault();
   if (e.repeat) return;
   k[e.code] = 1;
-  if (e.code === 'Space' && (durum === 'baslik' || durum === 'bitti')) basla();
-  if (e.code === 'KeyR') basla();
-  if (e.code === 'KeyP') durum = durum === 'oyun' ? 'duraklat' : durum === 'duraklat' ? 'oyun' : durum;
+  if (durum === 'baslik' && hedef !== 'INPUT' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { // menüde oklar sekme değiştirir
+    const i = sekmeAdlari.indexOf(sekme) + (e.code === 'ArrowRight' ? 1 : -1); sekmeSec(sekmeAdlari[(i + 3) % 3], true); return;
+  }
+  if (e.code === 'Space' && hedef !== 'BUTTON' && hedef !== 'INPUT' && (durum === 'bitti' || (durum === 'baslik' && sekme === 'oyna'))) basla();
+  if (e.code === 'KeyR' && hedef !== 'INPUT') basla();
+  if (e.code === 'KeyP' && hedef !== 'INPUT') { if (durum === 'oyun') durumDegistir('duraklat'); else if (durum === 'duraklat') durumDegistir('oyun'); }
+  if (e.code === 'Escape' && durum === 'duraklat') durumDegistir('baslik');
 });
 addEventListener('keyup', e => { k[e.code] = 0; });
-function oyunBitti() {
-  durum = 'bitti'; const s = skor(o);
-  if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
-}
+
+// ---- Döngü ----
 let onceki = 0, acc = 0; const DT = 20;
 function dongu(ms) {
-  acc += Math.min(100, ms - onceki); onceki = ms; t++;
+  acc += Math.min(100, ms - onceki); onceki = ms;
   while (acc >= DT) {
     if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft, sag: k.ArrowRight, zipla: k.Space }); if (o.bitti) oyunBitti(); }
     acc -= DT;
   }
   ciz(c, o);
   if (durum !== 'baslik') hudCiz(c, o, en);
-  if (durum === 'baslik') baslikCiz(c, en, t); else if (durum === 'duraklat') duraklatCiz(c); else if (durum === 'bitti') bitisCiz(c, o, en, yeniRekor);
   requestAnimationFrame(dongu);
 }
 requestAnimationFrame(ms => { onceki = ms; dongu(ms); });

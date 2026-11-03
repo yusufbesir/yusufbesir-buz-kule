@@ -3,6 +3,7 @@ import { SABIT, yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizi
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
 import { yeniPuan, inis, kare, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi } from './ses.js';
+import { AYAR } from './ayar.js';
 import { arkaPlan, duvarlar, platform, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
@@ -60,7 +61,7 @@ export function adim(o, giris) {
 export function skor(o) { return toplam(o.puan, o.enYuksek); }
 
 export function ciz(c, o) {
-  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
+  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 * AYAR.sarsinti : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK)), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
@@ -94,7 +95,7 @@ function karakterCiz(c, o) {
     c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, o.y - o.kamY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
     const ayakY = o.y - o.kamY; // eğilme ayak noktası etrafında olmalı (üst kenar etrafında değil)
     c.save(); c.translate(o.x, ayakY); c.rotate(o.havada ? 0 : Math.max(-0.18, Math.min(0.18, o.vx * 0.012)));
-    c.shadowColor = 'rgba(140,230,255,0.9)'; c.shadowBlur = Math.abs(o.vx) > 8 ? 14 : 6; c.translate(-o.x, -ayakY);
+    c.shadowColor = 'rgba(140,230,255,0.9)'; c.shadowBlur = (Math.abs(o.vx) > 8 ? 14 : 6) * AYAR.parilti; c.translate(-o.x, -ayakY);
     if (ters) { c.translate(x + g, 0); c.scale(-1, 1); c.drawImage(r, 0, yy, g, y); } else c.drawImage(r, x, yy, g, y);
     c.restore();
     return;

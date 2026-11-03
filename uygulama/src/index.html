@@ -1,6 +1,111 @@
-<!doctype html><html lang="tr"><meta charset="utf-8"><title>Buz Kule</title><link rel="icon" href="data:,">
+<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buz Kule</title><link rel="icon" href="data:,">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; media-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<!-- description: Buz Kule, özgün dikey zıplama oyunu; sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
-<body style="margin:0;background:#000;display:grid;place-items:center;height:100vh">
-<canvas id="c" width="640" height="480" style="max-width:100%;image-rendering:pixelated"></canvas>
+<!-- description: Buz Kule, özgün dikey zıplama oyunu; arayüz katmanı (yumuşak açık cam kartlar, sekme göstergesi, canlı ayar paneli). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
+<style>
+/* Tasarım dili: arayuz-modernlesme/TASARIM-DILI.css (jetonlar, cam kart, sekme göstergesi, giriş animasyonu, azaltılmış hareket) */
+:root{
+  --zemin:#EEF1EA; --kart:rgba(255,255,255,.92); --yazi:#1F3328; --yazi-soluk:#6B7A6F;
+  --vurgu:#1F3328; --lavanta:#D9CCF0; --adacayi:#CFE3C6; --seftali:#F3D5BF; --gokmavisi:#CFE0EC;
+  --kose:18px; --golge:0 10px 30px rgba(31,51,40,.10);
+  --sure:240ms; --yay:cubic-bezier(.2,.9,.25,1.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:
+  radial-gradient(900px 500px at 15% 10%,var(--lavanta),transparent 60%),
+  radial-gradient(900px 500px at 85% 90%,var(--adacayi),transparent 60%),var(--zemin);
+  color:var(--yazi);font:16px/1.5 "Inter","Segoe UI",system-ui,sans-serif}
+body{display:grid;place-items:center;overflow:hidden}
+h1,h2{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;letter-spacing:-.01em;margin:0}
+.etiket{font:11px/1 ui-monospace,"JetBrains Mono",Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--yazi-soluk)}
+#sahne{position:relative;width:min(100vw,calc(100vh*4/3),960px);aspect-ratio:4/3;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(31,51,40,.28)}
+#c{display:block;width:100%;height:100%}
+.katman{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(10,18,40,.46);opacity:0;visibility:hidden;
+  transition:opacity var(--sure) var(--yay),visibility 0s linear var(--sure)}
+.katman.acik{opacity:1;visibility:visible;transition:opacity var(--sure) var(--yay),visibility 0s}
+.kart{background:var(--kart);border-radius:var(--kose);box-shadow:var(--golge);padding:20px 22px;width:min(100%,400px);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transform:translateY(12px) scale(.98);
+  transition:transform var(--sure) var(--yay),box-shadow var(--sure) var(--yay)}
+.katman.acik .kart{transform:none}
+.kart:hover{box-shadow:0 18px 40px rgba(31,51,40,.18)}
+.kart h1{font-size:clamp(34px,7vw,52px);line-height:1}
+.kart h2{font-size:34px;line-height:1.1}
+.alt{margin:6px 0 14px}
+/* Sekme göstergesi: ön kenar önce, arka kenar gecikmeli (esneyip oturur) */
+.sekmeler{position:relative;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(31,51,40,.07);margin:0 0 14px}
+.sekme-gosterge{position:absolute;top:4px;bottom:4px;border-radius:999px;background:var(--vurgu);left:4px;width:80px}
+.sekme{position:relative;z-index:1;flex:1;padding:8px 10px;border:0;background:none;color:var(--yazi);cursor:pointer;border-radius:999px;font-family:inherit;font-weight:600;font-size:14px;line-height:1.2}
+.sekme[aria-selected=true]{color:var(--zemin)}
+.sekme:focus-visible,.dugme:focus-visible,input[type=range]:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
+.panel[hidden]{display:none}
+/* Kart giriş: kap önce, metin sonra */
+.giris{opacity:0;transform:translateY(12px);animation:gir var(--sure) var(--yay) forwards}
+.giris .metin{opacity:0;animation:gir var(--sure) var(--yay) 120ms forwards}
+@keyframes gir{to{opacity:1;transform:none}}
+.dugme{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 18px;border:0;border-radius:999px;background:var(--vurgu);color:var(--zemin);
+  font-family:inherit;font-weight:700;font-size:16px;line-height:1;cursor:pointer;transition:transform var(--sure) var(--yay),box-shadow var(--sure) var(--yay)}
+.dugme:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(31,51,40,.25)}
+.dugme.ikincil{background:rgba(31,51,40,.08);color:var(--yazi);margin-top:10px}
+.satir{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin:0 0 12px}
+.satir output{font:600 12px ui-monospace,Consolas,monospace;color:var(--yazi-soluk)}
+.satir input{grid-column:1/-1}
+input[type=range]{accent-color:var(--vurgu);width:100%}
+.skor{font-family:inherit;font-weight:700;font-size:44px;line-height:1;margin:2px 0}
+.ince{color:var(--yazi-soluk);font-size:14px;margin:6px 0 0}
+.rekor{color:#7B5CC4;font-weight:700}
+kbd{font:600 12px ui-monospace,Consolas,monospace;background:rgba(31,51,40,.08);border-radius:6px;padding:2px 6px}
+ul{margin:0;padding-left:18px}li{margin:4px 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.giris,.giris .metin{opacity:1;transform:none}.kart{transform:none}}
+</style>
+<body>
+<div id="sahne">
+  <canvas id="c" width="640" height="480"></canvas>
+
+  <div id="menu" class="katman acik" aria-hidden="false">
+    <div class="kart giris" role="dialog" aria-labelledby="m-baslik">
+      <div class="metin"><span class="etiket">dikey zıplama</span>
+        <h1 id="m-baslik">Buz Kule</h1>
+        <p class="alt ince">Kuleye tırman, kombo yap, düşme.</p></div>
+      <div class="sekmeler" role="tablist" aria-label="Menü">
+        <span class="sekme-gosterge" id="gosterge" aria-hidden="true"></span>
+        <button class="sekme" role="tab" id="t-oyna" aria-selected="true" aria-controls="p-oyna" data-sekme="oyna">Oyna</button>
+        <button class="sekme" role="tab" id="t-ayar" aria-selected="false" aria-controls="p-ayar" data-sekme="ayar" tabindex="-1">Ayarlar</button>
+        <button class="sekme" role="tab" id="t-nasil" aria-selected="false" aria-controls="p-nasil" data-sekme="nasil" tabindex="-1">Nasıl</button>
+      </div>
+      <section class="panel" id="p-oyna" role="tabpanel" aria-labelledby="t-oyna">
+        <p class="etiket" style="margin:0 0 4px">en iyi skor</p><p class="skor" id="m-en">0</p>
+        <button class="dugme" id="basla" type="button" style="margin-top:12px">Başla <kbd>Space</kbd></button>
+      </section>
+      <section class="panel" id="p-ayar" role="tabpanel" aria-labelledby="t-ayar" hidden>
+        <div class="satir"><label class="etiket" for="a-parilti">Parıltı</label><output id="o-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-parcacik">Parçacık</label><output id="o-parcacik"></output><input id="a-parcacik" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-sarsinti">Ekran sarsıntısı</label><output id="o-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-ses">Ses</label><output id="o-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
+        <button class="dugme ikincil" id="a-sifirla" type="button">Varsayılana dön</button>
+        <p class="ince" id="a-not"></p>
+      </section>
+      <section class="panel" id="p-nasil" role="tabpanel" aria-labelledby="t-nasil" hidden>
+        <ul class="ince" style="margin-top:0">
+          <li><kbd>←</kbd> <kbd>→</kbd> koş; ne kadar hızlıysan o kadar yükseğe zıplarsın.</li>
+          <li><kbd>Space</kbd> zıpla. Duvardan dönünce hızın çoğu korunur.</li>
+          <li>Üst üste en az 2 kat zıplayarak kombo yap; sayaç dolmadan yeni kombo zıplaması gerekir.</li>
+          <li><kbd>P</kbd> duraklat, <kbd>R</kbd> yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <div id="duraklat" class="katman" aria-hidden="true">
+    <div class="kart" role="dialog" aria-labelledby="d-baslik"><span class="etiket">duraklatıldı</span><h2 id="d-baslik">Bir nefes al</h2>
+      <p class="ince">Devam etmek için <kbd>P</kbd>, yeniden başlamak için <kbd>R</kbd>.</p></div>
+  </div>
+
+  <div id="sonuc" class="katman" aria-hidden="true">
+    <div class="kart" role="dialog" aria-labelledby="s-baslik"><span class="etiket">kule seni yendi</span><h2 id="s-baslik">Güzel tırmanış</h2>
+      <p class="skor" id="s-skor">0</p>
+      <p class="ince"><span id="s-kat">0</span> kat &nbsp;•&nbsp; en iyi <span id="s-en">0</span></p>
+      <p class="ince rekor" id="s-rekor" hidden>★ Yeni rekor</p>
+      <button class="dugme" id="tekrar" type="button" style="margin-top:14px">Tekrar dene <kbd>Space</kbd></button>
+    </div>
+  </div>
+</div>
 <script src="./buz-kule.js"></script></body></html>

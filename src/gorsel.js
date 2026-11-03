@@ -1,4 +1,5 @@
 // description: Buz Kule modern görsel katmanı: aurora gökyüzü, kristal siluetler, buzlu cam duvarlar, parıltılı platformlar (prosedürel çizim). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+import { AYAR } from './ayar.js';
 export const TEMALAR = [
   { ust: '#050a1f', alt: '#12356a', serit: ['#38f2c8', '#5aa8ff'], plat: '#7fe9ff', koyu: '#1b6f9a', kristal: '#0b2a55' }, // aurora
   { ust: '#12062b', alt: '#4a1a80', serit: ['#c76bff', '#ff6bd5'], plat: '#e0b3ff', koyu: '#7a3fb8', kristal: '#2a0f52' }, // mor gece
@@ -15,7 +16,7 @@ function yuvarlak(c, x, y, g, h, r) {
 }
 
 export function arkaPlan(c, W, H, kamY, kat) {
-  zaman++;
+  if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
   const t = tema(kat), g = c.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, t.ust); g.addColorStop(1, t.alt); c.fillStyle = g; c.fillRect(0, 0, W, H);
   // aurora şeritleri (ekleme karışımı, yavaş dalgalanma)
@@ -23,7 +24,7 @@ export function arkaPlan(c, W, H, kamY, kat) {
   t.serit.forEach((renk, k) => {
     const y0 = 120 + k * 130 - (kamY * 0.05) % 260;
     const gr = c.createLinearGradient(0, y0 - 70, 0, y0 + 70); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, renk); gr.addColorStop(1, 'rgba(0,0,0,0)');
-    c.globalAlpha = 0.16; c.fillStyle = gr; c.beginPath(); c.moveTo(0, y0 + 80);
+    c.globalAlpha = 0.16 * Math.min(1.5, AYAR.parilti); c.fillStyle = gr; c.beginPath(); c.moveTo(0, y0 + 80);
     for (let x = 0; x <= W; x += 20) c.lineTo(x, y0 + Math.sin(x * 0.012 + zaman * 0.012 + k * 2) * 34 + Math.sin(x * 0.03 - zaman * 0.02) * 10);
     c.lineTo(W, y0 + 160); c.lineTo(0, y0 + 160); c.closePath(); c.fill();
   });
@@ -66,14 +67,14 @@ export function duvarlar(c, W, H, kamY, kat) {
     }
     c.globalAlpha = 1;
     // neon kenar çizgisi
-    c.save(); c.shadowColor = t.plat; c.shadowBlur = 12; c.fillStyle = t.plat; c.globalAlpha = 0.85; c.fillRect(ic - (x0 === 0 ? 2 : 0), 0, 2, H); c.restore();
+    c.save(); c.shadowColor = t.plat; c.shadowBlur = 12 * AYAR.parilti; c.fillStyle = t.plat; c.globalAlpha = 0.85; c.fillRect(ic - (x0 === 0 ? 2 : 0), 0, 2, H); c.restore();
   }
 }
 
 export function platform(c, x, y, gen, kat, no, n) {
   const t = tema(kat), r = 7, h = 14, renk = no ? '#ffd24a' : t.plat;
   c.save();
-  c.shadowColor = renk; c.shadowBlur = no ? 18 : 12;
+  c.shadowColor = renk; c.shadowBlur = (no ? 18 : 12) * AYAR.parilti;
   const g = c.createLinearGradient(0, y - 2, 0, y + h); g.addColorStop(0, no ? '#fff1b0' : '#ffffff'); g.addColorStop(0.35, renk); g.addColorStop(1, no ? '#c98a10' : t.koyu);
   c.fillStyle = g; yuvarlak(c, x, y - 2, gen, h, r); c.fill(); c.shadowBlur = 0;
   c.fillStyle = 'rgba(255,255,255,0.55)'; yuvarlak(c, x + 5, y - 1, Math.max(8, gen - 10), 3, 1.5); c.fill(); // üst parlama
@@ -88,7 +89,8 @@ export function platform(c, x, y, gen, kat, no, n) {
 // Kozmetik parçacık sistemi (parıltılı, oyun mantığını etkilemez).
 const par = [];
 export function parcacikEkle(x, y, adet, renk, hiz = 3) {
-  for (let i = 0; i < adet; i++) par.push({ x, y, vx: (Math.random() - 0.5) * hiz * 2, vy: -Math.random() * hiz, om: 24 + Math.random() * 20, renk, boy: 2 + Math.random() * 3 });
+  const say = Math.floor(adet * AYAR.parcacik) + (Math.random() < adet * AYAR.parcacik % 1 ? 1 : 0); // ayar çarpanı; kesirli kısım olasılıkla
+  for (let i = 0; i < say; i++) par.push({ x, y, vx: (Math.random() - 0.5) * hiz * 2, vy: -Math.random() * hiz, om: 24 + Math.random() * 20, renk, boy: 2 + Math.random() * 3 });
 }
 export function parcacikCiz(c, kamY) {
   c.save(); c.globalCompositeOperation = 'lighter';
