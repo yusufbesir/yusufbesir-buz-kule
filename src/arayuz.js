@@ -2,6 +2,7 @@
 import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
+import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
 const kimlik = (a) => document.getElementById(a);
 const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
@@ -15,7 +16,7 @@ function boyutla() {
 }
 boyutla(); addEventListener('resize', boyutla);
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna';
-ayarYukle();
+ayarYukle(); cuzdanYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
 
 kimlik('m-en').textContent = String(en);
@@ -27,10 +28,10 @@ function katmanGoster(ad) {
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
   durum = d; katmanGoster(durumKatman[d]);
-  if (d === 'baslik') { kimlik('m-en').textContent = String(en); }
+  if (d === 'baslik') { kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
-    kimlik('s-rekor').hidden = !yeniRekor;
+    kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size);
   }
 }
 function basla() {
@@ -40,11 +41,12 @@ function basla() {
 function oyunBitti() {
   const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
+  kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
 
 // ---- Sekmeler (gösterge: ön kenar önce, arka kenar gecikmeli) ----
-const sekmeAdlari = ['oyna', 'ayar', 'nasil'];
+const sekmeAdlari = ['oyna', 'magaza', 'ayar', 'nasil'];
 const gosterge = kimlik('gosterge');
 function gostergeKonumla(hedef, yonSag) {
   const sol = hedef.offsetLeft, sag = hedef.offsetParent ? hedef.offsetParent.clientWidth - hedef.offsetLeft - hedef.offsetWidth : 0;
@@ -65,6 +67,26 @@ for (const a of sekmeAdlari) kimlik('t-' + a).addEventListener('click', () => se
 kimlik('basla').addEventListener('click', basla);
 kimlik('tekrar').addEventListener('click', basla);
 gostergeKonumla(kimlik('t-oyna'), true);
+
+// ---- Mağaza: iz renkleri (kristalle açılır, yalnız görünüm) ----
+const izDugmeleri = [];
+function magazaYaz() {
+  kimlik('g-kristal').textContent = String(CUZDAN.kristal); kimlik('m-kristal').textContent = String(CUZDAN.kristal);
+  izDugmeleri.forEach(({ b, ek }, i) => {
+    const acik = CUZDAN.acik.includes(i), secili = CUZDAN.secili === i;
+    b.className = 'iz' + (secili ? ' secili' : ''); b.setAttribute('aria-pressed', String(secili));
+    ek.textContent = secili ? 'Seçili' : acik ? 'Seç' : IZLER[i].fiyat + ' ◆';
+    b.disabled = !acik && CUZDAN.kristal < IZLER[i].fiyat;
+  });
+}
+IZLER.forEach((iz, i) => {
+  const b = document.createElement('button'), ad = document.createElement('span'), ek = document.createElement('span');
+  b.type = 'button'; ad.textContent = iz.ad; ad.className = 'iz-ad'; ek.className = 'iz-ek';
+  b.appendChild(ad); b.appendChild(ek);
+  b.addEventListener('click', () => { if (!CUZDAN.acik.includes(i)) izAl(i); izSec(i); magazaYaz(); });
+  kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek });
+});
+magazaYaz();
 
 // ---- Canlı ayar paneli ----
 const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'ses'];
@@ -97,7 +119,7 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   k[e.code] = 1;
   if (durum === 'baslik' && hedef !== 'INPUT' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { // menüde oklar sekme değiştirir
-    const i = sekmeAdlari.indexOf(sekme) + (e.code === 'ArrowRight' ? 1 : -1); sekmeSec(sekmeAdlari[(i + 3) % 3], true); return;
+    const i = sekmeAdlari.indexOf(sekme) + (e.code === 'ArrowRight' ? 1 : -1); sekmeSec(sekmeAdlari[(i + sekmeAdlari.length) % sekmeAdlari.length], true); return;
   }
   if (e.code === 'Space' && hedef !== 'BUTTON' && hedef !== 'INPUT' && (durum === 'bitti' || (durum === 'baslik' && sekme === 'oyna'))) basla();
   if (e.code === 'KeyR' && hedef !== 'INPUT') basla();

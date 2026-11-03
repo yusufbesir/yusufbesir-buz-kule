@@ -40,6 +40,12 @@ export function hudCiz(c, o, en) {
   kartHud(c, 94, 72, 92, 28); c.fillStyle = '#7B5CC4'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 93); c.lineTo(104, 86); c.closePath(); c.fill();
   c.fillStyle = '#C9B8F0'; c.beginPath(); c.moveTo(110, 79); c.lineTo(116, 86); c.lineTo(110, 87); c.closePath(); c.fill();
   metinHud(c, '× ' + o.alinan.size, 124, 91, '700 13px ' + MONO, YESIL);
+  [['saat', o.saat, 480, 'Saat', '#C98A10'], ['miknatis', o.miknatis, 500, 'Mıknatıs', '#D04040']].filter(g => g[1] > 0).forEach((g, i) => { // etkin güç öğeleri
+    const x = 194 + i * 112; kartHud(c, x, 72, 104, 28);
+    c.fillStyle = 'rgba(31,51,40,0.10)'; yuvarlakHud(c, x + 10, 91, 84, 5, 2.5); c.fill();
+    c.fillStyle = g[4]; yuvarlakHud(c, x + 10, 91, Math.max(3, 84 * g[1] / g[2]), 5, 2.5); c.fill();
+    metinHud(c, g[3], x + 10, 86, '700 11px ' + MONO, YESIL);
+  });
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı (alarm saati)
     const a = Math.min(1, o.hizlan / 20), ad = 'HIZLANIYOR  ' + (Math.floor(o.kare / SAAT) + 1) + 'x'; c.globalAlpha = a; c.font = '700 15px ' + MONO;
     const g = c.measureText(ad).width + 40; kartHud(c, W / 2 - g / 2 + 40, 76, g, 34); metinHud(c, ad, W / 2 + 60, 99, '700 15px ' + MONO, '#C2522B', 'center'); c.globalAlpha = 1;

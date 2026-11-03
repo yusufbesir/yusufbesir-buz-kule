@@ -17,3 +17,4 @@ export const odulSesi = (toplamKat) => { bip(500, 1000, 0.25, 'triangle', 0.09);
 export const olumSesi = () => bip(400, 60, 0.6, 'sawtooth', 0.08);
 export const kristalSesi = () => { bip(900, 1500, 0.12, 'sine', 0.08); setTimeout(() => bip(1300, 2000, 0.14, 'sine', 0.06), 70); };
 export const hizSesi = () => { for (let i = 0; i < 4; i++) setTimeout(() => bip(1500, 1500, 0.07, 'square', 0.05), i * 130); }; // alarm saati
+export const gucSesi = () => { bip(500, 900, 0.1, 'triangle', 0.08); setTimeout(() => bip(900, 1400, 0.16, 'triangle', 0.08), 90); };

@@ -59,6 +59,13 @@ kbd{font:600 12px ui-monospace,Consolas,monospace;background:rgba(31,51,40,.08);
 .karakter:hover{transform:translateY(-3px)}
 .karakter.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
 .karakter:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
+.izler{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
+.iz{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:2px solid transparent;border-radius:14px;background:rgba(31,51,40,.06);cursor:pointer;font-family:inherit;color:var(--yazi);font-size:14px;transition:transform var(--sure) var(--yay),border-color var(--sure) var(--yay)}
+.iz:hover:not(:disabled){transform:translateY(-2px)}
+.iz:disabled{opacity:.45;cursor:not-allowed}
+.iz.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
+.iz-ad{font-weight:600}.iz-ek{font:600 12px ui-monospace,Consolas,monospace;color:var(--yazi-soluk)}
+.iz:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
 ul{margin:0;padding-left:18px}li{margin:4px 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.giris,.giris .metin{opacity:1;transform:none}.kart{transform:none}}
 </style>
@@ -74,12 +81,20 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <div class="sekmeler" role="tablist" aria-label="Menü">
         <span class="sekme-gosterge" id="gosterge" aria-hidden="true"></span>
         <button class="sekme" role="tab" id="t-oyna" aria-selected="true" aria-controls="p-oyna" data-sekme="oyna">Oyna</button>
+        <button class="sekme" role="tab" id="t-magaza" aria-selected="false" aria-controls="p-magaza" data-sekme="magaza" tabindex="-1">Mağaza</button>
         <button class="sekme" role="tab" id="t-ayar" aria-selected="false" aria-controls="p-ayar" data-sekme="ayar" tabindex="-1">Ayarlar</button>
         <button class="sekme" role="tab" id="t-nasil" aria-selected="false" aria-controls="p-nasil" data-sekme="nasil" tabindex="-1">Nasıl</button>
       </div>
       <section class="panel" id="p-oyna" role="tabpanel" aria-labelledby="t-oyna">
         <p class="etiket" style="margin:0 0 4px">en iyi skor</p><p class="skor" id="m-en">0</p>
+        <p class="ince" style="margin:2px 0 0">Kristal cüzdanı: <b id="m-kristal">0</b> ◆</p>
         <button class="dugme" id="basla" type="button" style="margin-top:12px">Başla <kbd>Space</kbd></button>
+      </section>
+      <section class="panel" id="p-magaza" role="tabpanel" aria-labelledby="t-magaza" hidden>
+        <p class="etiket" style="margin:0 0 4px">kristal cüzdanı</p><p class="skor"><span id="g-kristal">0</span> <span style="font-size:22px">◆</span></p>
+        <p class="etiket" style="margin:10px 0 6px">iz rengi</p>
+        <div class="izler" id="izler" role="group" aria-label="İz rengi seçimi"></div>
+        <p class="ince">Oyunda topladığın kristaller buraya eklenir. İz rengi yalnız görünümü değiştirir.</p>
       </section>
       <section class="panel" id="p-ayar" role="tabpanel" aria-labelledby="t-ayar" hidden>
         <div class="satir"><label class="etiket" for="a-parilti">Parıltı</label><output id="o-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
@@ -95,7 +110,8 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
           <li><kbd>←</kbd> <kbd>→</kbd> koş; ne kadar hızlıysan o kadar yükseğe zıplarsın.</li>
           <li><kbd>Space</kbd> zıpla. Duvardan dönünce hızın çoğu korunur.</li>
           <li>Üst üste en az 2 kat zıplayarak kombo yap; hızlı zıplayınca karakter takla atar. Sayaç dolmadan yeni kombo zıplaması gerekir.</li>
-          <li>Süzülen buz kristallerine dokun: her biri +25 puan.</li>
+          <li>Süzülen buz kristallerine dokun: her biri +25 puan, ayrıca mağazada harcanır.</li>
+          <li>Saat kuleyi yavaşlatır, mıknatıs yakındaki kristalleri çeker. Basamak kenarlarında kısa süre tutunur ve kenardan düşerken bile zıplayabilirsin.</li>
           <li><kbd>P</kbd> duraklat, <kbd>R</kbd> yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</li>
         </ul>
       </section>
@@ -112,6 +128,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <p class="skor" id="s-skor">0</p>
       <p class="ince"><span id="s-kat">0</span> kat &nbsp;•&nbsp; en iyi <span id="s-en">0</span></p>
       <p class="ince rekor" id="s-rekor" hidden>★ Yeni rekor</p>
+      <p class="ince">+<span id="s-kristal">0</span> ◆ kristal cüzdana eklendi</p>
       <button class="dugme" id="tekrar" type="button" style="margin-top:14px">Tekrar dene <kbd>Space</kbd></button>
     </div>
   </div>

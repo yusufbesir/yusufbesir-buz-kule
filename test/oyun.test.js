@@ -39,3 +39,52 @@ test('hızlanma uyarısı: kayma başlayınca her 1500 karede açılır', () => 
   adim(o, { sag: false, sol: false, zipla: false });
   assert.ok(o.hizlan > 0);
 });
+
+// ---- Fizik hissi: basamağa tutunma, kenar toleransı, coyote süresi, zıplama tamponu ----
+function basamakta(rnd = () => 0.4) { // kat 1 basamağının üstünde duran oyun
+  const o = yeniOyun(rnd); const f = o.kat(1), x0 = 85 + (f.xKaro - 5) * 16, x1 = x0 + f.genislikKaro * 16;
+  o.katNo = 1; o.sonInisKat = 1; o.enYuksek = 1; o.y = 440 - 80; o.havada = false; o.x = (x0 + x1) / 2; return { o, x0, x1 };
+}
+const bos = { sag: false, sol: false, zipla: false };
+
+test('kenar toleransı: basamaktan 8 px taşan ayak hâlâ basar, 14 px taşan düşer', () => {
+  const a = basamakta(); a.o.x = a.x1 + 8; adim(a.o, bos); assert.equal(a.o.havada, false, '8 px taşınca düşmemeli');
+  const b = basamakta(); b.o.x = b.x1 + 14; adim(b.o, bos); assert.equal(b.o.havada, true, '14 px taşınca düşmeli');
+});
+
+test('iniş: basamak kenarının 8 px dışına düşen oyuncu basamağa konar (tutunma)', () => {
+  const { o, x1 } = basamakta(); o.katNo = 0; o.sonInisKat = 0; o.enYuksek = 0; o.y = 440 - 80 - 30; o.havada = true; o.vy = 4; o.x = x1 + 8;
+  for (let i = 0; i < 20 && o.havada; i++) adim(o, bos);
+  assert.equal(o.katNo, 1); assert.equal(o.havada, false);
+});
+
+test('hızlı koşuda basamağı atlamaz: geçiş anı konumuna göre denetlenir', () => {
+  const { o, x1 } = basamakta(); o.katNo = 0; o.sonInisKat = 0; o.enYuksek = 0; o.havada = true; o.y = 440 - 80 - 3; o.vy = 6; o.vx = 12; o.x = x1 - 6; // bir karede ~12 px sağa kayar
+  adim(o, { sag: true, sol: false, zipla: false });
+  assert.equal(o.katNo, 1, 'geçiş anında basamağın üstündeydi, konmalıydı');
+});
+
+test('coyote: kenardan yürüyerek çıkınca 6 kare içinde zıplanır, 12 kare sonra zıplanamaz', () => {
+  const { o, x1 } = basamakta(); o.x = x1 + 12; adim(o, bos); assert.equal(o.havada, true);
+  adim(o, { ...bos, zipla: true }); assert.ok(o.vy < 0, 'coyote süresinde zıplayabilmeli');
+  const g = basamakta(); g.o.x = g.x1 + 12; adim(g.o, bos);
+  for (let i = 0; i < 12; i++) adim(g.o, bos);
+  const vy = g.o.vy; adim(g.o, { ...bos, zipla: true }); assert.ok(g.o.vy > vy - 1, 'coyote süresi bitti, zıplamamalı');
+});
+
+test('zıplama tamponu: inişten 4 kare önce basılan tuş, iner inmez zıplatır', () => {
+  const { o } = basamakta(); o.katNo = 0; o.sonInisKat = 0; o.enYuksek = 0; o.havada = true; o.y = 440 - 80 - 14; o.vy = 4;
+  adim(o, { ...bos, zipla: true }); // havada bas
+  adim(o, bos); adim(o, bos); // tuşu bırak; basamağa in
+  for (let i = 0; i < 8 && o.havada; i++) adim(o, bos);
+  assert.equal(o.havada, false, 'basamağa inmeliydi');
+  adim(o, bos); assert.ok(o.vy < 0 || o.havada, 'tampon sayesinde hemen zıplamalıydı');
+});
+
+test('mıknatıs kristali uzaktan toplar; saat kaymayı yavaşlatır', () => {
+  const o = yeniOyun(() => 0.1); const f = o.kat(1); const kx = 85 + (f.xKaro - 5) * 16 + f.genislikKaro * 16 * (0.15 + 0.7 * f.kristalX);
+  o.x = kx + 90; o.miknatis = 100; adim(o, bos); assert.equal(o.ek, 25, 'mıknatıs menzilinden toplamalıydı');
+  const a = yeniOyun(() => 0.4), b = yeniOyun(() => 0.4); for (const q of [a, b]) { q.enYuksek = 6; q.kaymaBasladi = true; }
+  b.saat = 100; for (let i = 0; i < 30; i++) { adim(a, bos); adim(b, bos); }
+  assert.ok(b.kamTaban > a.kamTaban, 'saat varken kule daha yavaş kaymalı');
+});
