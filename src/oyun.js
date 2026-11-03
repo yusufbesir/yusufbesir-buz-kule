@@ -5,6 +5,7 @@ import { yeniPuan, inis, kare, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, kirmaSesi } from './ses.js';
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
+import { katRnd } from './hayalet.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
@@ -17,11 +18,13 @@ const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
 const KIRILMA = 30;         // kırılgan basamak: üstünde bu kadar kare durulursa kırılır (0,6 sn)
 const YAY_HIZI = 27;        // yay basamak: inişte yukarı fırlatma hızı (normal zıplamanın en fazla 24,4 hızından yüksek, ~6 kat)
 
+// rnd bir sayıysa tohumdur: kat n her zaman aynı (katRnd), böylece aynı tohum + aynı girişler = aynı oyun (hayalet, günlük kule).
+// rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
 export function yeniOyun(rnd = Math.random) {
-  const katlar = new Map();
-  const kat = (n) => (katlar.has(n) || katlar.set(n, katUret(n, rnd)), katlar.get(n));
+  const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
+  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUret(n, katRnd(tohum, n))), katlar.get(n));
   return {
-    rnd, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
+    rnd, tohum, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
@@ -122,7 +125,7 @@ export function adim(o, giris) {
 
 export function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
 
-export function ciz(c, o) {
+export function ciz(c, o, hayalet = null) {
   const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 * AYAR.sarsinti : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
@@ -134,6 +137,7 @@ export function ciz(c, o) {
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
+  if (hayalet && !hayalet.bitti) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
   c.restore();
 }
@@ -154,7 +158,7 @@ function pozSec(o) {
   if (Math.abs(o.vx) > 2) return (o.kare >> 3) & 1 ? 'walk1' : 'walk2';
   return 'stand';
 }
-function karakterCiz(c, o) {
+function karakterCiz(c, o, hayaletMi = false) {
   const takim = resimler(KARAKTERLER[AYAR.karakter] || KARAKTERLER[0]), r = takim && takim[pozSec(o)], ters = o.yon < 0;
   const ayakY = o.y - o.kamY;
   if (!(r && r.complete && r.naturalWidth > 0)) { // yüklenemezse sade yedek
@@ -163,7 +167,7 @@ function karakterCiz(c, o) {
   // squash & stretch: havada hıza göre uzar; hızlı koşuda hafif eğilir ve iz bırakır (iz rengi mağazadan); takla zıplamasında gövde döner
   const uzama = o.havada && !o.donuyor ? Math.max(-0.12, Math.min(0.14, -o.vy * 0.006)) : 0;
   const g = 48 * (1 - uzama * 0.6), y = 66 * (1 + uzama);
-  if (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14)) parcacikEkle(o.x, o.y - 24, 1, o.donuyor ? 'rgba(255,210,120,0.9)' : izRengi(o.kare), 0.6);
+  if (!hayaletMi && (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14))) parcacikEkle(o.x, o.y - 24, 1, o.donuyor ? 'rgba(255,210,120,0.9)' : izRengi(o.kare), 0.6);
   c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, ayakY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
   c.save();
   const merkezY = ayakY - 33; // dönüş ve eğilme gövde/ayak noktasından

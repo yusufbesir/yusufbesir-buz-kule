@@ -19,7 +19,7 @@ function kartHud(c, x, y, g, h, r = 12) {
 function metinHud(c, t, x, y, font, renk, hiza = 'left') { c.font = font; c.textAlign = hiza; c.fillStyle = renk; c.fillText(t, x, y); c.textAlign = 'left'; }
 const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 9px ' + MONO, SOLUK, hiza);
 
-export function hudCiz(c, o, en) {
+export function hudCiz(c, o, en, hayalet = null) {
   // Oyuncu ekranın üst kısmındayken (yukarı zıplama) HUD neredeyse görünmez olur, görüşü kapatmaz.
   const ekranY = o.y - o.kamY, gorunur = Math.max(0.16, Math.min(1, (ekranY - 70) / 150)) * 0.92 * Math.min(1.2, AYAR.hud); // HUD yoğunluğu ayardan (0 = sürekli bilgi kapalı)
   if (AYAR.hud <= 0.02) return;
@@ -38,6 +38,10 @@ export function hudCiz(c, o, en) {
   c.lineWidth = 4; c.lineCap = 'round'; c.strokeStyle = 'rgba(31,51,40,0.12)'; c.beginPath(); c.arc(cx, cy, 10, 0, 7); c.stroke();
   c.strokeStyle = o.kaymaBasladi ? '#E58A5C' : '#7B5CC4'; c.beginPath(); c.arc(cx, cy, 10, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, oran) * Math.PI * 2); c.stroke(); c.lineCap = 'butt';
   if (o.kaymaBasladi) metinHud(c, (Math.floor(o.kare / SAAT) + 1) + 'x', cx, cy + 3.5, '700 9px ' + MONO, YESIL, 'center');
+  if (hayalet) { // hayalet rakibin durumu: yarı saydam kapsül
+    const yanda = hayalet.bitti ? 'bitti' : 'kat ' + hayalet.enYuksek, fark = o.enYuksek - hayalet.enYuksek;
+    kartHud(c, 438, 44, 117, 20, 10); metinHud(c, 'Hayalet ' + yanda, 449, 58, '700 10px ' + MONO, fark >= 0 ? '#2F7D4F' : '#B0482C');
+  }
   // etkin güç öğeleri: küçük süre çubukları
   [['saat', o.saat, 480, 'Saat', '#C98A10'], ['miknatis', o.miknatis, 500, 'Mıknatıs', '#D04040']].filter(g => g[1] > 0).forEach((g, i) => {
     const x = 92 + i * 96; kartHud(c, x, 44, 90, 20, 10);

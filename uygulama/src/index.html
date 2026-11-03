@@ -59,6 +59,12 @@ kbd{font:600 12px ui-monospace,Consolas,monospace;background:rgba(31,51,40,.08);
 .karakter:hover{transform:translateY(-3px)}
 .karakter.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
 .karakter:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
+.modlar{display:flex;gap:6px;margin-bottom:4px}
+.mod{flex:1;padding:8px 6px;border:2px solid transparent;border-radius:12px;background:rgba(31,51,40,.06);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;color:var(--yazi);transition:transform var(--sure) var(--yay),border-color var(--sure) var(--yay)}
+.mod:hover:not(:disabled){transform:translateY(-2px)}
+.mod:disabled{opacity:.4;cursor:not-allowed}
+.mod.secili{border-color:var(--vurgu);background:rgba(123,92,196,.14)}
+.mod:focus-visible{outline:3px solid var(--lavanta);outline-offset:2px}
 .izler{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
 .iz{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:2px solid transparent;border-radius:14px;background:rgba(31,51,40,.06);cursor:pointer;font-family:inherit;color:var(--yazi);font-size:14px;transition:transform var(--sure) var(--yay),border-color var(--sure) var(--yay)}
 .iz:hover:not(:disabled){transform:translateY(-2px)}
@@ -94,6 +100,12 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <section class="panel" id="p-oyna" role="tabpanel" aria-labelledby="t-oyna">
         <p class="etiket" style="margin:0 0 4px">en iyi skor</p><p class="skor" id="m-en">0</p>
         <p class="ince" style="margin:2px 0 0">Kristal cüzdanı: <b id="m-kristal">0</b> ◆</p>
+        <p class="etiket" style="margin:10px 0 4px">oyun kipi</p>
+        <div class="modlar" role="group" aria-label="Oyun kipi">
+          <button class="mod secili" id="mod-yeni" type="button" aria-pressed="true" title="Her seferinde yeni, rastgele bir kule">Yeni kule</button>
+          <button class="mod" id="mod-hayalet" type="button" aria-pressed="false" title="En iyi oyununun kulesi; kaydı yarı saydam hayalet olarak koşar">Hayaletle yarış</button>
+          <button class="mod" id="mod-gunun" type="button" aria-pressed="false" title="Bugüne özel sabit kule; günlük en iyi kaydın hayaleti">Günün kulesi</button>
+        </div>
         <p class="etiket" style="margin:10px 0 4px">skor tablosu</p><ol class="liste" id="m-liste"></ol>
         <button class="dugme" id="basla" type="button" style="margin-top:12px">Başla <kbd>Space</kbd></button>
       </section>
@@ -143,6 +155,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <p class="ince"><span id="s-kat">0</span> kat &nbsp;•&nbsp; en iyi <span id="s-en">0</span></p>
       <p class="ince rekor" id="s-rekor" hidden>★ Yeni rekor</p>
       <p class="ince">+<span id="s-kristal">0</span> ◆ kristal cüzdana eklendi</p>
+      <p class="ince rekor" id="s-hayalet" hidden></p>
       <ol class="liste" id="s-liste"></ol>
       <button class="dugme" id="tekrar" type="button" style="margin-top:14px">Tekrar dene <kbd>Space</kbd></button>
     </div>

@@ -111,6 +111,46 @@ function basarimKontrol(o) {
 }
 const bildirimAdim = () => { for (let i = BILDIRIM.length - 1; i >= 0; i--) if (--BILDIRIM[i].guc <= 0) BILDIRIM.splice(i, 1); };
 
+// ---- hayalet ----
+// description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+const SOL = 1, SAG = 2, ZIPLA = 4;
+
+// mulberry32: küçük, hızlı, tekrarlanabilir rastgele sayı üreteci
+function tohumluRnd(tohum) {
+  let a = tohum >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+// Kat başına ayrı üreteç: katlar hangi sırayla görüntülenirse görüntülensin aynı kalır (oyuncu ve hayalet aynı kuleyi görür).
+const katRnd = (tohum, n) => tohumluRnd(((tohum >>> 0) ^ Math.imul(n + 1, 0x9E3779B1)) >>> 0);
+const yeniTohum = () => (Math.random() * 4294967296) >>> 0;
+function gunlukTohum(tarih = new Date()) { // yerel tarihe göre günlük tohum
+  const s = tarih.getFullYear() * 10000 + (tarih.getMonth() + 1) * 100 + tarih.getDate(); return (Math.imul(s, 2654435761) >>> 0) || 1;
+}
+const gunlukAnahtar = (tarih = new Date()) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate();
+
+const girisBit = (g) => (g.sol ? SOL : 0) | (g.sag ? SAG : 0) | (g.zipla ? ZIPLA : 0);
+const bitGiris = (b) => ({ sol: !!(b & SOL), sag: !!(b & SAG), zipla: !!(b & ZIPLA) });
+
+// Kayıt: kare başına 3 bitlik giriş; art arda aynı değerler [değer, sayı] çiftleriyle sıkıştırılır.
+function kayitBaslat() { return { kosu: [], son: -1, sayi: 0, kare: 0 }; }
+function kayitEkle(k, g) {
+  const b = girisBit(g); k.kare++;
+  if (b === k.son) k.sayi++; else { if (k.sayi) k.kosu.push(k.son, k.sayi); k.son = b; k.sayi = 1; }
+}
+function kayitBitir(k, tohum, skor, kat) { const kosu = k.kosu.slice(); if (k.sayi) kosu.push(k.son, k.sayi); return { tohum, kosu, skor, kat, kare: k.kare }; }
+function kayitCoz(kayit) { // kare kare giriş bitleri dizisi
+  const out = []; for (let i = 0; i + 1 < kayit.kosu.length; i += 2) for (let j = 0; j < kayit.kosu[i + 1]; j++) out.push(kayit.kosu[i]); return out;
+}
+function kayitGecerli(k) {
+  return !!k && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
+    && k.kosu.every(v => Number.isInteger(v) && v >= 0);
+}
+function kayitOku(anahtar) {
+  try { const k = JSON.parse(localStorage.getItem(anahtar) || 'null'); return kayitGecerli(k) ? k : null; } catch { return null; }
+}
+function kayitYaz(anahtar, kayit) { try { localStorage.setItem(anahtar, JSON.stringify(kayit)); } catch { /* sessiz */ } }
+const HAYALET_ANAHTAR = 'buzkule.hayalet';
+
 // ---- fizik ----
 // description: Buz Kule fizik çekirdeği (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 // Sabitler mekanikler.md dosyasındaki gözlemlerden; orijinal kod kopyalanmadı.
@@ -506,6 +546,7 @@ const parcacikSifirla = () => { par.length = 0; };
 
 
 
+
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
@@ -516,11 +557,13 @@ const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
 const KIRILMA = 30;         // kırılgan basamak: üstünde bu kadar kare durulursa kırılır (0,6 sn)
 const YAY_HIZI = 27;        // yay basamak: inişte yukarı fırlatma hızı (normal zıplamanın en fazla 24,4 hızından yüksek, ~6 kat)
 
+// rnd bir sayıysa tohumdur: kat n her zaman aynı (katRnd), böylece aynı tohum + aynı girişler = aynı oyun (hayalet, günlük kule).
+// rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
 function yeniOyun(rnd = Math.random) {
-  const katlar = new Map();
-  const kat = (n) => (katlar.has(n) || katlar.set(n, katUret(n, rnd)), katlar.get(n));
+  const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
+  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUret(n, katRnd(tohum, n))), katlar.get(n));
   return {
-    rnd, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
+    rnd, tohum, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
@@ -621,7 +664,7 @@ function adim(o, giris) {
 
 function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
 
-function ciz(c, o) {
+function ciz(c, o, hayalet = null) {
   const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 * AYAR.sarsinti : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
@@ -633,6 +676,7 @@ function ciz(c, o) {
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
+  if (hayalet && !hayalet.bitti) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
   c.restore();
 }
@@ -653,7 +697,7 @@ function pozSec(o) {
   if (Math.abs(o.vx) > 2) return (o.kare >> 3) & 1 ? 'walk1' : 'walk2';
   return 'stand';
 }
-function karakterCiz(c, o) {
+function karakterCiz(c, o, hayaletMi = false) {
   const takim = resimler(KARAKTERLER[AYAR.karakter] || KARAKTERLER[0]), r = takim && takim[pozSec(o)], ters = o.yon < 0;
   const ayakY = o.y - o.kamY;
   if (!(r && r.complete && r.naturalWidth > 0)) { // yüklenemezse sade yedek
@@ -662,7 +706,7 @@ function karakterCiz(c, o) {
   // squash & stretch: havada hıza göre uzar; hızlı koşuda hafif eğilir ve iz bırakır (iz rengi mağazadan); takla zıplamasında gövde döner
   const uzama = o.havada && !o.donuyor ? Math.max(-0.12, Math.min(0.14, -o.vy * 0.006)) : 0;
   const g = 48 * (1 - uzama * 0.6), y = 66 * (1 + uzama);
-  if (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14)) parcacikEkle(o.x, o.y - 24, 1, o.donuyor ? 'rgba(255,210,120,0.9)' : izRengi(o.kare), 0.6);
+  if (!hayaletMi && (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14))) parcacikEkle(o.x, o.y - 24, 1, o.donuyor ? 'rgba(255,210,120,0.9)' : izRengi(o.kare), 0.6);
   c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, ayakY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
   c.save();
   const merkezY = ayakY - 33; // dönüş ve eğilme gövde/ayak noktasından
@@ -697,7 +741,7 @@ function kartHud(c, x, y, g, h, r = 12) {
 function metinHud(c, t, x, y, font, renk, hiza = 'left') { c.font = font; c.textAlign = hiza; c.fillStyle = renk; c.fillText(t, x, y); c.textAlign = 'left'; }
 const etiketHud = (c, t, x, y, hiza) => metinHud(c, t.toUpperCase(), x, y, '600 9px ' + MONO, SOLUK, hiza);
 
-function hudCiz(c, o, en) {
+function hudCiz(c, o, en, hayalet = null) {
   // Oyuncu ekranın üst kısmındayken (yukarı zıplama) HUD neredeyse görünmez olur, görüşü kapatmaz.
   const ekranY = o.y - o.kamY, gorunur = Math.max(0.16, Math.min(1, (ekranY - 70) / 150)) * 0.92 * Math.min(1.2, AYAR.hud); // HUD yoğunluğu ayardan (0 = sürekli bilgi kapalı)
   if (AYAR.hud <= 0.02) return;
@@ -716,6 +760,10 @@ function hudCiz(c, o, en) {
   c.lineWidth = 4; c.lineCap = 'round'; c.strokeStyle = 'rgba(31,51,40,0.12)'; c.beginPath(); c.arc(cx, cy, 10, 0, 7); c.stroke();
   c.strokeStyle = o.kaymaBasladi ? '#E58A5C' : '#7B5CC4'; c.beginPath(); c.arc(cx, cy, 10, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, oran) * Math.PI * 2); c.stroke(); c.lineCap = 'butt';
   if (o.kaymaBasladi) metinHud(c, (Math.floor(o.kare / SAAT) + 1) + 'x', cx, cy + 3.5, '700 9px ' + MONO, YESIL, 'center');
+  if (hayalet) { // hayalet rakibin durumu: yarı saydam kapsül
+    const yanda = hayalet.bitti ? 'bitti' : 'kat ' + hayalet.enYuksek, fark = o.enYuksek - hayalet.enYuksek;
+    kartHud(c, 438, 44, 117, 20, 10); metinHud(c, 'Hayalet ' + yanda, 449, 58, '700 10px ' + MONO, fark >= 0 ? '#2F7D4F' : '#B0482C');
+  }
   // etkin güç öğeleri: küçük süre çubukları
   [['saat', o.saat, 480, 'Saat', '#C98A10'], ['miknatis', o.miknatis, 500, 'Mıknatıs', '#D04040']].filter(g => g[1] > 0).forEach((g, i) => {
     const x = 92 + i * 96; kartHud(c, x, 44, 90, 20, 10);
@@ -760,6 +808,7 @@ function hudCiz(c, o, en) {
 
 
 
+
 const kimlik = (a) => document.getElementById(a);
 const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
@@ -780,6 +829,7 @@ function boyutla() {
 boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna', sonSira = 0;
+let mod = 'yeni', hayalet = null, hayaletGiris = [], kaydedici = kayitBaslat(), hayaletSonuc = '';
 ayarYukle(); cuzdanYukle(); skorlariYukle(); basarimYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
 
@@ -792,19 +842,29 @@ function katmanGoster(ad) {
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
   durum = d; katmanGoster(durumKatman[d]);
-  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); }
+  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); modYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
     kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira);
+    kimlik('s-hayalet').textContent = hayaletSonuc; kimlik('s-hayalet').hidden = !hayaletSonuc;
   }
 }
+// Oyun kipleri: 'yeni' (rastgele kule), 'hayalet' (en iyi oyunun kulesi ve yarı saydam kaydı), 'gunun' (bugünün sabit kulesi ve günlük en iyi kaydı).
 function basla() {
-  o = yeniOyun(); yeniRekor = false; durumDegistir('oyun');
+  let tohum = yeniTohum(), kayit = null;
+  if (mod === 'hayalet') { kayit = kayitOku(HAYALET_ANAHTAR); if (kayit) tohum = kayit.tohum; }
+  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar()); }
+  o = yeniOyun(tohum); yeniRekor = false; kaydedici = kayitBaslat();
+  hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCoz(kayit) : []; hayaletSonuc = '';
+  durumDegistir('oyun');
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space odaktaki düğmeyi tekrar tıklamasın
 }
 function oyunBitti() {
   const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
+  const anahtar = mod === 'gunun' ? gunlukAnahtar() : HAYALET_ANAHTAR, eski = kayitOku(anahtar);
+  if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
+  hayaletSonuc = hayalet && eski ? (s > eski.skor ? 'Hayaleti geçtin! (' + eski.skor + ')' : 'Hayalet önde: ' + eski.skor) : '';
   sonSira = skorEkle(s, o.enYuksek); kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
@@ -832,6 +892,16 @@ kimlik('basla').addEventListener('click', basla);
 kimlik('tekrar').addEventListener('click', basla);
 gostergeKonumla(kimlik('t-oyna'), true);
 
+// ---- Oyun kipi seçici ----
+const modDugmeleri = { yeni: kimlik('mod-yeni'), hayalet: kimlik('mod-hayalet'), gunun: kimlik('mod-gunun') };
+function modYaz() {
+  const var_ = !!kayitOku(HAYALET_ANAHTAR);
+  if (mod === 'hayalet' && !var_) mod = 'yeni';
+  modDugmeleri.hayalet.disabled = !var_;
+  for (const [ad, b] of Object.entries(modDugmeleri)) { b.setAttribute('aria-pressed', String(mod === ad)); b.className = 'mod' + (mod === ad ? ' secili' : ''); }
+}
+for (const [ad, b] of Object.entries(modDugmeleri)) b.addEventListener('click', () => { mod = ad; modYaz(); });
+modYaz();
 // ---- Skor tablosu ----
 function listeYaz(ol, adet, vurgu) {
   if (!ol) return; ol.textContent = '';
@@ -929,12 +999,17 @@ function dongu(ms) {
   if (kol.start && !oncekiStart) { if (durum === 'oyun') durumDegistir('duraklat'); else if (durum === 'duraklat') durumDegistir('oyun'); }
   oncekiA = kol.a; oncekiStart = kol.start;
   while (acc >= DT) {
-    if (durum === 'oyun') { adim(o, { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla }); if (o.bitti) oyunBitti(); else basarimKontrol(o); }
+    if (durum === 'oyun') {
+      const giris = { sol: k.ArrowLeft || kol.sol, sag: k.ArrowRight || kol.sag, zipla: k.Space || kol.zipla };
+      kayitEkle(kaydedici, giris); adim(o, giris);
+      if (hayalet && !hayalet.bitti) { const b = hayaletGiris[o.kare - 1]; adim(hayalet, b === undefined ? bitGiris(0) : bitGiris(b)); }
+      if (o.bitti) oyunBitti(); else basarimKontrol(o);
+    }
     bildirimAdim(); acc -= DT;
   }
   c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-  ciz(c, o);
-  if (durum !== 'baslik') hudCiz(c, o, en);
+  ciz(c, o, hayalet);
+  if (durum !== 'baslik') hudCiz(c, o, en, hayalet);
   requestAnimationFrame(dongu);
 }
 requestAnimationFrame(ms => { onceki = ms; dongu(ms); });
