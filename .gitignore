@@ -1,0 +1,4 @@
+node_modules/
+uygulama/node_modules/
+uygulama/dist/
+*.exe

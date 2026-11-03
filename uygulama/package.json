@@ -1,0 +1,19 @@
+{
+  "name": "buz-kule",
+  "version": "0.1.1",
+  "description": "Buz Kule - dikey zıplama oyunu",
+  "main": "main.js",
+  "author": "Yusuf",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": { "start": "electron .", "dist": "electron-builder --win nsis" },
+  "devDependencies": { "electron": "33.2.1", "electron-builder": "25.1.8" },
+  "build": {
+    "appId": "com.yusuf.buzkule",
+    "productName": "Buz Kule",
+    "files": ["main.js", "src/**/*", "package.json"],
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false, "deleteAppDataOnUninstall": false, "shortcutName": "Buz Kule", "artifactName": "Buz-Kule-Kurulum-${version}.exe" }
+  }
+}
