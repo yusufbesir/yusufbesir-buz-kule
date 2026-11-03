@@ -1,13 +1,8 @@
 {
-  "_aciklama": "ÖNERİ, etkin ayar değildir. Güvenlik incelemesi sonrası daraltıldı: betik ajan tarafından düzenlenebildiği için joker izin yerine tam çıktı yolu ve betik yazma yasağı önerilir. Sahip: Yusuf; yazan: Claude [İP:TEZDENEME#CLONE].",
+  "_aciklama": "ÖNERİ, etkin ayar değildir. İkinci güvenlik incelemesi sonrası Blender için ön onay (allow) tamamen kaldırıldı: betik/yapılandırma ajan tarafından değiştirilebildiği için yol eşleştirme yasakları yeterli bir sınır değildir. Blender gerekirse her çalıştırma elle onaylanmalı ve --factory-startup ile (kullanıcı eklentileri/başlangıç betikleri kapalı) çalıştırılmalı. Betiği salt okunur yapmak (ACL) Yusuf'un kararıdır, ben izin değiştirmem. Sahip: Yusuf; yazan: Claude [İP:TEZDENEME#CLONE].",
   "permissions": {
-    "allow": [
-      "PowerShell(& \"D:\\Programlar\\Blender\\blender-4.5.9-windows-x64\\blender.exe\" -b -P \"D:\\Programlar\\IcyTower-klon\\arac\\blender_sprite_v2.py\" -- \"D:\\Programlar\\IcyTower-klon\\uygulama\\src\\varlik\\blender-v2\")",
-      "PowerShell(& \"D:\\Programlar\\Blender\\blender-4.5.9-windows-x64\\blender.exe\" --version)"
-    ],
+    "allow": [],
     "deny": [
-      "Edit(D:/Programlar/IcyTower-klon/arac/blender_sprite*.py)",
-      "Write(D:/Programlar/IcyTower-klon/arac/blender_sprite*.py)",
       "Read(D:/YusufII/HAFIZAM1/anahtarlar/**)",
       "Edit(D:/YusufII/HAFIZAM1/anahtarlar/**)",
       "Write(D:/YusufII/HAFIZAM1/anahtarlar/**)"
