@@ -194,3 +194,34 @@ pub extern "C" fn inis_ara(tohum: u32, x: f64, y: f64, eski_x: f64, eski_y: f64,
     }
     -1
 }
+
+// ---- Aşama 4: hayalet kaydı çözme (src/hayalet.js kayitCoz ile aynı). Giriş: koşu dizisi [bit, tekrar, bit, tekrar, ...]; çıkış: kare başına bit (u8) ----
+const KOSU_ENFAZLA: usize = 40000;
+const KARE_ENFAZLA: usize = 1_000_000;
+static mut KOSU: [u32; KOSU_ENFAZLA] = [0; KOSU_ENFAZLA];
+static mut KARELER: [u8; KARE_ENFAZLA] = [0; KARE_ENFAZLA];
+
+#[no_mangle]
+pub extern "C" fn kosu_adresi() -> u32 { core::ptr::addr_of!(KOSU) as u32 }
+#[no_mangle]
+pub extern "C" fn kare_adresi() -> u32 { core::ptr::addr_of!(KARELER) as u32 }
+
+// uzunluk: KOSU içindeki sayı adedi (çift). Dönüş: çözülen kare sayısı, sınır aşılırsa u32::MAX.
+#[no_mangle]
+pub extern "C" fn kayit_coz(uzunluk: u32) -> u32 {
+    let uz = uzunluk as usize;
+    if uz > KOSU_ENFAZLA { return u32::MAX; }
+    let (kosu, kareler) = unsafe { (&*core::ptr::addr_of!(KOSU), &mut *core::ptr::addr_of_mut!(KARELER)) };
+    let mut yaz: usize = 0;
+    let mut i = 0;
+    while i + 1 < uz {
+        let bit = kosu[i] as u8;
+        let say = kosu[i + 1] as usize;
+        if yaz + say > KARE_ENFAZLA { return u32::MAX; }
+        let mut j = 0;
+        while j < say { kareler[yaz + j] = bit; j += 1; }
+        yaz += say;
+        i += 2;
+    }
+    yaz as u32
+}

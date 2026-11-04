@@ -1,6 +1,6 @@
 // description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
 import { katUret, KAT_ARALIK, KARO, ZEMIN_Y, AYAK } from './kat.js';
-import { katRnd } from './hayalet.js';
+import { katRnd, kayitCoz } from './hayalet.js';
 import { yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
 import { yeniPuan, inis, kare, odulAdi } from './puan.js';
 
@@ -81,6 +81,24 @@ function inisSinav() {
   }
   return true;
 }
+// Aşama 4: hayalet kaydı çözme. Rust çekirdeği varsa onunla (sınırlar aşılırsa ya da hata olursa JS ile).
+export function kayitCozC(kayit) {
+  const kosu = kayit.kosu;
+  if (!cekirdekIc || kosu.length > 40000) return kayitCoz(kayit);
+  const adres = cekirdekIc.kosu_adresi(), tampon = cekirdekIc.bellek.buffer;
+  new Uint32Array(tampon, adres, kosu.length).set(kosu);
+  const n = cekirdekIc.kayit_coz(kosu.length);
+  return n === 0xFFFFFFFF ? kayitCoz(kayit) : Array.from(new Uint8Array(tampon, cekirdekIc.kare_adresi(), n));
+}
+function kayitSinav() {
+  let s = 99; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 300; i++) {
+    const kosu = []; const adet = Math.floor(r() * 300);
+    for (let k = 0; k < adet; k++) kosu.push(Math.floor(r() * 8), 1 + Math.floor(r() * 80));
+    if (!ayni(kayitCozC({ kosu }), kayitCoz({ kosu }))) return false;
+  }
+  return true;
+}
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
   let s = 12345; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -104,6 +122,7 @@ export function cekirdekYukle(b64) {
     if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
     if (!puanSinav()) throw new Error('puan uyuşmazlığı');
     if (!inisSinav()) throw new Error('iniş uyuşmazlığı');
+    if (!kayitSinav()) throw new Error('kayıt çözme uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }

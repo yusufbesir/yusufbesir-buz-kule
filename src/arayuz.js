@@ -3,8 +3,9 @@ import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
 import { skorListesi, skorEkle } from './skorlar.js';
-import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitCoz, kayitOku, kayitYaz, bitGiris, HAYALET_ANAHTAR } from './hayalet.js';
+import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitOku, kayitYaz, bitGiris, HAYALET_ANAHTAR } from './hayalet.js';
 import { muzikGuncelle } from './ses.js';
+import { kayitCozC } from './cekirdek.js';
 import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
@@ -61,7 +62,7 @@ function basla() {
   if (mod === 'hayalet') { kayit = kayitOku(HAYALET_ANAHTAR); if (kayit) tohum = kayit.tohum; }
   else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar()); }
   o = yeniOyun(tohum); o.rekorKat = skorListesi(mod).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
-  hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCoz(kayit) : []; hayaletSonuc = '';
+  hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
   durumDegistir('oyun', true); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
 }
 function oyunBitti() {
