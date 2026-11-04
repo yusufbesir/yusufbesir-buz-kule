@@ -52,7 +52,7 @@ const kristalKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * K
 const gucKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 40 });
 
 function zipladi(o) {
-  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
+  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx, o.puan.kombo ? o.puan.kombo.zip : 0); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
   o.donuyor = Math.abs(o.vy) >= TAKLA_HIZI; o.aci = 0;
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
@@ -160,6 +160,19 @@ export function adim(o, giris) {
 
 export function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
 
+// İniş gölgesi: karakter havadayken ve düşerken, ayağının altındaki ilk basamağın üstüne soluk bir elips çizer (kombo planı için).
+function inisGolgesi(c, o) {
+  if (!o.havada || o.vy < 0 || o.bitti) return;
+  for (let n = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK); n >= 0; n--) {
+    const py = katY(n);
+    if (py < o.y) continue;
+    if (n > 0) { if (o.kirik.has(n)) continue; const [kx0, kx1] = basamakAralik(o.kat(n)); if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) continue; }
+    const uzak = Math.min(1, (py - o.y) / 240);
+    c.save(); c.globalAlpha = 0.35 * (1 - uzak * 0.6); c.fillStyle = '#0b1230';
+    c.beginPath(); c.ellipse(o.x, py - o.kamY - 1, 16 - uzak * 6, 3.5 - uzak, 0, 0, Math.PI * 2); c.fill(); c.restore();
+    return;
+  }
+}
 export function ciz(c, o, hayalet = null) {
   const titre = Math.max(o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0, o.sars * 0.45) * AYAR.sarsinti; // büyük kombo ödülünde ve 100/200/500. katta kısa ekran sarsıntısı (azaltılmış harekette 0)
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
@@ -174,6 +187,7 @@ export function ciz(c, o, hayalet = null) {
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
+  inisGolgesi(c, o); // düşerken altındaki basamağa ince soluk gölge (yalnız görünüm)
   if (hayalet && !hayalet.bitti) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
   c.restore();

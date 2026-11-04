@@ -14,11 +14,12 @@ function havuz(ad) { // ilk istekte kurulur; kopyalar yüklenmiş kaynağı payl
   return havuzlar[ad];
 }
 // Efekt çalar: efektler kapalıysa ya da ses düzeyi 0 ise hiçbir şey olmaz. Havuzdaki nesneler sırayla kullanılır.
-function cal(ad, ses = 1) {
+function cal(ad, ses = 1, perde = 1) {
   if (!ses_var() || !AYAR.efektAcik || AYAR.ses <= 0) return;
   try {
     const h = havuz(ad), a = h.liste[h.i]; h.i = (h.i + 1) % h.liste.length;
     try { a.currentTime = 0; } catch { /* henüz yüklenmemiş olabilir */ }
+    a.preservesPitch = false; a.playbackRate = perde; // perde: 1 = normal; kombo büyüdükçe yükselir
     a.volume = Math.max(0, Math.min(1, AYAR.ses * ses)); const s = a.play(); if (s && s.catch) s.catch(() => {});
   } catch { /* ses yoksa oyun sessiz sürer */ }
 }
@@ -28,7 +29,7 @@ export function efektOnYukle() { // ilk kullanımı beklemeden açılışta yük
   try { for (const ad of EFEKTLER) havuz(ad); } catch { /* ses yoksa oyun sessiz sürer */ }
 }
 efektOnYukle();
-export const zipSesi = (hiz) => cal(Math.abs(hiz) > 9 ? 'phaseJump5' : Math.abs(hiz) > 5 ? 'phaseJump3' : 'phaseJump1', 0.7);
+export const zipSesi = (hiz, kombo = 0) => cal(Math.abs(hiz) > 9 ? 'phaseJump5' : Math.abs(hiz) > 5 ? 'phaseJump3' : 'phaseJump1', 0.7, 1 + Math.min(Math.max(kombo, 0), 8) * 0.06); // kombo perdesi: her kombo zıplamasında ~%6 yükselir (en çok 8 basamak)
 export const odulSesi = (toplamKat) => cal(toplamKat >= 25 ? 'powerUp8' : 'powerUp5', 0.9);
 export const olumSesi = () => cal('lowDown', 0.9);
 export const kristalSesi = () => cal('pepSound3', 0.8);
