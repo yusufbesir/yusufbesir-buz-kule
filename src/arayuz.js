@@ -9,7 +9,7 @@ import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
 const kimlik = (a) => document.getElementById(a);
-const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
+const tuval = kimlik('c'), c = tuval.getContext('2d', { alpha: false }); // arka plan her karede tam opak çizilir (gorsel.js arkaPlan fillRect) -> alfa kanalı gereksiz const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
 let olcek = 1;
 function boyutla() {
@@ -197,6 +197,10 @@ addEventListener('keydown', e => {
   if (e.code === 'Escape' && durum === 'duraklat') durumDegistir('baslik');
 });
 addEventListener('keyup', e => { k[e.code] = 0; });
+// Sekme gizlenince ya da pencere odağı gidince oyun sürüyorsa otomatik duraklat; takılı kalan tuşlar bırakılır (yalnız arayüz, simülasyon kuralı değil).
+function otoDuraklat() { for (const a in k) k[a] = 0; if (durum === 'oyun') durumDegistir('duraklat'); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) otoDuraklat(); });
+addEventListener('blur', otoDuraklat);
 
 // ---- Oyun kolu (gamepad): sol çubuk ya da yön tuşları koşar, A zıplar/başlatır, Start duraklatır ----
 let oncekiA = false, oncekiStart = false;
