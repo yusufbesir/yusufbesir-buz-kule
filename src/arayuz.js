@@ -43,8 +43,8 @@ const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun
 // katman kapanıp oyun sürünce odak tuvale (tabindex=-1) döner, böylece Space odaktaki düğmeyi yeniden tıklamaz.
 function odakla(el) { if (el && typeof el.focus === 'function') { try { el.focus({ preventScroll: true }); } catch { /* sahte DOM ya da eski tarayıcı */ } } }
 const durumOdak = { baslik: () => kimlik('t-' + sekme), duraklat: () => kimlik('d-kart'), bitti: () => kimlik('tekrar'), oyun: () => tuval };
-function durumDegistir(d) {
-  durum = d; katmanGoster(durumKatman[d]); muzikGuncelle(d === 'oyun'); // müzik yalnız oyun sürerken çalar
+function durumDegistir(d, yeni = false) {
+  durum = d; katmanGoster(durumKatman[d]); muzikGuncelle(d === 'oyun', yeni); // müzik yalnız oyun sürerken çalar
   odakla(durumOdak[d]());
   if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); modYaz(); }
   if (d === 'bitti') {
@@ -60,7 +60,7 @@ function basla() {
   else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar()); }
   o = yeniOyun(tohum); o.rekorKat = skorListesi(mod).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
   hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCoz(kayit) : []; hayaletSonuc = '';
-  durumDegistir('oyun'); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
+  durumDegistir('oyun', true); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
 }
 function oyunBitti() {
   const s = skor(o);

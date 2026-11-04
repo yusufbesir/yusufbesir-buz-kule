@@ -24,10 +24,52 @@ test('efektler: açıkken doğru dosya ve düzeyle çalar, kapalıyken ya da dü
 test('müzik: varsayılan kapalı, açılınca yalnız oyun sürerken çalar, durdurulunca durur', async () => {
   const olay = sahteAudio(); const ayar = await import('../src/ayar.js'); const ses = await import('../src/ses.js?m=' + Math.random());
   assert.equal(ayar.VARSAYILAN.muzikAcik, 0, 'müzik varsayılan kapalı olmalı'); assert.equal(ayar.VARSAYILAN.efektAcik, 1);
-  ayar.AYAR.muzikAcik = 0; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), false, 'kapalıyken çalmamalı');
+  ayar.AYAR.ses = 0.5; ayar.AYAR.muzikAcik = 0; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), false, 'kapalıyken çalmamalı');
   ayar.AYAR.muzikAcik = 1; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), true);
   ses.muzikGuncelle(false); assert.equal(ses.muzikCaliyor(), false, 'oyun dışında durmalı');
   assert.ok(olay.yuklenen.includes('./varlik/ses/muzik.wav'));
+});
+
+function sahteBelge() {
+  const dinleyici = {}; const b = { hidden: false, addEventListener(t, f) { (dinleyici[t] ||= []).push(f); }, removeEventListener(t, f) { dinleyici[t] = (dinleyici[t] || []).filter(x => x !== f); } };
+  b.tetikle = (t) => (dinleyici[t] || []).slice().forEach(f => f()); b.say = (t) => (dinleyici[t] || []).length;
+  globalThis.document = b; return b;
+}
+
+test('efekt havuzu: açılışta önceden yüklenir, ad başına 3 nesne dönüşümlü kullanılır', async () => {
+  const olay = sahteAudio(); const ayar = await import('../src/ayar.js'); const ses = await import('../src/ses.js?h=' + Math.random());
+  const yuklenen = olay.yuklenen.length; assert.ok(yuklenen >= 12 * 4, 'tüm efektler (ana + 3 kopya) açılışta kurulmalı');
+  ayar.AYAR.efektAcik = 1; ayar.AYAR.ses = 0.5;
+  for (let i = 0; i < 7; i++) ses.olumSesi();
+  assert.equal(olay.yuklenen.length, yuklenen, 'çalarken yeni Audio üretilmemeli');
+  assert.equal(olay.calan.length, 7);
+});
+
+test('müzik: ses 0 iken çalmaz, düzey ses ile ölçeklenir, bastan=true başa sarar', async () => {
+  const olay = sahteAudio(); sahteBelge(); const ayar = await import('../src/ayar.js'); const ses = await import('../src/ses.js?z=' + Math.random());
+  ayar.AYAR.muzikAcik = 1; ayar.AYAR.ses = 0; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), false);
+  ayar.AYAR.ses = 0.5; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), true);
+  ses.muzikGuncelle(true, true); assert.equal(olay.muzikCalan >= 2, true);
+  ayar.AYAR.ses = 0; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), false, 'ses 0 olunca durmalı');
+});
+
+test('müzik: autoplay reddi ilk keydown/pointerdown ile bir kez yeniden denenir', async () => {
+  sahteAudio(); const b = sahteBelge(); const ayar = await import('../src/ayar.js');
+  let ret = true; const Eski = globalThis.Audio;
+  globalThis.Audio = class extends Eski { play() { if (ret) { this.paused = true; return Promise.reject(new Error('NotAllowed')); } return super.play(); } };
+  const ses = await import('../src/ses.js?a=' + Math.random());
+  ayar.AYAR.muzikAcik = 1; ayar.AYAR.ses = 0.5; ses.muzikGuncelle(true); await new Promise(r => setImmediate(r));
+  assert.equal(ses.muzikCaliyor(), false); assert.equal(b.say('keydown'), 1); assert.equal(b.say('pointerdown'), 1);
+  ret = false; b.tetikle('keydown'); assert.equal(ses.muzikCaliyor(), true); assert.equal(b.say('keydown'), 0, 'dinleyici tek kullanımlık'); assert.equal(b.say('pointerdown'), 0);
+});
+
+test('müzik: sekme gizlenince duraklar, dönünce oyun sürüyorsa devam eder', async () => {
+  sahteAudio(); const b = sahteBelge(); const ayar = await import('../src/ayar.js'); const ses = await import('../src/ses.js?v=' + Math.random());
+  ayar.AYAR.muzikAcik = 1; ayar.AYAR.ses = 0.5; ses.muzikGuncelle(true); assert.equal(ses.muzikCaliyor(), true);
+  b.hidden = true; b.tetikle('visibilitychange'); assert.equal(ses.muzikCaliyor(), false);
+  b.hidden = false; b.tetikle('visibilitychange'); assert.equal(ses.muzikCaliyor(), true);
+  ses.muzikGuncelle(false); b.hidden = true; b.tetikle('visibilitychange'); b.hidden = false; b.tetikle('visibilitychange');
+  assert.equal(ses.muzikCaliyor(), false, 'oyun sürmüyorsa devam etmemeli');
 });
 
 test('ses yokken (Audio tanımsız) hiçbir çağrı çökmez', async () => {
