@@ -574,6 +574,10 @@ const TAMPON = 7;           // inişten hemen önce basılan zıplama tuşu bu k
 const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
 const KIRILMA = 30;         // kırılgan basamak: üstünde bu kadar kare durulursa kırılır (0,6 sn)
 const YAY_HIZI = 27;        // yay basamak: inişte yukarı fırlatma hızı (normal zıplamanın en fazla 24,4 hızından yüksek, ~6 kat)
+// "Kıl payı" bonusu: oyuncu ekran altına bir kattan az yaklaşıp (düşme sınırı H) sonra bir basamağa konarsa küçük sabit puan.
+// Yalnız oyun durumuna bağlıdır (rastgelelik yok): hayalet/günlük kule tekrarlanabilirliği korunur. Fizik ve kat üretimi değişmez.
+const KIL_PAYI_PUAN = 25, KIL_PAYI_BEKLE = 300; // bonus puanı; iki bonus arası en az bekleme (kare, 6 sn)
+const KIL_PAYI_SINIR = H - KAT_ARALIK;                  // ekranda bu çizginin altı tehlike bölgesi
 
 // rnd bir sayıysa tohumdur: kat n her zaman aynı (katRnd), böylece aynı tohum + aynı girişler = aynı oyun (hayalet, günlük kule).
 // rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
@@ -588,6 +592,7 @@ function yeniOyun(rnd = Math.random) {
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
     sars: 0, rekorKat: 0, // kilometre taşı sarsıntısı süresi; önceki en iyi kat (arayuz.js yazar, yalnız görünüm)
     sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
+    tehlike: false, kilPayi: 0, kilPayiBekle: 0, kilPayiSayisi: 0, // kıl payı: tehlike bölgesine girildi mi, yazı süresi, bekleme süresi, verilen bonus sayısı
   };
 }
 
@@ -609,6 +614,8 @@ function adim(o, giris) {
   if (o.sars > 0) o.sars--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
   if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
+  if (o.kilPayi > 0) o.kilPayi--; if (o.kilPayiBekle > 0) o.kilPayiBekle--;
+  let indi = false; // bu karede bir basamağa konuldu mu (kıl payı denetimi için)
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
@@ -630,7 +637,7 @@ function adim(o, giris) {
       const uzerinde = (x) => x >= kx0 - AYAK && x <= kx1 + AYAK;
       if (n === 0 ? true : (eskiY <= py && o.y >= py && (uzerinde(xk) || uzerinde(o.x)))) {
         if (n === 0 && o.y < py) continue;
-        o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0;
+        o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
         if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
         const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
         const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
@@ -683,7 +690,14 @@ function adim(o, giris) {
   }
   const kamHedef = Math.min(o.kamTaban, o.y - 100);
   if (kamHedef < o.kamY) o.kamY = kamHedef; else o.kamY += Math.min(8, kamHedef - o.kamY);
-  if (o.y - o.kamY > H) { o.bitti = true; olumSesi(); }
+  const ekranY = o.y - o.kamY;
+  if (ekranY > H) { o.bitti = true; olumSesi(); return; }
+  // Kıl payı: önceki karelerde tehlike bölgesine (ekran altına bir kattan az) girmiş oyuncu bir basamağa konunca bonus; bekleme süresi sık tekrarı önler.
+  if (indi && o.tehlike) {
+    o.tehlike = false;
+    if (o.kilPayiBekle === 0) { o.ek += KIL_PAYI_PUAN; o.kilPayi = 70; o.kilPayiBekle = KIL_PAYI_BEKLE; o.kilPayiSayisi++; parcacikEkle(o.x, o.y, 12, '#5dff6a', 3); }
+  }
+  if (ekranY > KIL_PAYI_SINIR) o.tehlike = true;
 }
 
 function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
@@ -881,6 +895,11 @@ function hudCiz(c, o, en, hayalet = null) {
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı
     const t = 'HIZLANIYOR X' + (Math.floor(kare / SAAT) + 1), g = pikselGenislik(t, 3) + 24;
     if (yanip || o.hizlan < 20) { c.save(); c.globalAlpha = Math.min(1, o.hizlan / 15); panelArcade(c, W / 2 - g / 2, 72, g, 34, KIRMIZI); vur(c, t, W / 2, 80, 3, SARI, 'orta'); c.restore(); }
+  }
+  if (o.kilPayi > 0) { // kıl payı bonusu: ekran altına çok yaklaşıp kurtulunca kısa yeşil yazı ve küçük puan
+    const s = o.kilPayi > 62 ? 4 : 3; c.save(); c.globalAlpha = Math.min(1, o.kilPayi / 15);
+    pikselYaz(c, 'KIL PAYI!', W / 2, 300 - (70 - o.kilPayi) * 0.3, s, yanip ? YESIL : BEYAZ, { hiza: 'orta', cizgi: '#0a3a14', golge: 'rgba(0,0,0,0.9)' });
+    vur(c, '+' + KIL_PAYI_PUAN, W / 2, 300 - (70 - o.kilPayi) * 0.3 + 7 * s + 6, 2, SARI, 'orta'); c.restore();
   }
   if (o.rozet) { // 50 katta kilometre taşı
     const s = o.rozet.olcek || 9, t = o.rozet.metin; c.save(); c.globalAlpha = Math.min(1, o.rozet.guc / 20);
