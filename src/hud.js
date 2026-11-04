@@ -98,8 +98,9 @@ export function hudCiz(c, o, en, hayalet = null) {
     if (Math.floor(o.rozet.guc / 5) % 2 === 0) pikselYaz(c, t, W / 2, 210, s, SARI, { hiza: 'orta', cizgi: '#7a1fff', golge: 'rgba(0,0,0,0.9)' }); else pikselYaz(c, t, W / 2, 210, s, BEYAZ, { hiza: 'orta', cizgi: NEON1, golge: 'rgba(0,0,0,0.9)' });
     c.restore();
   }
-  if (o.mesaj && o.mesaj.guc > 0) { // kombo ödülü: büyük yanıp sönen renkli yazı
+  if (o.mesaj && o.mesaj.guc > 0) { // kombo ödülü: büyük yanıp sönen renkli yazı, altında kombo özeti
     const renk = [SARI, NEON2, NEON1, YESIL][Math.floor(kare / 5) % 4], t = o.mesaj.ad + '!', s = pikselGenislik(t, 5) > 380 ? 3 : 5;
-    c.save(); c.globalAlpha = Math.min(1, o.mesaj.guc / 15); pikselYaz(c, t, W / 2, 140 - (60 - o.mesaj.guc) * 0.35, s, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.9)' }); c.restore();
+    c.save(); c.globalAlpha = Math.min(1, o.mesaj.guc / 15);
+    if (o.mesaj.zip) vur(c, 'KOMBO BITTI: X' + o.mesaj.zip + '  +' + o.mesaj.toplam * o.mesaj.toplam + ' PUAN', W / 2, 140 - (60 - o.mesaj.guc) * 0.35 + 7 * s + 8, 2, BEYAZ, 'orta'); pikselYaz(c, t, W / 2, 140 - (60 - o.mesaj.guc) * 0.35, s, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.9)' }); c.restore();
   }
 }

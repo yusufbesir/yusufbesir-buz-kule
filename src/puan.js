@@ -22,6 +22,6 @@ function bitir(p) {
   const k = p.kombo; p.kombo = null;
   if (!k || k.zip < 2) return null;
   p.bonus += k.toplam * k.toplam;
-  return { ad: odulAdi(k.toplam), toplam: k.toplam };
+  return { ad: odulAdi(k.toplam), toplam: k.toplam, zip: k.zip };
 }
 export const toplam = (p, enYuksekKat) => enYuksekKat * 10 + p.bonus;

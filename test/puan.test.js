@@ -9,7 +9,7 @@ test('ödül eşikleri', () => {
 test('iki kombo zıplaması sonra tek kat bonus verir', () => {
   const p = yeniPuan(); inis(p, 3); inis(p, 4);
   const o = inis(p, 1);
-  assert.deepEqual(o, { ad: 'GÜZEL', toplam: 7 });
+  assert.deepEqual(o, { ad: 'GÜZEL', toplam: 7, zip: 2 });
   assert.equal(toplam(p, 10), 100 + 49);
 });
 test('tek zıplamalı kombo bonus vermez', () => {
