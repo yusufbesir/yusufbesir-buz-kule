@@ -210,9 +210,10 @@ function katUret(kat, rnd = Math.random) {
   return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc, tur };
 }
 
-const CEKIRDEK_B64 = "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";
+const CEKIRDEK_B64 = "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oKCAgABBAEKAgICAgICA+D83A5iggIAAQQBCgICAgICAwKzAADcDkKCAgABBACAEOQOIoICAAEEAQoCAgICAgID4PzcDgKCAgABBAEIANwOooICAAEEAQgA3A7CggIAAQQBCADcDuKCAgAALkwMBA3wCQCAADQBBAEIANwO4oICAAEEAQgA3A7CggIAAQQBCADcDqKCAgABBAEIANwOgoICAAEEAQgA3A5iggIAAQQBCADcDkKCAgABBAEIANwOIoICAAEEAQgA3A4CggIAADwtEAAAAAAAAAAAhBAJAIAJEAAAAAAAA8L+gIgJEAAAAAAAAAABlRQ0ARAAAAAAAAAAAIQJEAAAAAAAAAAAhBUQAAAAAAAAAACEGAkAgA0QAAAAAAAAAQGZFDQAgASABoiEERAAAAAAAAPA/IQIgASEFIAMhBgtBAEIANwOYoICAAEEAQgA3A5CggIAAQQBCADcDiKCAgABBAEIANwOAoICAAEEAIAY5A7iggIAAQQAgBTkDsKCAgABBACACOQOooICAAEEAIAQ5A6CggIAADwtBAEIANwOgoICAAEEAIAM5A5iggIAAQQAgAjkDkKCAgABBACABOQOIoICAAEEAQoCAgICAgID4PzcDgKCAgABBAEIANwOooICAAEEAQgA3A7CggIAAQQBCADcDuKCAgAALrwEBAXwCQEQAAAAAAADwP0QAAAAAAAAAACACG0QAAAAAAADwP0QAAAAAAAAAACABG6EiA0QAAAAAAAAAAGENAAJARGZmZmZmZihAIANEMzMzMzMz0z+iIABEZmZmZmZm5j+iIAAgACADokQAAAAAAAAAAGMboCIAIABEZmZmZmZmKEBkGyIARGZmZmZmZijAY0UNAERmZmZmZmYowCEACyAADwsgAETNzMzMzMzsP6ILNgAgAJogACAARAAAAAAAAAAAYxtEAAAAAAAAAMCiIgBEZmZmZmZmKMAgAERmZmZmZmYowGMbCw==";
 // ---- cekirdek ----
 // description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
+
 
 
 
@@ -233,6 +234,34 @@ function duvarSekmesiC(x, vx) {
   cekirdekIc.duvar_sekmesi(x, vx);
   const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 2);
   return { x: v[0], vx: v[1] };
+}
+// Aşama 2b: puan/kombo. Durum JS nesnesinde (p.kombo, p.bonus) kalır; Rust yalnız kuralı hesaplar.
+function puanUygula(p) {
+  const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 8);
+  p.kombo = v[0] === 1 ? { toplam: v[1], sayac: v[2], zip: v[3] } : null;
+  if (v[4] !== 0) p.bonus += v[4];
+  return v[5] === 1 ? { ad: odulAdi(v[6]), toplam: v[6], zip: v[7] } : null;
+}
+function puanInisC(p, katFarki) {
+  if (!cekirdekIc) return inis(p, katFarki);
+  const k = p.kombo; cekirdekIc.puan_inis(k ? 1 : 0, k ? k.toplam : 0, k ? k.sayac : 0, k ? k.zip : 0, katFarki);
+  return puanUygula(p);
+}
+function puanKareC(p) {
+  if (!cekirdekIc) return kare(p);
+  const k = p.kombo; if (!k) return null;
+  cekirdekIc.puan_kare(1, k.toplam, k.sayac, k.zip);
+  return puanUygula(p);
+}
+function puanSinav() {
+  let s = 777; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const a = yeniPuan(), b = yeniPuan();
+  for (let i = 0; i < 20000; i++) {
+    const kareMi = r() < 0.5, fark = Math.floor(r() * 8) - 2;
+    const ra = kareMi ? puanKareC(a) : puanInisC(a, fark), rb = kareMi ? kare(b) : inis(b, fark);
+    if (!ayni(ra, rb) || !ayni(a, b)) return false;
+  }
+  return true;
 }
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
@@ -255,6 +284,7 @@ function cekirdekYukle(b64) {
     for (const t of [0, 1, 7, 42, 1234, 99999, 2147483647, 4294967295]) for (let n = 0; n < 120; n++)
       if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
     if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
+    if (!puanSinav()) throw new Error('puan uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }
@@ -861,7 +891,7 @@ function adim(o, giris) {
         if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
         buzKirigi(o.x, o.y, 4); // iniş
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+        const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
         if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
           o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
           yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
@@ -879,7 +909,7 @@ function adim(o, giris) {
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
   { const zip = o.puan.kombo ? o.puan.kombo.zip : 0; if (zip !== o.sonZip) { o.sonZip = zip; if (zip > 0) o.komboPuls = 18; } } // kombo yazısı her zıplamada büyür
-  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
+  { const od = puanKareC(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
   for (let n = Math.max(1, taban - 1 - (cekim ? 1 : 0)); n <= taban + 2 + (cekim ? 1 : 0); n++) {

@@ -2,6 +2,7 @@
 import { katUret, KAT_ARALIK } from './kat.js';
 import { katRnd } from './hayalet.js';
 import { yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
+import { yeniPuan, inis, kare, odulAdi } from './puan.js';
 
 let cekirdekIc = null;
 const GUC_AD = [null, 'saat', 'miknatis'], TUR_AD = ['normal', 'kirilgan', 'yay'];
@@ -20,6 +21,34 @@ export function duvarSekmesiC(x, vx) {
   cekirdekIc.duvar_sekmesi(x, vx);
   const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 2);
   return { x: v[0], vx: v[1] };
+}
+// Aşama 2b: puan/kombo. Durum JS nesnesinde (p.kombo, p.bonus) kalır; Rust yalnız kuralı hesaplar.
+function puanUygula(p) {
+  const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 8);
+  p.kombo = v[0] === 1 ? { toplam: v[1], sayac: v[2], zip: v[3] } : null;
+  if (v[4] !== 0) p.bonus += v[4];
+  return v[5] === 1 ? { ad: odulAdi(v[6]), toplam: v[6], zip: v[7] } : null;
+}
+export function puanInisC(p, katFarki) {
+  if (!cekirdekIc) return inis(p, katFarki);
+  const k = p.kombo; cekirdekIc.puan_inis(k ? 1 : 0, k ? k.toplam : 0, k ? k.sayac : 0, k ? k.zip : 0, katFarki);
+  return puanUygula(p);
+}
+export function puanKareC(p) {
+  if (!cekirdekIc) return kare(p);
+  const k = p.kombo; if (!k) return null;
+  cekirdekIc.puan_kare(1, k.toplam, k.sayac, k.zip);
+  return puanUygula(p);
+}
+function puanSinav() {
+  let s = 777; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const a = yeniPuan(), b = yeniPuan();
+  for (let i = 0; i < 20000; i++) {
+    const kareMi = r() < 0.5, fark = Math.floor(r() * 8) - 2;
+    const ra = kareMi ? puanKareC(a) : puanInisC(a, fark), rb = kareMi ? kare(b) : inis(b, fark);
+    if (!ayni(ra, rb) || !ayni(a, b)) return false;
+  }
+  return true;
 }
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
@@ -42,6 +71,7 @@ export function cekirdekYukle(b64) {
     for (const t of [0, 1, 7, 42, 1234, 99999, 2147483647, 4294967295]) for (let n = 0; n < 120; n++)
       if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
     if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
+    if (!puanSinav()) throw new Error('puan uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }

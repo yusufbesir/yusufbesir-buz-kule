@@ -1,11 +1,11 @@
 // description: Oyun döngüsü, fizik hissi (kenar toleransı, coyote süresi, zıplama tamponu), kamera, takla, kristaller, güç öğeleri ve çizim (özgün kod). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
-import { yeniPuan, inis, kare, toplam } from './puan.js';
+import { yeniPuan, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, kirmaSesi } from './ses.js';
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
-import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC } from './cekirdek.js';
+import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC, puanInisC, puanKareC } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
@@ -104,7 +104,7 @@ export function adim(o, giris) {
         if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
         buzKirigi(o.x, o.y, 4); // iniş
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+        const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
         if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
           o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
           yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
@@ -122,7 +122,7 @@ export function adim(o, giris) {
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
   { const zip = o.puan.kombo ? o.puan.kombo.zip : 0; if (zip !== o.sonZip) { o.sonZip = zip; if (zip > 0) o.komboPuls = 18; } } // kombo yazısı her zıplamada büyür
-  { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
+  { const od = puanKareC(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
   for (let n = Math.max(1, taban - 1 - (cekim ? 1 : 0)); n <= taban + 2 + (cekim ? 1 : 0); n++) {

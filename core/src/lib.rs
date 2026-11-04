@@ -120,3 +120,37 @@ pub extern "C" fn duvar_sekmesi(x: f64, vx: f64) {
     let (nx, nvx) = if x < DUVAR_SOL { (DUVAR_SOL, vx * SEKME) } else if x > DUVAR_SAG { (DUVAR_SAG, vx * SEKME) } else { (x, vx) };
     unsafe { let c = &mut *core::ptr::addr_of_mut!(CIKIS); c[0] = nx; c[1] = nvx; }
 }
+
+// ---- Aşama 2b: puan/kombo (src/puan.js ile aynı). Durum JS nesnesinde kalır; çıkış tamponu:
+// [0] kombo var(0/1), [1] toplam, [2] sayac, [3] zip, [4] bonusa eklenecek, [5] ödül var(0/1), [6] ödül toplam, [7] ödül zip
+const KOMBO_KARE: f64 = 100.0;
+
+fn puan_yaz(var: f64, toplam: f64, sayac: f64, zip: f64, bonus: f64, odul: f64, o_toplam: f64, o_zip: f64) {
+    unsafe {
+        let c = &mut *core::ptr::addr_of_mut!(CIKIS);
+        c[0] = var; c[1] = toplam; c[2] = sayac; c[3] = zip; c[4] = bonus; c[5] = odul; c[6] = o_toplam; c[7] = o_zip;
+    }
+}
+
+// kombo kapanışı (bitir): kombo yok edilir; zip >= 2 ise toplam² bonus ve ödül
+fn puan_bitir(var: bool, toplam: f64, zip: f64) {
+    if var && zip >= 2.0 { puan_yaz(0.0, 0.0, 0.0, 0.0, toplam * toplam, 1.0, toplam, zip); } else { puan_yaz(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); }
+}
+
+#[no_mangle]
+pub extern "C" fn puan_inis(var: u32, toplam: f64, sayac: f64, zip: f64, kat_farki: f64) {
+    if kat_farki >= 2.0 {
+        if var != 0 { puan_yaz(1.0, toplam + kat_farki, KOMBO_KARE, zip + 1.0, 0.0, 0.0, 0.0, 0.0); }
+        else { puan_yaz(1.0, kat_farki, KOMBO_KARE, 1.0, 0.0, 0.0, 0.0, 0.0); }
+    } else {
+        let _ = sayac;
+        puan_bitir(var != 0, toplam, zip);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn puan_kare(var: u32, toplam: f64, sayac: f64, zip: f64) {
+    if var == 0 { puan_yaz(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); return; }
+    let s = sayac - 1.0;
+    if s <= 0.0 { puan_bitir(true, toplam, zip); } else { puan_yaz(1.0, toplam, s, zip, 0.0, 0.0, 0.0, 0.0); }
+}
