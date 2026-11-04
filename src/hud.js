@@ -1,9 +1,12 @@
 // description: Buz Kule oyun içi HUD: klasik arcade makinesi görünümü (piksel yazı, neon çerçeve, parçalı çubuklar, yanıp sönen uyarılar); oyuncu üst kenara yaklaşınca solar. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
+// Kombo kapanış patlaması (yalnız görünüm): yeni bir kombo ödülü mesajı görülünce kombo renginde ışınlar ve parçacıklar saçılır,
+// "+N" etiketi skor alanına uçar, varınca skor kısa süre beyaz yanar. Azaltılmış harekette uçuş yok, yalnız skor vurgusu. Simülasyona dokunmaz.
 import { W, SAAT, skor, katY, KIL_PAYI_PUAN } from './oyun.js';
 import { AYAR } from './ayar.js';
 import { BILDIRIM } from './basarim.js';
 import { pikselYaz, pikselGenislik } from './piksel.js';
+import { kapanisEkle, kapanisCiz, kapanisNokta } from './gorsel.js';
 
 const ARKA = 'rgba(8,6,28,0.78)', NEON1 = '#ff3df2', NEON2 = '#2de6ff', SARI = '#ffd62e', KIRMIZI = '#ff4d4d', YESIL = '#5dff6a', BEYAZ = '#ffffff', SOLUK = '#9aa6d6';
 const sifirli = (n, adet) => String(Math.max(0, Math.floor(n))).padStart(adet, '0');
@@ -31,15 +34,41 @@ const pikselKristal = (c, x, y, s = 2) => { // 7x9 hücrelik elmas
   satir.forEach((r, j) => [...r].forEach((h, i) => { if (h === '#') { c.fillStyle = i < 2 && j > 1 ? '#7B5CC4' : j < 2 ? '#e8fbff' : '#8de8ff'; c.fillRect(x + i * s, y + j * s, s, s); } }));
 };
 
+// ---- Kombo kapanış patlaması durumu (HUD'a özel, çizim karesiyle ilerler) ----
+let sonKapanis = null, kapanisEtiket = null, skorVurgu = 0;
+const komboRengi = (zip) => (zip >= 6 ? NEON1 : zip >= 4 ? NEON2 : SARI); // kombo yazısıyla aynı renk basamakları
+export const kapanisGorunum = () => ({ etiket: !!kapanisEtiket, vurgu: skorVurgu }); // testler için
+function kapanisBaslat(m) {
+  const renk = komboRengi(m.zip), x0 = W / 2, y0 = 186, x1 = 100 + pikselGenislik('0000000', 2) / 2, y1 = 27; // kaynak: "KOMBO BITTI" satırı; hedef: skor sayısı
+  if (AYAR.azaltilmisHareket) { skorVurgu = 14; return; }
+  kapanisEkle(x0, y0, x1, y1, 16, renk);
+  kapanisEtiket = { metin: '+' + m.toplam * m.toplam, renk, t: 0, isin: 12, p: { x0, y0, cx: x0 + 40, cy: y0 - 90, x1, y1 } };
+}
+function kapanisCizHud(c) {
+  kapanisCiz(c);
+  const e = kapanisEtiket; if (!e) return;
+  e.t += 1 / 40;
+  if (e.isin > 0 && AYAR.parilti > 0.05) { // kaynaktan dışa açılan kısa ışınlar
+    const k = e.isin / 12; c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(1, AYAR.parilti) * 0.7 * k; c.strokeStyle = e.renk; c.lineWidth = 2;
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + 0.3, r0 = (1 - k) * 60 + 10, r1 = r0 + 26 + 30 * (1 - k); c.beginPath(); c.moveTo(e.p.x0 + Math.cos(a) * r0, e.p.y0 + Math.sin(a) * r0); c.lineTo(e.p.x0 + Math.cos(a) * r1, e.p.y0 + Math.sin(a) * r1); c.stroke(); }
+    c.restore(); e.isin--;
+  }
+  if (e.t >= 1) { kapanisEtiket = null; skorVurgu = 14; return; } // vardı: skor yanar
+  const n = kapanisNokta(e.p, e.t); c.save(); c.globalAlpha = e.t > 0.85 ? (1 - e.t) / 0.15 : 1;
+  pikselYaz(c, e.metin, n.x, n.y, 2, e.renk, { hiza: 'orta', golge: 'rgba(0,0,0,0.85)' }); c.restore();
+}
+
 export function hudCiz(c, o, en, hayalet = null) {
   const kare = o.kare, yanip = (Math.floor(kare / 12) % 2) === 0;
+  if (o.mesaj !== sonKapanis) { sonKapanis = o.mesaj; if (o.mesaj && o.mesaj.zip) kapanisBaslat(o.mesaj); } // her kombo kapanışında bir kez
+  if (skorVurgu > 0) skorVurgu--;
   // Oyuncu ekranın üst kısmındayken (yukarı zıplama) ana şerit neredeyse görünmez olur, görüşü kapatmaz.
   const ekranY = o.y - o.kamY, gorunur = Math.max(0.14, Math.min(1, (ekranY - 70) / 150)) * Math.min(1.1, AYAR.hud);
   if (AYAR.hud > 0.02) {
     c.save(); c.globalAlpha = Math.min(1, gorunur);
     // ana şerit: SKOR | REKOR | KAT
     panelArcade(c, 92, 6, 456, 34, NEON1);
-    vur(c, '1UP', 100, 10, 1, yanip ? KIRMIZI : '#7a2b2b'); vur(c, sifirli(skor(o), 7), 100, 20, 2, SARI);
+    vur(c, '1UP', 100, 10, 1, yanip ? KIRMIZI : '#7a2b2b'); vur(c, sifirli(skor(o), 7), 100, 20, 2, skorVurgu > 0 ? BEYAZ : SARI);
     vur(c, 'REKOR', 320, 10, 1, SOLUK, 'orta'); vur(c, sifirli(Math.max(en, skor(o)), 7), 320, 20, 2, NEON2, 'orta');
     vur(c, 'KAT', 540, 10, 1, SOLUK, 'sag'); vur(c, sifirli(o.enYuksek, 3), 540, 20, 2, YESIL, 'sag');
     // ikinci satır: kristal sayacı, hayalet, güç öğeleri
@@ -108,4 +137,5 @@ export function hudCiz(c, o, en, hayalet = null) {
     c.save(); c.globalAlpha = Math.min(1, o.mesaj.guc / 15);
     if (o.mesaj.zip) vur(c, 'KOMBO BITTI: X' + o.mesaj.zip + '  +' + o.mesaj.toplam * o.mesaj.toplam + ' PUAN', W / 2, 140 - (60 - o.mesaj.guc) * 0.35 + 7 * s + 8, 2, BEYAZ, 'orta'); pikselYaz(c, t, W / 2, 140 - (60 - o.mesaj.guc) * 0.35, s, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.9)' }); c.restore();
   }
+  kapanisCizHud(c); // kombo kapanış patlaması: parçacıklar, ışınlar ve skora uçan "+N" etiketi (en üstte)
 }

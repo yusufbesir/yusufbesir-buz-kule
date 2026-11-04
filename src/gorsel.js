@@ -301,3 +301,39 @@ export function parcacikCiz(c, kamY) {
   c.restore(); c.globalAlpha = 1;
 }
 export const parcacikSifirla = () => { par.length = 0; };
+
+// Kombo kapanış uçuşu (yalnız görünüm): kombo bitince biriken bonusu temsil eden parçacıklar ekran uzayında (kameradan bağımsız)
+// önce dışa saçılır, sonra eğri bir yolla skor alanına uçar. Sayı AYAR.parcacik ile ölçeklenir; azaltılmış harekette hiç üretilmez.
+// Oyun durumunu okumaz ve değiştirmez; hud.js tetikler ve çizer.
+const kapanisPar = [];
+export const KAPANIS_OMUR = 34; // bir parçacığın uçuş süresi (çizim karesi)
+export function kapanisEkle(x0, y0, x1, y1, adet, renk) {
+  if (AYAR.azaltilmisHareket) return 0;
+  const say = Math.round(adet * AYAR.parcacik);
+  for (let i = 0; i < say; i++) {
+    const a = Math.random() * Math.PI * 2, r = 40 + Math.random() * 70; // kontrol noktası dışarıda: saçıl, sonra topla
+    kapanisPar.push({ x0, y0, cx: x0 + Math.cos(a) * r, cy: y0 + Math.sin(a) * r - 20, x1, y1, t: -Math.random() * 0.35, renk, boy: 2 + Math.random() * 2.5 });
+  }
+  return say;
+}
+export function kapanisAdim() { // bir çizim karesi ilerletir; kalan parçacık sayısını döner
+  for (let i = kapanisPar.length - 1; i >= 0; i--) { const p = kapanisPar[i]; p.t += 1 / KAPANIS_OMUR; if (p.t >= 1) kapanisPar.splice(i, 1); }
+  return kapanisPar.length;
+}
+export const kapanisSay = () => kapanisPar.length;
+export const kapanisSifirla = () => { kapanisPar.length = 0; };
+export function kapanisNokta(p, t) { // yumuşatılmış kuadratik Bezier: (x0,y0) → (cx,cy) → (x1,y1)
+  const u = Math.max(0, Math.min(1, t)), s = u * u * (3 - 2 * u), v = 1 - s;
+  return { x: v * v * p.x0 + 2 * v * s * p.cx + s * s * p.x1, y: v * v * p.y0 + 2 * v * s * p.cy + s * s * p.y1 };
+}
+export function kapanisCiz(c) {
+  kapanisAdim();
+  if (!kapanisPar.length) return;
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (const p of kapanisPar) {
+    if (p.t < 0) continue; // gecikmeli başlar
+    const n = kapanisNokta(p, p.t), a = p.t < 0.15 ? p.t / 0.15 : 1 - Math.max(0, (p.t - 0.8) / 0.2);
+    c.globalAlpha = Math.max(0, Math.min(1, a)) * 0.95; c.fillStyle = p.renk; c.beginPath(); c.arc(n.x, n.y, p.boy * (1.2 - p.t * 0.6), 0, 7); c.fill();
+  }
+  c.restore(); c.globalAlpha = 1;
+}
