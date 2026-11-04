@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "Kode tidak valid",
  "j_ozet_kopyala": "Salin ringkasan",
  "j_kopyalandi": "Disalin",
- "j_ozet_metin": "Menara Es: lantai {k}, {s} poin, kombo terbaik {c}, kode menara {kod}"
+ "j_ozet_metin": "Menara Es: lantai {k}, {s} poin, kombo terbaik {c}, kode menara {kod}",
+ "j_kuleler": "Menara",
+ "j_kule_buz": "Menara Es",
+ "j_kule_kor": "Menara Bara",
+ "j_kule_run": "Menara Rune",
+ "j_kule_kum": "Menara Pasir",
+ "j_kule_yildiz": "Menara Bintang",
+ "j_kule_basarim": "Pencapaian: {ad}",
+ "j_kule_fiyat": "Buka dengan {n} ◆",
+ "j_kule_kilidi": "Kunci menara",
+ "j_kule_ipucu": "Menara hanya mengubah tampilan; setiap menara punya papan skor sendiri. Kunci bisa dimatikan di Pengaturan."
 }

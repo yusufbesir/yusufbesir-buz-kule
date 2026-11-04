@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "代码无效",
  "j_ozet_kopyala": "复制摘要",
  "j_kopyalandi": "已复制",
- "j_ozet_metin": "冰塔：第{k}层，{s}分，最佳连击{c}，塔码{kod}"
+ "j_ozet_metin": "冰塔：第{k}层，{s}分，最佳连击{c}，塔码{kod}",
+ "j_kuleler": "塔楼",
+ "j_kule_buz": "冰霜塔",
+ "j_kule_kor": "余烬塔",
+ "j_kule_run": "符文塔",
+ "j_kule_kum": "沙之塔",
+ "j_kule_yildiz": "星辰塔",
+ "j_kule_basarim": "成就：{ad}",
+ "j_kule_fiyat": "以 {n} ◆ 解锁",
+ "j_kule_kilidi": "塔楼锁定",
+ "j_kule_ipucu": "塔楼只改变外观；每座塔都有独立的排行榜。可在设置中关闭锁定。"
 }

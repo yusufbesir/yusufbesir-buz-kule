@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "Code invalide",
  "j_ozet_kopyala": "Copier le résumé",
  "j_kopyalandi": "Copié",
- "j_ozet_metin": "Buz Kule : étage {k}, {s} points, meilleur combo {c}, code de la tour {kod}"
+ "j_ozet_metin": "Buz Kule : étage {k}, {s} points, meilleur combo {c}, code de la tour {kod}",
+ "j_kuleler": "Tours",
+ "j_kule_buz": "Tour de Glace",
+ "j_kule_kor": "Tour des Braises",
+ "j_kule_run": "Tour des Runes",
+ "j_kule_kum": "Tour de Sable",
+ "j_kule_yildiz": "Tour Étoilée",
+ "j_kule_basarim": "Succès : {ad}",
+ "j_kule_fiyat": "Débloquer pour {n} ◆",
+ "j_kule_kilidi": "Verrous des tours",
+ "j_kule_ipucu": "Les tours changent seulement l'apparence ; chacune a son propre tableau des scores. Vous pouvez désactiver les verrous dans les Paramètres."
 }

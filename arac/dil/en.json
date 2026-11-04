@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "Invalid code",
  "j_ozet_kopyala": "Copy summary",
  "j_kopyalandi": "Copied",
- "j_ozet_metin": "Ice Tower: floor {k}, {s} points, best combo {c}, tower code {kod}"
+ "j_ozet_metin": "Ice Tower: floor {k}, {s} points, best combo {c}, tower code {kod}",
+ "j_kuleler": "Towers",
+ "j_kule_buz": "Ice Tower",
+ "j_kule_kor": "Ember Tower",
+ "j_kule_run": "Rune Tower",
+ "j_kule_kum": "Sand Tower",
+ "j_kule_yildiz": "Star Tower",
+ "j_kule_basarim": "Achievement: {ad}",
+ "j_kule_fiyat": "Unlock for {n} ◆",
+ "j_kule_kilidi": "Tower locks",
+ "j_kule_ipucu": "Towers only change the look; each tower has its own scoreboard. You can turn locks off in Settings."
 }

@@ -151,5 +151,15 @@
  "j_ozet_kopyala": "Özeti kopyala",
  "j_kopyalandi": "Kopyalandı",
  "j_ozet_metin": "Buz Kule: {k}. kat, {s} puan, en büyük kombo {c}, kule kodu {kod}",
- "hud_mukemmel": "MUKEMMEL"
+ "hud_mukemmel": "MUKEMMEL",
+ "j_kuleler": "Kuleler",
+ "j_kule_buz": "Buz Kulesi",
+ "j_kule_kor": "Kor Kulesi",
+ "j_kule_run": "Rün Kulesi",
+ "j_kule_kum": "Kum Kulesi",
+ "j_kule_yildiz": "Yıldız Kulesi",
+ "j_kule_basarim": "Başarım: {ad}",
+ "j_kule_fiyat": "{n} ◆ ile aç",
+ "j_kule_kilidi": "Kule kilitleri",
+ "j_kule_ipucu": "Kuleler yalnız görünümü değiştirir; her kulenin skor tablosu ayrıdır. Kilitleri Ayarlar'dan kapatabilirsin."
 }

@@ -38,6 +38,13 @@ let akis = 0;
 export const akisDegeri = () => akis;
 export const akisSifirla = () => { akis = 0; };
 
+// Kule konsepti tonu (yalnız görünüm): tüm sahneye 'color' karışımı + isteğe bağlı koyulaştırma; tint null ise (Buz Kulesi) hiçbir şey yapmaz.
+export function kuleTint(c, W, H, tint) {
+  if (!tint) return;
+  c.save(); c.globalCompositeOperation = 'color'; c.globalAlpha = tint.a; c.fillStyle = 'hsl(' + tint.h + ',' + tint.s + '%,' + tint.l + '%)'; c.fillRect(0, 0, W, H);
+  if (tint.karart) { c.globalCompositeOperation = 'multiply'; c.globalAlpha = tint.karart; c.fillStyle = '#14102a'; c.fillRect(0, 0, W, H); }
+  c.restore();
+}
 export function arkaPlan(c, W, H, kamY, kat, akisHedef = 0) {
   if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
   akis += (akisHedef - akis) * (akisHedef > akis ? 0.04 : 0.025); // giriş biraz hızlı, çıkış daha yumuşak

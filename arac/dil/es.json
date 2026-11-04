@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "Código no válido",
  "j_ozet_kopyala": "Copiar resumen",
  "j_kopyalandi": "Copiado",
- "j_ozet_metin": "Torre de Hielo: piso {k}, {s} puntos, mejor combo {c}, código de torre {kod}"
+ "j_ozet_metin": "Torre de Hielo: piso {k}, {s} puntos, mejor combo {c}, código de torre {kod}",
+ "j_kuleler": "Torres",
+ "j_kule_buz": "Torre de Hielo",
+ "j_kule_kor": "Torre de Brasas",
+ "j_kule_run": "Torre de Runas",
+ "j_kule_kum": "Torre de Arena",
+ "j_kule_yildiz": "Torre Estelar",
+ "j_kule_basarim": "Logro: {ad}",
+ "j_kule_fiyat": "Desbloquear por {n} ◆",
+ "j_kule_kilidi": "Cerrojos de torres",
+ "j_kule_ipucu": "Las torres solo cambian el aspecto; cada una tiene su propia tabla de puntuaciones. Puedes desactivar los cerrojos en Ajustes."
 }

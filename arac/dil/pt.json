@@ -151,5 +151,15 @@
  "j_kod_gecersiz": "Código inválido",
  "j_ozet_kopyala": "Copiar resumo",
  "j_kopyalandi": "Copiado",
- "j_ozet_metin": "Buz Kule: andar {k}, {s} pontos, melhor combo {c}, código da torre {kod}"
+ "j_ozet_metin": "Buz Kule: andar {k}, {s} pontos, melhor combo {c}, código da torre {kod}",
+ "j_kuleler": "Torres",
+ "j_kule_buz": "Torre de Gelo",
+ "j_kule_kor": "Torre de Brasas",
+ "j_kule_run": "Torre de Runas",
+ "j_kule_kum": "Torre de Areia",
+ "j_kule_yildiz": "Torre Estelar",
+ "j_kule_basarim": "Conquista: {ad}",
+ "j_kule_fiyat": "Desbloquear por {n} ◆",
+ "j_kule_kilidi": "Travas das torres",
+ "j_kule_ipucu": "As torres mudam apenas a aparência; cada uma tem seu próprio placar. Você pode desligar as travas em Configurações."
 }
