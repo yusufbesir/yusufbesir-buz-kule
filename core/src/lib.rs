@@ -78,3 +78,45 @@ pub extern "C" fn kat_uret(tohum: u32, n: u32) {
         c[8] = tur;
     }
 }
+
+// ---- Aşama 2: fizik (src/fizik.js ile bit düzeyinde aynı; yalnız + − × ÷ ve karşılaştırma) ----
+const MAKS_VX: f64 = 12.2;
+const MAKS_DUSME: f64 = 12.2;
+const YERCEKIMI: f64 = 0.8;
+const SURTUNME: f64 = 0.9;
+const IVME: f64 = 0.3;
+const TERS_YON_CARPAN: f64 = 0.7;
+const DUVAR_SOL: f64 = 85.0;
+const DUVAR_SAG: f64 = 555.0;
+const SEKME: f64 = -0.9;
+
+#[inline]
+fn kucuk(a: f64, b: f64) -> f64 { if a < b { a } else { b } } // Math.min (NaN gelmez)
+#[inline]
+fn buyuk(a: f64, b: f64) -> f64 { if a > b { a } else { b } } // Math.max
+
+#[no_mangle]
+pub extern "C" fn yatay_guncelle(vx: f64, sol: u32, sag: u32) -> f64 {
+    let dir = (if sag != 0 { 1.0 } else { 0.0 }) - (if sol != 0 { 1.0 } else { 0.0 });
+    if dir == 0.0 { return vx * SURTUNME; }
+    let mut v = vx;
+    if v * dir < 0.0 { v *= TERS_YON_CARPAN; }
+    v += dir * IVME;
+    buyuk(-MAKS_VX, kucuk(MAKS_VX, v))
+}
+
+#[no_mangle]
+pub extern "C" fn zipla(vx: f64) -> f64 {
+    let m = if vx < 0.0 { -vx } else { vx }; // Math.abs
+    kucuk(-2.0 * m, -MAKS_VX)
+}
+
+#[no_mangle]
+pub extern "C" fn dikey_guncelle(vy: f64) -> f64 { kucuk(vy + YERCEKIMI, MAKS_DUSME) }
+
+// Sonuç çıkış tamponunda: [0] = x, [1] = vx
+#[no_mangle]
+pub extern "C" fn duvar_sekmesi(x: f64, vx: f64) {
+    let (nx, nvx) = if x < DUVAR_SOL { (DUVAR_SOL, vx * SEKME) } else if x > DUVAR_SAG { (DUVAR_SAG, vx * SEKME) } else { (x, vx) };
+    unsafe { let c = &mut *core::ptr::addr_of_mut!(CIKIS); c[0] = nx; c[1] = nvx; }
+}

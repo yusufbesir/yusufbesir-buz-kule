@@ -1,12 +1,11 @@
 // description: Oyun döngüsü, fizik hissi (kenar toleransı, coyote süresi, zıplama tamponu), kamera, takla, kristaller, güç öğeleri ve çizim (özgün kod). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
-import { yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
 import { katUret, KARO, KAT_ARALIK } from './kat.js';
 import { yeniPuan, inis, kare, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, kirmaSesi } from './ses.js';
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
-import { katUretTohum } from './cekirdek.js';
+import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
@@ -49,7 +48,7 @@ const kristalKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * K
 const gucKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 40 });
 
 function zipladi(o) {
-  o.vy = zipla(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
+  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
   o.donuyor = Math.abs(o.vy) >= TAKLA_HIZI; o.aci = 0;
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
@@ -73,7 +72,7 @@ export function adim(o, giris) {
   if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   if (o.kilPayi > 0) o.kilPayi--; if (o.kilPayiBekle > 0) o.kilPayiBekle--;
   let indi = false; // bu karede bir basamağa konuldu mu (kıl payı denetimi için)
-  o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
+  o.vx = yatayGuncelleC(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
   if (basildi) o.tampon = TAMPON; else if (o.tampon > 0) o.tampon--;
@@ -83,10 +82,10 @@ export function adim(o, giris) {
   const eskiX = o.x;
   o.x += o.vx;
   const vxOnce = o.vx;
-  ({ x: o.x, vx: o.vx } = duvarSekmesi(o.x, o.vx));
+  ({ x: o.x, vx: o.vx } = duvarSekmesiC(o.x, o.vx));
   if (vxOnce !== 0 && Math.sign(o.vx) !== Math.sign(vxOnce)) buzKirigi(o.x, o.y - 24, 5); // duvar sekmesi
   const eskiY = o.y;
-  if (o.havada) { o.vy = dikeyGuncelle(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
+  if (o.havada) { o.vy = dikeyGuncelleC(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
   if (o.havada && o.vy >= 0) {
     for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {

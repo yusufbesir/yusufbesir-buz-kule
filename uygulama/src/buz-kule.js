@@ -210,9 +210,10 @@ function katUret(kat, rnd = Math.random) {
   return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc, tur };
 }
 
-const CEKIRDEK_B64 = "AGFzbQEAAAABCgJgAAF/YAJ/fwADAwIAAQUDAQABBgcBfwFBgCALByQDBmJlbGxlawIADGNpa2lzX2FkcmVzaQAACGthdF91cmV0AAEKsggCCABBgKCAgAALpggFAn8BfAF+An8BfCABQTJwIQIgAUGx893xeWxBsfPd8XlqIABzIQMCQAJAAkACQCABRQ0AIAINAEEeIQJEAAAAAAAAFEAhBAwBC0QAAAAAAADwP0QAAAAAAADwP0QAAAAAAMByQCABuKFEAAAAAAAAPkCjRAAAAAAAAOA/oCIE/AciBbogBVAbIAREAAAAAAAAAABjGyADQfXzrekGaiIAQQ92IABzIABBAXJsIgJBB3YgAnMgAkE9cmwgAmogAnMiAkEOdiACc7hEAAAAAAAA8D2iovwHuvwDQQZqIQZBHiECQR4hBwJAIAFB5ABJDQBBAiEHIAFB8wNLDQBBBiABQf//A3FB5ABuayEHC0QAAAAAAAAUQCEEAkAgBiAHIAYgB0kbIgdBHkYNACADQern29J9aiIAQQ92IABzIABBAXJsIgNBB3YgA3MgA0E9cmwgA2ogA3MiA0EOdiADc7hEAAAAAAAA8D2iIAdBAiAHQQJLGyICQR9zuKL8B7r8A0EFarghBAsgAUUNASAAIQMLIANB9fOt6QZqIgBBD3YgAHMgAEEBcmwiA0EHdiADcyADQT1ybCADaiADcyIDQQ52IANzuEQAAAAAAADwPaJEMzMzMzMz0z9jIQMMAQtBACEDCwJAAkACQCABQQ5LDQAgASABQXZqIAFBCkkbIQcMAQsgAUEKcCIHRQ0AIAJBHUsNAEEAIAQ5A4iggIAAQQAgArg5A5CggIAAQQAgAbg5A4CggIAARAAAAAAAAAAAIQhEAAAAAAAA8D9EAAAAAAAAAEBEAAAAAAAAAAAgAEHf24m8BGoiAkEPdiACcyACQQFybCICQQd2IAJzIAJBPXJsIAJqIAJzIgJBDnYgAnO4RAAAAAAAAPA9oiIEROxRuB6F68E/YxsgBER7FK5H4Xq0P2MbIQQMAQtBACAEOQOIoICAAEEAIAK4OQOQoICAAEEAIAG4OQOAoICAAEQAAAAAAAAAACEERAAAAAAAAAAARAAAAAAAAPA/IAcbIQgLQQAgBDkDwKCAgABBACAIOQOYoICAAEEAIAFB5ABuuDkDoKCAgABBAEQAAAAAAADwP0QAAAAAAAAAACADQQFxIgIbOQOooICAAEEAIABB9fOt6QZqIgNBD3YgA3MgA0EBcmwiA0EHdiADcyADQT1ybCADaiADcyIDQQ52IANzuEQAAAAAAADwPaI5A7CggIAAQQBEAAAAAAAAAABEAAAAAAAAAABEAAAAAAAA8D9EAAAAAAAAAEAgAEHq59vSfWoiAEEPdiAAcyAAQQFybCIAQQd2IABzIABBPXJsIABqIABzIgBBDnYgAHO4RAAAAAAAAPA9oiIEROxRuB6F66E/YxtEAAAAAAAAAAAgBETsUbgeheuxP2MbIAIbIAFBBUkbOQO4oICAAAs=";
+const CEKIRDEK_B64 = "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";
 // ---- cekirdek ----
 // description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
+
 
 
 let cekirdekIc = null;
@@ -223,6 +224,27 @@ const rustKat = (tohum, n) => {
   return { kat: v[0], y: -v[0] * KAT_ARALIK, xKaro: v[1], genislikKaro: v[2], no: v[3] === 1, tema: v[4], kristal: v[5] === 1, kristalX: v[6], guc: GUC_AD[v[7]], tur: TUR_AD[v[8]] };
 };
 const ayni = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// Aşama 2: fizik. Rust çekirdeği varsa onunla, yoksa src/fizik.js ile (aynı sonuç).
+const yatayGuncelleC = (vx, sol, sag) => (cekirdekIc ? cekirdekIc.yatay_guncelle(vx, sol ? 1 : 0, sag ? 1 : 0) : yatayGuncelle(vx, sol, sag));
+const ziplaC = (vx) => (cekirdekIc ? cekirdekIc.zipla(vx) : zipla(vx));
+const dikeyGuncelleC = (vy) => (cekirdekIc ? cekirdekIc.dikey_guncelle(vy) : dikeyGuncelle(vy));
+function duvarSekmesiC(x, vx) {
+  if (!cekirdekIc) return duvarSekmesi(x, vx);
+  cekirdekIc.duvar_sekmesi(x, vx);
+  const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 2);
+  return { x: v[0], vx: v[1] };
+}
+// Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
+function fizikSinav() {
+  let s = 12345; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 3000; i++) {
+    const vx = (r() - 0.5) * 30, vy = (r() - 0.5) * 40, x = 60 + r() * 520, sol = r() < 0.4, sag = r() < 0.4;
+    if (!Object.is(yatayGuncelleC(vx, sol, sag), yatayGuncelle(vx, sol, sag)) || !Object.is(ziplaC(vx), zipla(vx)) || !Object.is(dikeyGuncelleC(vy), dikeyGuncelle(vy))) return false;
+    const a = duvarSekmesiC(x, vx), b = duvarSekmesi(x, vx);
+    if (!Object.is(a.x, b.x) || !Object.is(a.vx, b.vx)) return false;
+  }
+  return true;
+}
 
 // Baytlardan çekirdeği kurar (küçük modül, eşzamanlı derlenir). Kendi kendine sınav: 8 tohum x 120 kat JS ile birebir aynı olmalı, değilse kapatılır.
 function cekirdekYukle(b64) {
@@ -232,6 +254,7 @@ function cekirdekYukle(b64) {
     cekirdekIc = new WebAssembly.Instance(new WebAssembly.Module(bayt), {}).exports;
     for (const t of [0, 1, 7, 42, 1234, 99999, 2147483647, 4294967295]) for (let n = 0; n < 120; n++)
       if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
+    if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }
@@ -743,7 +766,6 @@ function kapanisCiz(c) {
 
 
 
-
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
@@ -783,7 +805,7 @@ const kristalKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * K
 const gucKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 40 });
 
 function zipladi(o) {
-  o.vy = zipla(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
+  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
   o.donuyor = Math.abs(o.vy) >= TAKLA_HIZI; o.aci = 0;
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
@@ -807,7 +829,7 @@ function adim(o, giris) {
   if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   if (o.kilPayi > 0) o.kilPayi--; if (o.kilPayiBekle > 0) o.kilPayiBekle--;
   let indi = false; // bu karede bir basamağa konuldu mu (kıl payı denetimi için)
-  o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
+  o.vx = yatayGuncelleC(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
   if (basildi) o.tampon = TAMPON; else if (o.tampon > 0) o.tampon--;
@@ -817,10 +839,10 @@ function adim(o, giris) {
   const eskiX = o.x;
   o.x += o.vx;
   const vxOnce = o.vx;
-  ({ x: o.x, vx: o.vx } = duvarSekmesi(o.x, o.vx));
+  ({ x: o.x, vx: o.vx } = duvarSekmesiC(o.x, o.vx));
   if (vxOnce !== 0 && Math.sign(o.vx) !== Math.sign(vxOnce)) buzKirigi(o.x, o.y - 24, 5); // duvar sekmesi
   const eskiY = o.y;
-  if (o.havada) { o.vy = dikeyGuncelle(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
+  if (o.havada) { o.vy = dikeyGuncelleC(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
   if (o.havada && o.vy >= 0) {
     for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
