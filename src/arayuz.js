@@ -9,7 +9,8 @@ import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
 const kimlik = (a) => document.getElementById(a);
-const tuval = kimlik('c'), c = tuval.getContext('2d', { alpha: false }); // arka plan her karede tam opak çizilir (gorsel.js arkaPlan fillRect) -> alfa kanalı gereksiz const k = {};
+const tuval = kimlik('c'), c = tuval.getContext('2d', { alpha: false }); // arka plan her karede tam opak çizilir (gorsel.js arkaPlan fillRect) -> alfa kanalı gereksiz
+const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
 let olcek = 1;
 function boyutla() {

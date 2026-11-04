@@ -17,7 +17,7 @@ function ortam() {
     getContext: () => ctx, getBoundingClientRect: () => ({ width: 640, height: 480 }), appendChild() {}, width: 640, height: 480,
   };
   const kutu = {
-    document: { getElementById: eleman, createElement: () => eleman('yeni' + Object.keys(elemanlar).length), activeElement: null },
+    document: { getElementById: eleman, createElement: () => eleman('yeni' + Object.keys(elemanlar).length), activeElement: null, addEventListener() {}, hidden: false },
     addEventListener: (ad, f) => { (dinleyiciler[ad] ||= []).push(f); },
     requestAnimationFrame: (f) => { kareler.push(f); },
     localStorage: { getItem: () => null, setItem() {} },

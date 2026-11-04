@@ -142,12 +142,13 @@ function kayitEkle(k, g) {
   const b = girisBit(g); k.kare++;
   if (b === k.son) k.sayi++; else { if (k.sayi) k.kosu.push(k.son, k.sayi); k.son = b; k.sayi = 1; }
 }
-function kayitBitir(k, tohum, skor, kat) { const kosu = k.kosu.slice(); if (k.sayi) kosu.push(k.son, k.sayi); return { tohum, kosu, skor, kat, kare: k.kare }; }
+const KAYIT_SURUM = 1; // kayıt biçimi sürümü; v alanı olmayan eski kayıtlar sürüm 1 sayılır, bilinmeyen sürüm reddedilir
+function kayitBitir(k, tohum, skor, kat) { const kosu = k.kosu.slice(); if (k.sayi) kosu.push(k.son, k.sayi); return { v: KAYIT_SURUM, tohum, kosu, skor, kat, kare: k.kare }; }
 function kayitCoz(kayit) { // kare kare giriş bitleri dizisi
   const out = []; for (let i = 0; i + 1 < kayit.kosu.length; i += 2) for (let j = 0; j < kayit.kosu[i + 1]; j++) out.push(kayit.kosu[i]); return out;
 }
 function kayitGecerli(k) {
-  return !!k && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
+  return !!k && (k.v === undefined || k.v === KAYIT_SURUM) && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
     && k.kosu.every((v, i) => Number.isInteger(v) && v >= 0 && (i % 2 === 0 ? v <= 7 : v >= 1 && v <= 200000)) // çift: giriş bitleri, tek: tekrar sayısı
     && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
@@ -710,6 +711,7 @@ function kapanisCiz(c) {
 
 
 
+
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
@@ -754,6 +756,14 @@ function zipladi(o) {
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
 
+// Buz kıymığı (yalnız görünüm): açık mavi/beyaz parçacıklar; durumu okumaz/değiştirmez, azaltılmış harekette üretilmez.
+function buzKirigi(x, y, adet) {
+  if (AYAR.azaltilmisHareket) return;
+  parcacikEkle(x, y, adet, '#e8f8ff', 2.2); parcacikEkle(x, y, adet, '#8fd0ff', 2.8);
+}
+// Her 100. katta kule tabelası metni (yalnız görünüm); diğer katlarda null.
+const katTabelasi = (n) => (n > 0 && n % 100 === 0 ? 'KAT ' + n : null);
+
 const KAM_YUMUSAK = 0.22; // yukarı kamera yaklaşma oranı (kare başına)
 
 function adim(o, giris) {
@@ -774,7 +784,9 @@ function adim(o, giris) {
   if ((yerde || kenardaCoyote) && (giris.zipla || o.tampon > 0)) zipladi(o);
   const eskiX = o.x;
   o.x += o.vx;
+  const vxOnce = o.vx;
   ({ x: o.x, vx: o.vx } = duvarSekmesi(o.x, o.vx));
+  if (vxOnce !== 0 && Math.sign(o.vx) !== Math.sign(vxOnce)) buzKirigi(o.x, o.y - 24, 5); // duvar sekmesi
   const eskiY = o.y;
   if (o.havada) { o.vy = dikeyGuncelle(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
@@ -793,6 +805,7 @@ function adim(o, giris) {
         if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
         if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
         if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
+        buzKirigi(o.x, o.y, 4); // iniş
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
         const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
         if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
@@ -861,6 +874,8 @@ function ciz(c, o, hayalet = null) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
     if (n === 0) platform(c, 85, sy, 470, 0, true, 0);
     else if (!o.kirik.has(n)) platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n, f.tur, o.sayacKat === n ? o.sayac / KIRILMA : 0);
+    const tab = katTabelasi(n);
+    if (tab) pikselYaz(c, tab, 85 + (f.xKaro - 5) * KARO - 8, sy - 8, 2, '#dff6ff', { hiza: 'sag', golge: 'rgba(0,0,0,0.85)' });
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
@@ -1146,7 +1161,8 @@ function hudCiz(c, o, en, hayalet = null) {
 
 
 const kimlik = (a) => document.getElementById(a);
-const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
+const tuval = kimlik('c'), c = tuval.getContext('2d', { alpha: false }); // arka plan her karede tam opak çizilir (gorsel.js arkaPlan fillRect) -> alfa kanalı gereksiz
+const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
 let olcek = 1;
 function boyutla() {
@@ -1186,6 +1202,7 @@ function durumDegistir(d, yeni = false) {
   if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); modYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en); kimlik('s-kombo').textContent = String(o.enIyiKombo); kimlik('s-olum').textContent = o.enYuksek + '. katta düştün' + (o.katNo < o.enYuksek ? ' (' + (o.enYuksek - o.katNo) + ' kat aşağıya)' : '') + '.';
+    kimlik('s-tohum').hidden = o.tohum == null; kimlik('s-tohum').textContent = o.tohum == null ? '' : 'kule no: ' + o.tohum.toString(16);
     kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira, sonMod);
     kimlik('s-hayalet').textContent = hayaletSonuc; kimlik('s-hayalet').hidden = !hayaletSonuc;
   }
@@ -1333,6 +1350,10 @@ addEventListener('keydown', e => {
   if (e.code === 'Escape' && durum === 'duraklat') durumDegistir('baslik');
 });
 addEventListener('keyup', e => { k[e.code] = 0; });
+// Sekme gizlenince ya da pencere odağı gidince oyun sürüyorsa otomatik duraklat; takılı kalan tuşlar bırakılır (yalnız arayüz, simülasyon kuralı değil).
+function otoDuraklat() { for (const a in k) k[a] = 0; if (durum === 'oyun') durumDegistir('duraklat'); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) otoDuraklat(); });
+addEventListener('blur', otoDuraklat);
 
 // ---- Oyun kolu (gamepad): sol çubuk ya da yön tuşları koşar, A zıplar/başlatır, Start duraklatır ----
 let oncekiA = false, oncekiStart = false;
