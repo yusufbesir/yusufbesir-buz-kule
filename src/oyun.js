@@ -10,6 +10,7 @@ import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
+const KAYMA_ENFAZLA = 4; // kamera kayma hızı tavanı (px/kare); 30 sn'de bir artar. Yusuf kararı 2026-11-04: üst katlar biraz daha kolay (eskiden 5)
 const KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
 // AYAK (ayak yarı genişliği) ve ZEMIN_Y kat.js'te: Rust çekirdeğiyle ortak sabitler
@@ -138,8 +139,8 @@ export function adim(o, giris) {
   o.kamTaban = Math.min(o.kamTaban, katY(o.enYuksek) - 200);
   if (!o.kaymaBasladi && o.enYuksek >= 5) o.kaymaBasladi = true; // kat 5'ten sonra kayma başlar
   if (o.kaymaBasladi) {
-    o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
-    if (o.kare % SAAT === 0 && o.kare <= 5 * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
+    o.kayma = o.kare < SAAT ? 0.5 : Math.min(KAYMA_ENFAZLA, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
+    if (o.kare % SAAT === 0 && o.kare <= KAYMA_ENFAZLA * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
   }
   // Yukarı çıkarken kamera hedefe yumuşakça (üstel) yaklaşır; yükselen oyuncunun biraz önüne bakar (gecikme birikmesin). Aşağı dönüş eskisi gibi sınırlı hızda.
   const kamHedef = Math.min(o.kamTaban, o.y - 100 + (o.vy < 0 ? o.vy * 2.5 : 0));

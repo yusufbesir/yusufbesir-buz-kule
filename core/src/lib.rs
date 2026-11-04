@@ -42,7 +42,7 @@ fn genislik(kat: u32, r: &mut Rnd) -> u32 {
     let ham = floor(h + 0.5); // Math.round (h negatifse 1'e sıkıştırılır)
     let aralik = if h + 0.5 < 0.0 || ham < 1.0 { 1.0 } else { ham };
     let w = 6 + floor(r.sonraki() * aralik) as u32;
-    let ust = if kat < 100 { SATIR_KARO } else { let d = 6i64 - (kat / 100) as i64; if d < 2 { 2 } else { d as u32 } };
+    let ust = if kat < 100 { SATIR_KARO } else { let d = 6i64 - (kat / 100) as i64; if d < 3 { 3 } else { d as u32 } };
     let m = if w < ust { w } else { ust };
     if m < 2 { 2 } else { m }
 }

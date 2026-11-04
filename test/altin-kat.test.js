@@ -9,7 +9,7 @@ const altin = JSON.parse(fs.readFileSync(new URL('./altin/kat.json', import.meta
 const GUC = ['', 'saat', 'miknatis'], TUR = ['normal', 'kirilgan', 'yay'];
 const satir = (k) => [k.kat, k.xKaro, k.genislikKaro, k.no ? 1 : 0, k.tema, k.kristal ? 1 : 0, +k.kristalX.toFixed(12), k.guc || '', k.tur];
 
-test('JS kat üretimi altın vektörle birebir aynı (200 tohum x 300 kat)', () => {
+test('JS kat üretimi altın vektörle birebir aynı (200 tohum x 600 kat)', () => {
   for (const { tohum, katlar } of altin.tohumlar) for (let n = 0; n < katlar.length; n++)
     assert.deepEqual(satir(katUret(n, katRnd(tohum, n))), katlar[n], `tohum ${tohum} kat ${n}`);
 });

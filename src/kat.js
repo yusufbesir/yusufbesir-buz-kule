@@ -5,7 +5,7 @@ export function genislik(kat, rnd) {
   if (kat > 0 && kat % 50 === 0) return SATIR_KARO;
   const aralik = Math.max(1, Math.round((300 - kat) / 30));
   const w = 6 + Math.floor(rnd() * aralik);
-  const ust = kat < 100 ? SATIR_KARO : Math.max(2, 6 - Math.floor(kat / 100));
+  const ust = kat < 100 ? SATIR_KARO : Math.max(3, 6 - Math.floor(kat / 100));
   return Math.max(2, Math.min(w, ust));
 }
 export function katUret(kat, rnd = Math.random) {
