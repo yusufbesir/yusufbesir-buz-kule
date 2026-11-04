@@ -568,6 +568,7 @@ function yeniOyun(rnd = Math.random) {
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
+    sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
   };
 }
 
@@ -587,7 +588,7 @@ function adim(o, giris) {
   if (o.bitti) return;
   o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
-  if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--;
+  if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
@@ -632,6 +633,7 @@ function adim(o, giris) {
     const [kx0, kx1] = basamakAralik(o.kat(o.katNo));
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
+  { const zip = o.puan.kombo ? o.puan.kombo.zip : 0; if (zip !== o.sonZip) { o.sonZip = zip; if (zip > 0) o.komboPuls = 18; } } // kombo yazısı her zıplamada büyür
   { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
@@ -822,6 +824,22 @@ function hudCiz(c, o, en, hayalet = null) {
       vur(c, 'KOMBO', 37, 79, 1, SOLUK, 'orta');
       parcaliCubuk(c, 20, 262, 14, Math.ceil(14 * k.sayac / 100), 34, 9, 3, (i, seg) => (i < seg * 0.4 ? KIRMIZI : i < seg * 0.7 ? SARI : YESIL), true);
       vur(c, 'X' + k.zip, 37, 268, 2, SARI, 'orta'); c.restore();
+    }
+  }
+  // kombo yazısı: kombo sürerken ortada büyüyen "XN KOMBO"; her kombo zıplamasında vurgulanır, süre bitmeye yaklaşırken yanıp söner
+  if (o.puan.kombo && o.puan.kombo.zip >= 2) {
+    const k = o.puan.kombo, zip = k.zip, renk = zip >= 6 ? NEON1 : zip >= 4 ? NEON2 : SARI, boyut = Math.min(7, 2 + Math.floor(zip * 0.6)) + (o.komboPuls > 10 ? 1 : 0);
+    const yazi = 'X' + zip + ' KOMBO', kalan = k.sayac, soluk = kalan < 30 && Math.floor(kalan / 4) % 2 === 0;
+    if (!soluk) {
+      c.save(); c.globalAlpha = 0.95;
+      const ust = 188 - Math.round(boyut * 3.5);
+      pikselYaz(c, yazi, W / 2, ust, boyut, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.85)' });
+      pikselYaz(c, '+' + k.toplam + ' KAT', W / 2, ust + 7 * boyut + 10, 2, BEYAZ, { hiza: 'orta', golge: 'rgba(0,0,0,0.85)' }); c.restore();
+    }
+    if (AYAR.parilti > 0.05) { // oyun alanı kenarlarında kombo rengiyle kısa parıltı
+      const a = Math.min(0.55, 0.12 + o.komboPuls * 0.025 + zip * 0.02) * Math.min(1, AYAR.parilti); c.save(); c.globalAlpha = a;
+      for (const [x0, x1] of [[90, 130], [550, 510]]) { const g = c.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, renk); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(Math.min(x0, x1), 0, 40, 480); }
+      c.restore();
     }
   }
   // geçici uyarılar (her zaman görünür)

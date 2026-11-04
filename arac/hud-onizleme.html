@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>Buz Kule HUD önizleme</title>
+<!-- description: Geliştirme aracı: arcade HUD'u sahte oyun durumlarıyla (kombo, uyarılar) çizer; kök dizinden sunucuyla açılır. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
+<body style="margin:0;background:#111"><canvas id="c" width="1920" height="480" style="width:1920px;height:480px"></canvas>
+<script type="module">
+import { arkaPlan, duvarlar } from '../src/gorsel.js';
+import { hudCiz } from '../src/hud.js';
+import { yeniPuan } from '../src/puan.js';
+const c = document.getElementById('c').getContext('2d');
+const durumlar = [
+  { zip: 2, toplam: 5, sayac: 80, puls: 0, mesaj: null },
+  { zip: 4, toplam: 12, sayac: 60, puls: 14, mesaj: null },
+  { zip: 7, toplam: 31, sayac: 25, puls: 16, mesaj: { ad: 'HARİKA', guc: 50 } },
+];
+durumlar.forEach((d, i) => {
+  c.save(); c.translate(i * 640, 0); c.beginPath(); c.rect(0, 0, 640, 480); c.clip();
+  arkaPlan(c, 640, 480, 0, 0); duvarlar(c, 640, 480, 0, 0);
+  const o = { y: 400, kamY: 0, kare: 300 + i * 7, puan: { ...yeniPuan(), kombo: { zip: d.zip, toplam: d.toplam, sayac: d.sayac }, bonus: 0 }, alinan: new Set([1, 2]), enYuksek: 8 + i * 9, ek: 0, saat: 0, miknatis: 0, hizlan: 0, rozet: null, mesaj: d.mesaj, komboPuls: d.puls, kaymaBasladi: false };
+  hudCiz(c, o, 460, null); c.restore();
+});
+</script>

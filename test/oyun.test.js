@@ -119,3 +119,12 @@ test('kat üretimi: kırılgan/yay yalnız kat 15 sonrası, numaralı ve tam gen
   for (let k = 1; k < 4000; k++) { const f = katUret(k, rnd); if (f.tur !== 'normal') { assert.ok(k >= 15 && k % 10 !== 0 && f.genislikKaro < 30, 'uygunsuz kat ' + k); f.tur === 'kirilgan' ? kirilgan++ : yay++; } }
   assert.ok(kirilgan > 100 && yay > 100, 'türler hiç çıkmıyor: ' + kirilgan + '/' + yay);
 });
+
+test('kombo yazısı: kombo zıplaması artınca vurgu süresi başlar, kombo bitince sıfırlanır', () => {
+  const o = yeniOyun(() => 0.4);
+  o.puan.kombo = { zip: 2, toplam: 5, sayac: 100 }; adim(o, bos);
+  assert.equal(o.sonZip, 2); assert.ok(o.komboPuls > 0 && o.komboPuls <= 18);
+  for (let i = 0; i < 25; i++) adim(o, bos); assert.equal(o.komboPuls, 0, 'vurgu süresi bitmeli');
+  o.puan.kombo = { zip: 3, toplam: 9, sayac: 100 }; adim(o, bos); assert.equal(o.sonZip, 3); assert.ok(o.komboPuls > 0);
+  o.puan.kombo = null; adim(o, bos); assert.equal(o.sonZip, 0);
+});

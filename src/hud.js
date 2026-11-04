@@ -59,6 +59,22 @@ export function hudCiz(c, o, en, hayalet = null) {
       vur(c, 'X' + k.zip, 37, 268, 2, SARI, 'orta'); c.restore();
     }
   }
+  // kombo yazısı: kombo sürerken ortada büyüyen "XN KOMBO"; her kombo zıplamasında vurgulanır, süre bitmeye yaklaşırken yanıp söner
+  if (o.puan.kombo && o.puan.kombo.zip >= 2) {
+    const k = o.puan.kombo, zip = k.zip, renk = zip >= 6 ? NEON1 : zip >= 4 ? NEON2 : SARI, boyut = Math.min(7, 2 + Math.floor(zip * 0.6)) + (o.komboPuls > 10 ? 1 : 0);
+    const yazi = 'X' + zip + ' KOMBO', kalan = k.sayac, soluk = kalan < 30 && Math.floor(kalan / 4) % 2 === 0;
+    if (!soluk) {
+      c.save(); c.globalAlpha = 0.95;
+      const ust = 188 - Math.round(boyut * 3.5);
+      pikselYaz(c, yazi, W / 2, ust, boyut, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.85)' });
+      pikselYaz(c, '+' + k.toplam + ' KAT', W / 2, ust + 7 * boyut + 10, 2, BEYAZ, { hiza: 'orta', golge: 'rgba(0,0,0,0.85)' }); c.restore();
+    }
+    if (AYAR.parilti > 0.05) { // oyun alanı kenarlarında kombo rengiyle kısa parıltı
+      const a = Math.min(0.55, 0.12 + o.komboPuls * 0.025 + zip * 0.02) * Math.min(1, AYAR.parilti); c.save(); c.globalAlpha = a;
+      for (const [x0, x1] of [[90, 130], [550, 510]]) { const g = c.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, renk); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(Math.min(x0, x1), 0, 40, 480); }
+      c.restore();
+    }
+  }
   // geçici uyarılar (her zaman görünür)
   BILDIRIM.slice(0, 2).forEach((b, i) => { // başarım bildirimi
     const a = Math.min(1, b.guc / 20, (200 - b.guc) / 12), g = Math.max(pikselGenislik('BASARIM!', 2), pikselGenislik(b.ad + ' +' + b.odul, 1)) + 24, y = 112 + i * 46;

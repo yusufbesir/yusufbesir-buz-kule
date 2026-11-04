@@ -29,6 +29,7 @@ export function yeniOyun(rnd = Math.random) {
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
+    sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
   };
 }
 
@@ -48,7 +49,7 @@ export function adim(o, giris) {
   if (o.bitti) return;
   o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
-  if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--;
+  if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
@@ -93,6 +94,7 @@ export function adim(o, giris) {
     const [kx0, kx1] = basamakAralik(o.kat(o.katNo));
     if (o.x < kx0 - AYAK || o.x > kx1 + AYAK) { o.havada = true; o.coyote = COYOTE; }
   }
+  { const zip = o.puan.kombo ? o.puan.kombo.zip : 0; if (zip !== o.sonZip) { o.sonZip = zip; if (zip > 0) o.komboPuls = 18; } } // kombo yazısı her zıplamada büyür
   { const od = kare(o.puan); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); } }
   // Toplanabilirler: yakındaki katlarda yüzen kristaller (+25 puan) ve güç öğeleri
   const taban = Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK), cekim = o.miknatis > 0 ? 150 : 0;
