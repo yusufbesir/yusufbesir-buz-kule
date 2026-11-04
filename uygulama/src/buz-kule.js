@@ -864,7 +864,7 @@ function boyutla() {
   const sahne = kimlik('sahne'), vv = window.visualViewport;
   const gw = Math.min(window.innerWidth || 640, (vv && vv.width) || 1e9, (document.documentElement && document.documentElement.clientWidth) || 1e9);
   const gh = Math.min(window.innerHeight || 480, (vv && vv.height) || 1e9, (document.documentElement && document.documentElement.clientHeight) || 1e9);
-  if (sahne && sahne.style && gw && gh) { const w = Math.max(320, Math.min(gw - 24, (gh - 24) * 4 / 3)); sahne.style.width = Math.floor(w) + 'px'; }
+  if (sahne && sahne.style && gw && gh) { const w = Math.max(320, Math.min(gw - 48, (gh - 48) * 4 / 3)); sahne.style.width = Math.floor(w) + 'px'; }
   const r = tuval.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   const w = Math.max(320, Math.min(2560, Math.round(r.width * dpr)));
   if (tuval.width !== w) { tuval.width = w; tuval.height = Math.round(w * 3 / 4); }
