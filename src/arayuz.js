@@ -2,7 +2,7 @@
 import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
-import { SKORLAR, skorlariYukle, skorEkle } from './skorlar.js';
+import { skorListesi, skorEkle } from './skorlar.js';
 import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitCoz, kayitOku, kayitYaz, bitGiris, HAYALET_ANAHTAR } from './hayalet.js';
 import { muzikGuncelle } from './ses.js';
 import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
@@ -28,8 +28,8 @@ function boyutla() {
 boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna', sonSira = 0;
-let mod = 'yeni', hayalet = null, hayaletGiris = [], kaydedici = kayitBaslat(), hayaletSonuc = '';
-ayarYukle(); cuzdanYukle(); skorlariYukle(); basarimYukle();
+let mod = 'yeni', sonMod = 'yeni', hayalet = null, hayaletGiris = [], kaydedici = kayitBaslat(), hayaletSonuc = '';
+ayarYukle(); cuzdanYukle(); basarimYukle();
 try { en = Number(localStorage.getItem('buzkule.en')) || 0; } catch { /* kayıt yoksa sorun değil */ }
 
 kimlik('m-en').textContent = String(en);
@@ -41,10 +41,10 @@ function katmanGoster(ad) {
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
   durum = d; katmanGoster(durumKatman[d]); muzikGuncelle(d === 'oyun'); // müzik yalnız oyun sürerken çalar
-  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); modYaz(); }
+  if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); modYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
-    kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira);
+    kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira, sonMod);
     kimlik('s-hayalet').textContent = hayaletSonuc; kimlik('s-hayalet').hidden = !hayaletSonuc;
   }
 }
@@ -64,7 +64,7 @@ function oyunBitti() {
   const anahtar = mod === 'gunun' ? gunlukAnahtar() : HAYALET_ANAHTAR, eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
   hayaletSonuc = hayalet && eski ? (s > eski.skor ? 'Hayaleti geçtin! (' + eski.skor + ')' : 'Hayalet önde: ' + eski.skor) : '';
-  sonSira = skorEkle(s, o.enYuksek); kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
+  sonSira = skorEkle(mod, s, o.enYuksek); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
 
@@ -99,12 +99,12 @@ function modYaz() {
   modDugmeleri.hayalet.disabled = !var_;
   for (const [ad, b] of Object.entries(modDugmeleri)) { b.setAttribute('aria-pressed', String(mod === ad)); b.className = 'mod' + (mod === ad ? ' secili' : ''); }
 }
-for (const [ad, b] of Object.entries(modDugmeleri)) b.addEventListener('click', () => { mod = ad; modYaz(); });
+for (const [ad, b] of Object.entries(modDugmeleri)) b.addEventListener('click', () => { mod = ad; modYaz(); listeYaz(kimlik('m-liste'), 5, 0); });
 modYaz();
 // ---- Skor tablosu ----
-function listeYaz(ol, adet, vurgu) {
+function listeYaz(ol, adet, vurgu, oyunMod = mod) {
   if (!ol) return; ol.textContent = '';
-  SKORLAR.slice(0, adet).forEach((kayit, i) => {
+  skorListesi(oyunMod).slice(0, adet).forEach((kayit, i) => {
     const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('b');
     a.textContent = 'kat ' + kayit.kat; b.textContent = String(kayit.skor); li.appendChild(a); li.appendChild(b);
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);
@@ -137,7 +137,7 @@ IZLER.forEach((iz, i) => {
   b.addEventListener('click', () => { if (!CUZDAN.acik.includes(i)) izAl(i); izSec(i); magazaYaz(); });
   kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek });
 });
-magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); basarimYaz();
+magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); basarimYaz();
 
 // ---- Ses ve müzik düğmeleri (aç/kapa) ----
 function sesDugmeleriYaz() {

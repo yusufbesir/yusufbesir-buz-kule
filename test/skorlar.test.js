@@ -4,20 +4,28 @@ import assert from 'node:assert/strict';
 
 function depo() { const d = {}; globalThis.localStorage = { getItem: (k) => (k in d ? d[k] : null), setItem: (k, v) => { d[k] = String(v); } }; return d; }
 
-test('skor tablosu: sıralı, en çok 10, sıfır eklenmez, sıra döner', async () => {
+test('skor tablosu: kip başına ayrı, sıralı, en çok 5, sıfır eklenmez, sıra döner', async () => {
   const d = depo(); const m = await import('../src/skorlar.js?a=' + Math.random());
-  assert.equal(m.skorEkle(0, 0), 0);
-  assert.equal(m.skorEkle(50, 3), 1); assert.equal(m.skorEkle(100, 8), 1); assert.equal(m.skorEkle(70, 5), 2);
-  for (let i = 1; i <= 12; i++) m.skorEkle(i, 1);
-  assert.equal(m.SKORLAR.length, 10); assert.equal(m.SKORLAR[0].skor, 100);
-  assert.equal(m.skorEkle(1, 1) <= 10, true);
-  assert.ok(JSON.parse(d['buzkule.skorlar']).length === 10, 'kalıcı kayıt yazılmadı');
+  assert.equal(m.skorEkle('yeni', 0, 0), 0);
+  assert.equal(m.skorEkle('yeni', 50, 3), 1); assert.equal(m.skorEkle('yeni', 100, 8), 1); assert.equal(m.skorEkle('yeni', 70, 5), 2);
+  for (let i = 1; i <= 8; i++) m.skorEkle('yeni', i, 1);
+  const yeni = m.skorListesi('yeni'); assert.equal(yeni.length, 5); assert.equal(yeni[0].skor, 100); assert.equal(m.SKOR_SAYISI, 5);
+  assert.equal(m.skorEkle('hayalet', 999, 40), 1); assert.equal(m.skorListesi('hayalet').length, 1, 'kipler birbirine karışmamalı');
+  assert.equal(m.skorListesi('yeni')[0].skor, 100); assert.equal(m.skorListesi('gunun').length, 0);
+  assert.ok(JSON.parse(d['buzkule.skorlar']).length === 5, 'yeni kipinin kalıcı kaydı yazılmadı'); assert.ok('buzkule.skorlar.hayalet' in d);
 });
 
-test('skor tablosu: bozuk kayıt yüklenince çökmez ve geçersiz satırlar atılır', async () => {
-  const d = depo(); d['buzkule.skorlar'] = JSON.stringify([{ skor: 5, kat: 1 }, { skor: 'x' }, null]);
-  const m = await import('../src/skorlar.js?b=' + Math.random()); m.skorlariYukle();
-  assert.equal(m.SKORLAR.length, 1); d['buzkule.skorlar'] = '{bozuk'; m.skorlariYukle(); assert.equal(m.SKORLAR.length, 1);
+test('skor tablosu: eski tek tablo (en çok 10 satırlı) "yeni" kipine devredilir ve ilk 5 satıra kesilir', async () => {
+  const d = depo(); d['buzkule.skorlar'] = JSON.stringify(Array.from({ length: 10 }, (_, i) => ({ skor: (i + 1) * 10, kat: i + 1, t: i + 1 })));
+  const m = await import('../src/skorlar.js?g=' + Math.random()); const liste = m.skorListesi('yeni');
+  assert.equal(liste.length, 5); assert.deepEqual(liste.map(x => x.skor), [100, 90, 80, 70, 60]);
+});
+
+test('skor tablosu: günün kulesi bugüne özel anahtar kullanır; bozuk kayıt çökmez ve geçersiz satırlar atılır', async () => {
+  const d = depo(); const m = await import('../src/skorlar.js?b=' + Math.random());
+  assert.match(m.skorAnahtari('gunun'), /^buzkule\.skorlar\.gunun\.\d{4}-\d{1,2}-\d{1,2}$/);
+  d['buzkule.skorlar'] = JSON.stringify([{ skor: 5, kat: 1, t: 1 }, { skor: 'x' }, null, { skor: -3, kat: 1, t: 2 }]);
+  assert.equal(m.skorListesi('yeni').length, 1); d['buzkule.skorlar'] = '{bozuk'; assert.deepEqual(m.skorListesi('yeni'), []);
 });
 
 test('mağaza: yetersiz kristalle alınmaz, alınca düşer ve seçilir; kayıt geri yüklenir', async () => {
