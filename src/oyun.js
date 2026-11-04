@@ -29,12 +29,13 @@ export function yeniOyun(rnd = Math.random) {
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
+    sars: 0, rekorKat: 0, // kilometre taşı sarsıntısı süresi; önceki en iyi kat (arayuz.js yazar, yalnız görünüm)
     sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
   };
 }
 
 // y ekranda aşağı artar; kat n platformunun dünya y'si = ZEMIN_Y - n*KAT_ARALIK
-const katY = (n) => ZEMIN_Y - n * KAT_ARALIK;
+export const katY = (n) => ZEMIN_Y - n * KAT_ARALIK;
 const basamakAralik = (f) => { const x0 = 85 + (f.xKaro - 5) * KARO; return [x0, x0 + f.genislikKaro * KARO]; };
 const kristalKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 38 });
 const gucKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 40 });
@@ -48,6 +49,7 @@ function zipladi(o) {
 export function adim(o, giris) {
   if (o.bitti) return;
   o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
+  if (o.sars > 0) o.sars--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
   if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   o.vx = yatayGuncelle(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
@@ -76,6 +78,8 @@ export function adim(o, giris) {
         const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
         const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
         if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
+        if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
+        if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
         const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
         if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
@@ -128,7 +132,7 @@ export function adim(o, giris) {
 export function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
 
 export function ciz(c, o, hayalet = null) {
-  const titre = o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 * AYAR.sarsinti : 0; // büyük kombo ödülünde kısa ekran sarsıntısı
+  const titre = Math.max(o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0, o.sars * 0.45) * AYAR.sarsinti; // büyük kombo ödülünde ve 100/200/500. katta kısa ekran sarsıntısı (azaltılmış harekette 0)
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK) - 1), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;

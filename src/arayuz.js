@@ -53,7 +53,7 @@ function basla() {
   let tohum = yeniTohum(), kayit = null;
   if (mod === 'hayalet') { kayit = kayitOku(HAYALET_ANAHTAR); if (kayit) tohum = kayit.tohum; }
   else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar()); }
-  o = yeniOyun(tohum); yeniRekor = false; kaydedici = kayitBaslat();
+  o = yeniOyun(tohum); o.rekorKat = skorListesi(mod).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
   hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCoz(kayit) : []; hayaletSonuc = '';
   durumDegistir('oyun');
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space odaktaki düğmeyi tekrar tıklamasın

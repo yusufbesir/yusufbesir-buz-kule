@@ -1,6 +1,6 @@
 // description: Buz Kule oyun içi HUD: klasik arcade makinesi görünümü (piksel yazı, neon çerçeve, parçalı çubuklar, yanıp sönen uyarılar); oyuncu üst kenara yaklaşınca solar. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Menü, duraklatma ve bitiş ekranları HTML katmanındadır (index.html + arayuz.js); burada yalnız canvas HUD'u var.
-import { W, SAAT, skor } from './oyun.js';
+import { W, SAAT, skor, katY } from './oyun.js';
 import { AYAR } from './ayar.js';
 import { BILDIRIM } from './basarim.js';
 import { pikselYaz, pikselGenislik } from './piksel.js';
@@ -59,6 +59,14 @@ export function hudCiz(c, o, en, hayalet = null) {
       vur(c, 'X' + k.zip, 37, 268, 2, SARI, 'orta'); c.restore();
     }
   }
+  // önceki en iyi kat: kulede ince kesikli çizgi; geçilince kaybolur
+  if (o.rekorKat > 0 && o.enYuksek <= o.rekorKat) {
+    const ry = Math.round(katY(o.rekorKat) - o.kamY - 6);
+    if (ry > 20 && ry < 470) {
+      c.save(); c.globalAlpha = 0.8; c.fillStyle = SARI; for (let x = 92; x < 548; x += 12) c.fillRect(x, ry, 7, 2);
+      vur(c, 'REKOR KAT ' + o.rekorKat, 546, ry - 9, 1, SARI, 'sag'); c.restore();
+    }
+  }
   // kombo yazısı: kombo sürerken ortada büyüyen "XN KOMBO"; her kombo zıplamasında vurgulanır, süre bitmeye yaklaşırken yanıp söner
   if (o.puan.kombo && o.puan.kombo.zip >= 2) {
     const k = o.puan.kombo, zip = k.zip, renk = zip >= 6 ? NEON1 : zip >= 4 ? NEON2 : SARI, boyut = Math.min(7, 2 + Math.floor(zip * 0.6)) + (o.komboPuls > 10 ? 1 : 0);
@@ -86,7 +94,7 @@ export function hudCiz(c, o, en, hayalet = null) {
     if (yanip || o.hizlan < 20) { c.save(); c.globalAlpha = Math.min(1, o.hizlan / 15); panelArcade(c, W / 2 - g / 2, 72, g, 34, KIRMIZI); vur(c, t, W / 2, 80, 3, SARI, 'orta'); c.restore(); }
   }
   if (o.rozet) { // 50 katta kilometre taşı
-    const s = 9, t = o.rozet.metin; c.save(); c.globalAlpha = Math.min(1, o.rozet.guc / 20);
+    const s = o.rozet.olcek || 9, t = o.rozet.metin; c.save(); c.globalAlpha = Math.min(1, o.rozet.guc / 20);
     if (Math.floor(o.rozet.guc / 5) % 2 === 0) pikselYaz(c, t, W / 2, 210, s, SARI, { hiza: 'orta', cizgi: '#7a1fff', golge: 'rgba(0,0,0,0.9)' }); else pikselYaz(c, t, W / 2, 210, s, BEYAZ, { hiza: 'orta', cizgi: NEON1, golge: 'rgba(0,0,0,0.9)' });
     c.restore();
   }

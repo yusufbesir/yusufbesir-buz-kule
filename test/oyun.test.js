@@ -128,3 +128,15 @@ test('kombo yazısı: kombo zıplaması artınca vurgu süresi başlar, kombo bi
   o.puan.kombo = { zip: 3, toplam: 9, sayac: 100 }; adim(o, bos); assert.equal(o.sonZip, 3); assert.ok(o.komboPuls > 0);
   o.puan.kombo = null; adim(o, bos); assert.equal(o.sonZip, 0);
 });
+
+// Kilometre taşı görünümü: 100. kata inince sarsıntı, önceki kat rekoru aşılınca bir kez rozet.
+import { katY } from '../src/oyun.js';
+function katIn(o, n) { const f = o.kat(n); o.enYuksek = n - 1; o.sonInisKat = n - 1; o.havada = true; o.vy = 2; o.vx = 0; o.x = 85 + (f.xKaro - 5) * 16 + 10; o.y = katY(n) - 1; o.kamY = o.y - 300; adim(o, {}); }
+test('100. kata inişte sarsıntı kurulur, 99. katta kurulmaz', () => {
+  const a = yeniOyun(7); katIn(a, 100); assert.equal(a.enYuksek, 100); assert.equal(a.sars, 22);
+  const b = yeniOyun(7); katIn(b, 99); assert.equal(b.sars, 0);
+});
+test('önceki kat rekoru aşılınca YENİ KAT REKORU rozeti çıkar; rekor yokken çıkmaz', () => {
+  const a = yeniOyun(7); a.rekorKat = 20; katIn(a, 21); assert.equal(a.rozet && a.rozet.metin, 'YENİ KAT REKORU');
+  const b = yeniOyun(7); katIn(b, 21); assert.equal(b.rozet, null);
+});
