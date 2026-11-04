@@ -133,5 +133,6 @@
  "hud_odul7": "LEGENDARIO",
  "hud_odul8": "EPICO",
  "hud_odul9": "PERFECTO",
- "j_dil": "Idioma"
+ "j_dil": "Idioma",
+ "j_profil": "{n} partidas · piso más alto {k} · combo más grande {c}"
 }

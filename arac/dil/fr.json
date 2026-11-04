@@ -133,5 +133,6 @@
  "hud_odul7": "LEGENDAIRE",
  "hud_odul8": "EPIQUE",
  "hud_odul9": "PARFAIT",
- "j_dil": "Langue"
+ "j_dil": "Langue",
+ "j_profil": "{n} parties · étage max {k} · plus grand combo {c}"
 }

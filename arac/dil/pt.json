@@ -133,5 +133,6 @@
  "hud_odul7": "LENDARIO",
  "hud_odul8": "EPICO",
  "hud_odul9": "PERFEITO",
- "j_dil": "Idioma"
+ "j_dil": "Idioma",
+ "j_profil": "{n} jogos · andar mais alto {k} · maior combo {c}"
 }

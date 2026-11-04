@@ -133,5 +133,6 @@
  "hud_odul7": "LEGENDARY",
  "hud_odul8": "EPIC",
  "hud_odul9": "FLAWLESS",
- "j_dil": "Language"
+ "j_dil": "Language",
+ "j_profil": "{n} games · highest floor {k} · biggest combo {c}"
 }

@@ -133,5 +133,6 @@
  "hud_odul7": "EFSANE",
  "hud_odul8": "DESTAN",
  "hud_odul9": "KUSURSUZ",
- "j_dil": "Dil"
+ "j_dil": "Dil",
+ "j_profil": "{n} oyun · en yüksek kat {k} · en büyük kombo {c}"
 }

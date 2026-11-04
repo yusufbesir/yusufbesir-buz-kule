@@ -133,5 +133,6 @@
  "hud_odul7": "LEGENDARY",
  "hud_odul8": "EPIC",
  "hud_odul9": "PERFECT",
- "j_dil": "Язык"
+ "j_dil": "Язык",
+ "j_profil": "{n} игр · макс. этаж {k} · лучшее комбо {c}"
 }

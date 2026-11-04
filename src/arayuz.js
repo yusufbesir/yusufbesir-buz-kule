@@ -7,6 +7,7 @@ import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBit
 import { muzikGuncelle } from './ses.js';
 import { kayitCozC } from './cekirdek.js';
 import { t, dilUygula, DILLER } from './dil.js';
+import { PROFIL, profilYukle, profilGuncelle } from './profil.js';
 import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
@@ -72,7 +73,7 @@ function oyunBitti() {
   const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, o.zorluk) : hayaletAnahtar(o.zorluk), eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
   hayaletSonuc = hayalet && eski ? (s > eski.skor ? t('j_hayalet_gecti', { n: eski.skor }) : t('j_hayalet_onde', { n: eski.skor })) : '';
-  sonSira = skorEkle(mod, s, o.enYuksek, o.zorluk); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
+  profilGuncelle(o); profilYaz(); sonSira = skorEkle(mod, s, o.enYuksek, o.zorluk); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
 
@@ -186,12 +187,14 @@ KARAKTERLER.forEach((ad, i) => {
 karakterIsaretle();
 ayarYaz();
 if (!document.activeElement || document.activeElement === document.body) odakla(kimlik('t-' + sekme)); // açılışta odak menünün ilk düğmesinde
+function profilYaz() { const e = kimlik('m-profil'); if (e) e.textContent = PROFIL.oyun ? t('j_profil', { n: PROFIL.oyun, k: PROFIL.enKat, c: PROFIL.enKombo }) : ''; }
+profilYukle();
 const notYaz = () => { kimlik('a-not').textContent = AYAR.azaltilmisHareket ? t('j_azalt_not') : t('j_ayar_not'); };
 // Dil seçici: seçili dil kalıcıdır; değişince menü, ayar düğmeleri ve listeler yeniden yazılır.
 const dilSec = kimlik('a-dil');
 DILLER.forEach((d, i) => { const op = document.createElement('option'); op.value = String(i); op.textContent = d.ad; dilSec.appendChild(op); });
 function dilYenile() {
-  dilSec.value = String(AYAR.dil); dilUygula(); // sekme etiketleri değişince genişlikler değişir: gösterge yeniden konumlanır
+  dilSec.value = String(AYAR.dil); dilUygula(); profilYaz(); // sekme etiketleri değişince genişlikler değişir: gösterge yeniden konumlanır
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => sekmeSec(sekme, false)); notYaz(); sesDugmeleriYaz(); basarimYaz(); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0);
   karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-label', t('j_karakter', { ad: t('kar_' + i) })); b.title = t('kar_' + i); });
 }

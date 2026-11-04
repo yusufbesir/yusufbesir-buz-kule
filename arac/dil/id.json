@@ -133,5 +133,6 @@
  "hud_odul7": "LEGENDA",
  "hud_odul8": "EPIK",
  "hud_odul9": "SEMPURNA",
- "j_dil": "Bahasa"
+ "j_dil": "Bahasa",
+ "j_profil": "{n} permainan · lantai tertinggi {k} · kombo terbesar {c}"
 }

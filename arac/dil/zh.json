@@ -133,5 +133,6 @@
  "hud_odul7": "LEGEND",
  "hud_odul8": "MYTH",
  "hud_odul9": "PERFECT",
- "j_dil": "语言"
+ "j_dil": "语言",
+ "j_profil": "{n} 局 · 最高层数 {k} · 最大连击 {c}"
 }
