@@ -136,6 +136,25 @@ test('100. kata inişte sarsıntı kurulur, 99. katta kurulmaz', () => {
   const a = yeniOyun(7); katIn(a, 100); assert.equal(a.enYuksek, 100); assert.equal(a.sars, 22);
   const b = yeniOyun(7); katIn(b, 99); assert.equal(b.sars, 0);
 });
+// Kıl payı bonusu: tehlike bölgesinden (ekran altına bir kattan az) kurtulup basamağa konunca +25, bekleme süresi içinde tekrar yok.
+import { KIL_PAYI_PUAN, KIL_PAYI_BEKLE } from '../src/oyun.js';
+test('kıl payı: tehlike bölgesi yalnız ekran altına 80 px yaklaşınca işaretlenir', () => {
+  const a = yeniOyun(7); a.enYuksek = 9; a.sonInisKat = 9; a.havada = true; a.vy = 0; a.x = 320; a.y = katY(10) - 60; a.kamY = a.y - 430;
+  adim(a, {}); assert.equal(a.bitti, false); assert.equal(a.tehlike, true);
+  const b = yeniOyun(7); b.enYuksek = 9; b.sonInisKat = 9; b.havada = true; b.vy = 0; b.x = 320; b.y = katY(10) - 60; b.kamY = b.y - 380;
+  adim(b, {}); assert.equal(b.tehlike, false);
+});
+test('kıl payı: tehlikeden sonra inişte +25 ve yazı; bekleme süresinde tekrar verilmez, bitince yine verilir', () => {
+  const o = yeniOyun(7); o.tehlike = true; katIn(o, 10);
+  assert.equal(o.ek, KIL_PAYI_PUAN); assert.equal(o.kilPayi, 70); assert.equal(o.kilPayiBekle, KIL_PAYI_BEKLE); assert.equal(o.kilPayiSayisi, 1); assert.equal(o.tehlike, false);
+  o.tehlike = true; katIn(o, 11); assert.equal(o.ek, KIL_PAYI_PUAN, 'bekleme süresinde ikinci bonus olmamalı'); assert.equal(o.tehlike, false);
+  o.kilPayiBekle = 0; o.tehlike = true; katIn(o, 12); assert.equal(o.ek, 2 * KIL_PAYI_PUAN); assert.equal(o.kilPayiSayisi, 2);
+  const n = yeniOyun(7); katIn(n, 10); assert.equal(n.ek, 0, 'tehlike yokken bonus yok'); assert.equal(n.kilPayi, 0);
+});
+test('kıl payı: ekran altına düşerek biten oyunda bonus verilmez', () => {
+  const o = yeniOyun(7), f = o.kat(10); o.tehlike = true; o.enYuksek = 9; o.sonInisKat = 9; o.havada = true; o.vy = 2; o.x = 85 + (f.xKaro - 5) * 16 + 10; o.y = katY(10) - 1; o.kamY = o.y - 500;
+  adim(o, {}); assert.equal(o.bitti, true); assert.equal(o.ek, 0);
+});
 test('önceki kat rekoru aşılınca YENİ KAT REKORU rozeti çıkar; rekor yokken çıkmaz', () => {
   const a = yeniOyun(7); a.rekorKat = 20; katIn(a, 21); assert.equal(a.rozet && a.rozet.metin, 'YENİ KAT REKORU');
   const b = yeniOyun(7); katIn(b, 21); assert.equal(b.rozet, null);
