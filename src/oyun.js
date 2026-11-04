@@ -6,6 +6,7 @@ import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, ki
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
+import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
@@ -52,6 +53,14 @@ function zipladi(o) {
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
 
+// Buz kıymığı (yalnız görünüm): açık mavi/beyaz parçacıklar; durumu okumaz/değiştirmez, azaltılmış harekette üretilmez.
+export function buzKirigi(x, y, adet) {
+  if (AYAR.azaltilmisHareket) return;
+  parcacikEkle(x, y, adet, '#e8f8ff', 2.2); parcacikEkle(x, y, adet, '#8fd0ff', 2.8);
+}
+// Her 100. katta kule tabelası metni (yalnız görünüm); diğer katlarda null.
+export const katTabelasi = (n) => (n > 0 && n % 100 === 0 ? 'KAT ' + n : null);
+
 const KAM_YUMUSAK = 0.22; // yukarı kamera yaklaşma oranı (kare başına)
 
 export function adim(o, giris) {
@@ -72,7 +81,9 @@ export function adim(o, giris) {
   if ((yerde || kenardaCoyote) && (giris.zipla || o.tampon > 0)) zipladi(o);
   const eskiX = o.x;
   o.x += o.vx;
+  const vxOnce = o.vx;
   ({ x: o.x, vx: o.vx } = duvarSekmesi(o.x, o.vx));
+  if (vxOnce !== 0 && Math.sign(o.vx) !== Math.sign(vxOnce)) buzKirigi(o.x, o.y - 24, 5); // duvar sekmesi
   const eskiY = o.y;
   if (o.havada) { o.vy = dikeyGuncelle(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
@@ -91,6 +102,7 @@ export function adim(o, giris) {
         if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
         if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
         if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
+        buzKirigi(o.x, o.y, 4); // iniş
         if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
         const od = inis(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
         if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
@@ -159,6 +171,8 @@ export function ciz(c, o, hayalet = null) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
     if (n === 0) platform(c, 85, sy, 470, 0, true, 0);
     else if (!o.kirik.has(n)) platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n, f.tur, o.sayacKat === n ? o.sayac / KIRILMA : 0);
+    const tab = katTabelasi(n);
+    if (tab) pikselYaz(c, tab, 85 + (f.xKaro - 5) * KARO - 8, sy - 8, 2, '#dff6ff', { hiza: 'sag', golge: 'rgba(0,0,0,0.85)' });
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
