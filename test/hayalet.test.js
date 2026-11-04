@@ -58,3 +58,12 @@ test('kayitGecerli: devasa tekrar sayısı ve geçersiz giriş biti reddedilir',
   assert.equal(_gecerli({ ...temel, kosu: [9, 3] }), false);
   assert.equal(_gecerli({ ...temel, kosu: [0, 600000, 1, 600000] }), false);
 });
+
+import { kayitBitir as _bitir, kayitBaslat as _baslat, kayitEkle as _ekle, KAYIT_SURUM } from "../src/hayalet.js";
+test("kayit surumu: yeni kayit v:1 tasir, v yoksa (eski kayit) kabul, bilinmeyen surum reddedilir", () => {
+  const b = _baslat(); _ekle(b, { sol: true, sag: false, zipla: false });
+  const kayit = _bitir(b, 5, 10, 2);
+  assert.equal(kayit.v, KAYIT_SURUM); assert.equal(_gecerli(kayit), true);
+  const eski = { ...kayit }; delete eski.v; assert.equal(_gecerli(eski), true);
+  assert.equal(_gecerli({ ...kayit, v: 2 }), false); assert.equal(_gecerli({ ...kayit, v: 99 }), false); assert.equal(_gecerli({ ...kayit, v: "x" }), false);
+});

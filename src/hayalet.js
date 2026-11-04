@@ -23,12 +23,13 @@ export function kayitEkle(k, g) {
   const b = girisBit(g); k.kare++;
   if (b === k.son) k.sayi++; else { if (k.sayi) k.kosu.push(k.son, k.sayi); k.son = b; k.sayi = 1; }
 }
-export function kayitBitir(k, tohum, skor, kat) { const kosu = k.kosu.slice(); if (k.sayi) kosu.push(k.son, k.sayi); return { tohum, kosu, skor, kat, kare: k.kare }; }
+export const KAYIT_SURUM = 1; // kayıt biçimi sürümü; v alanı olmayan eski kayıtlar sürüm 1 sayılır, bilinmeyen sürüm reddedilir
+export function kayitBitir(k, tohum, skor, kat) { const kosu = k.kosu.slice(); if (k.sayi) kosu.push(k.son, k.sayi); return { v: KAYIT_SURUM, tohum, kosu, skor, kat, kare: k.kare }; }
 export function kayitCoz(kayit) { // kare kare giriş bitleri dizisi
   const out = []; for (let i = 0; i + 1 < kayit.kosu.length; i += 2) for (let j = 0; j < kayit.kosu[i + 1]; j++) out.push(kayit.kosu[i]); return out;
 }
 export function kayitGecerli(k) {
-  return !!k && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
+  return !!k && (k.v === undefined || k.v === KAYIT_SURUM) && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
     && k.kosu.every((v, i) => Number.isInteger(v) && v >= 0 && (i % 2 === 0 ? v <= 7 : v >= 1 && v <= 200000)) // çift: giriş bitleri, tek: tekrar sayısı
     && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
