@@ -192,6 +192,7 @@ function dikeyGuncelle(vy) {
 // ---- kat ----
 // description: Prosedürel kat üretimi (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 const KARO = 16, KAT_ARALIK = 80, SATIR_KARO = 30;
+const ZEMIN_Y = 440, AYAK = 10; // zemin çizgisi; ayak yarı genişliği: basamak kenarından bu kadar taşan ayak hâlâ basamağa basar (Rust çekirdeğiyle ortak)
 function genislik(kat, rnd) {
   if (kat > 0 && kat % 50 === 0) return SATIR_KARO;
   const aralik = Math.max(1, Math.round((300 - kat) / 30));
@@ -210,7 +211,7 @@ function katUret(kat, rnd = Math.random) {
   return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc, tur };
 }
 
-const CEKIRDEK_B64 = "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oKCAgABBAEKAgICAgICA+D83A5iggIAAQQBCgICAgICAwKzAADcDkKCAgABBACAEOQOIoICAAEEAQoCAgICAgID4PzcDgKCAgABBAEIANwOooICAAEEAQgA3A7CggIAAQQBCADcDuKCAgAALkwMBA3wCQCAADQBBAEIANwO4oICAAEEAQgA3A7CggIAAQQBCADcDqKCAgABBAEIANwOgoICAAEEAQgA3A5iggIAAQQBCADcDkKCAgABBAEIANwOIoICAAEEAQgA3A4CggIAADwtEAAAAAAAAAAAhBAJAIAJEAAAAAAAA8L+gIgJEAAAAAAAAAABlRQ0ARAAAAAAAAAAAIQJEAAAAAAAAAAAhBUQAAAAAAAAAACEGAkAgA0QAAAAAAAAAQGZFDQAgASABoiEERAAAAAAAAPA/IQIgASEFIAMhBgtBAEIANwOYoICAAEEAQgA3A5CggIAAQQBCADcDiKCAgABBAEIANwOAoICAAEEAIAY5A7iggIAAQQAgBTkDsKCAgABBACACOQOooICAAEEAIAQ5A6CggIAADwtBAEIANwOgoICAAEEAIAM5A5iggIAAQQAgAjkDkKCAgABBACABOQOIoICAAEEAQoCAgICAgID4PzcDgKCAgABBAEIANwOooICAAEEAQgA3A7CggIAAQQBCADcDuKCAgAALrwEBAXwCQEQAAAAAAADwP0QAAAAAAAAAACACG0QAAAAAAADwP0QAAAAAAAAAACABG6EiA0QAAAAAAAAAAGENAAJARGZmZmZmZihAIANEMzMzMzMz0z+iIABEZmZmZmZm5j+iIAAgACADokQAAAAAAAAAAGMboCIAIABEZmZmZmZmKEBkGyIARGZmZmZmZijAY0UNAERmZmZmZmYowCEACyAADwsgAETNzMzMzMzsP6ILNgAgAJogACAARAAAAAAAAAAAYxtEAAAAAAAAAMCiIgBEZmZmZmZmKMAgAERmZmZmZmYowGMbCw==";
+const CEKIRDEK_B64 = "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gIAAQQBCADcDqKCAgABBAEIANwOgoICAAEEAQgA3A5iggIAAQQBCADcDkKCAgABBAEIANwOIoICAAEEAQgA3A4CggIAADwtEAAAAAAAAAAAhBAJAIAJEAAAAAAAA8L+gIgJEAAAAAAAAAABlRQ0ARAAAAAAAAAAAIQJEAAAAAAAAAAAhBUQAAAAAAAAAACEGAkAgA0QAAAAAAAAAQGZFDQAgASABoiEERAAAAAAAAPA/IQIgASEFIAMhBgtBAEIANwOYoICAAEEAQgA3A5CggIAAQQBCADcDiKCAgABBAEIANwOAoICAAEEAIAY5A7iggIAAQQAgBTkDsKCAgABBACACOQOooICAAEEAIAQ5A6CggIAADwtBAEIANwOgoICAAEEAIAM5A5iggIAAQQAgAjkDkKCAgABBACABOQOIoICAAEEAQoCAgICAgID4PzcDgKCAgABBAEIANwOooICAAEEAQgA3A7CggIAAQQBCADcDuKCAgAALrwEBAXwCQEQAAAAAAADwP0QAAAAAAAAAACACG0QAAAAAAADwP0QAAAAAAAAAACABG6EiA0QAAAAAAAAAAGENAAJARGZmZmZmZihAIANEMzMzMzMz0z+iIABEZmZmZmZm5j+iIAAgACADokQAAAAAAAAAAGMboCIAIABEZmZmZmZmKEBkGyIARGZmZmZmZijAY0UNAERmZmZmZmYowCEACyAADwsgAETNzMzMzMzsP6ILNgAgAJogACAARAAAAAAAAAAAYxtEAAAAAAAAAMCiIgBEZmZmZmZmKMAgAERmZmZmZmYowGMbCw==";
 // ---- cekirdek ----
 // description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
 
@@ -263,6 +264,37 @@ function puanSinav() {
   }
   return true;
 }
+// Aşama 3a: iniş araması (basamak çarpışması). JS sürümü: ilk inilen kat ya da -1.
+function inisBulJS(katFn, kirikHas, x, y, eskiX, eskiY) {
+  for (let n = Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
+    const f = katFn(n), py = ZEMIN_Y - n * KAT_ARALIK, kx0 = 85 + (f.xKaro - 5) * KARO, kx1 = kx0 + f.genislikKaro * KARO;
+    if (kirikHas(n)) continue;
+    const t = y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (y - eskiY))) : 1, xk = eskiX + (x - eskiX) * t;
+    const uzerinde = (v) => v >= kx0 - AYAK && v <= kx1 + AYAK;
+    if (n === 0 ? true : (eskiY <= py && y >= py && (uzerinde(xk) || uzerinde(x)))) {
+      if (n === 0 && y < py) continue;
+      return n;
+    }
+  }
+  return -1;
+}
+// Rust çekirdeği varsa ve oyun tohumluysa Rust, yoksa JS. kirik: kırık katların Set'i, katFn: o.kat.
+function inisBulC(tohum, kirik, katFn, x, y, eskiX, eskiY) {
+  const n0 = Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1), n1 = Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1;
+  if (!cekirdekIc || tohum === null || n1 < n0 || n1 - n0 >= 32) return inisBulJS(katFn, (n) => kirik.has(n), x, y, eskiX, eskiY);
+  let maske = 0; for (let i = 0; i <= n1 - n0; i++) if (kirik.has(n0 + i)) maske |= 1 << i;
+  return cekirdekIc.inis_ara(tohum >>> 0, x, y, eskiX, eskiY, n0, n1, maske >>> 0);
+}
+function inisSinav() {
+  let s = 4242; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 6000; i++) {
+    const tohum = (r() * 4294967296) >>> 0, katFn = (n) => katUret(n, katRnd(tohum, n));
+    const eskiY = ZEMIN_Y - r() * (i % 3 === 0 ? 400 : 20000), y = eskiY + r() * 12.2, eskiX = 60 + r() * 520, x = eskiX + (r() - 0.5) * 24;
+    const kirik = new Set(); for (let k = 0; k < 4; k++) if (r() < 0.3) kirik.add(Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1 + Math.floor(r() * 4)));
+    if (inisBulC(tohum, kirik, katFn, x, y, eskiX, eskiY) !== inisBulJS(katFn, (n) => kirik.has(n), x, y, eskiX, eskiY)) return false;
+  }
+  return true;
+}
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
   let s = 12345; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -285,6 +317,7 @@ function cekirdekYukle(b64) {
       if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
     if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
     if (!puanSinav()) throw new Error('puan uyuşmazlığı');
+    if (!inisSinav()) throw new Error('iniş uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }
@@ -797,9 +830,9 @@ function kapanisCiz(c) {
 
 
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
-const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
+const KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
-const AYAK = 10;     // ayak yarı genişliği: basamak kenarından bu kadar taşan ayak hâlâ basamağa basar
+// AYAK (ayak yarı genişliği) ve ZEMIN_Y kat.js'te: Rust çekirdeğiyle ortak sabitler
 const COYOTE = 6;           // basamaktan yürüyerek çıktıktan sonra hâlâ zıplayabilme süresi (kare)
 const TAMPON = 7;           // inişten hemen önce basılan zıplama tuşu bu kadar kare hatırlanır
 const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
@@ -875,29 +908,23 @@ function adim(o, giris) {
   if (o.havada) { o.vy = dikeyGuncelleC(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
   if (o.havada && o.vy >= 0) {
-    for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
-      const f = o.kat(n), py = katY(n), [kx0, kx1] = basamakAralik(f);
-      if (o.kirik.has(n)) continue; // kırılan basamaktan geçilir
-      const t = o.y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (o.y - eskiY))) : 1, xk = eskiX + (o.x - eskiX) * t;
-      const uzerinde = (x) => x >= kx0 - AYAK && x <= kx1 + AYAK;
-      if (n === 0 ? true : (eskiY <= py && o.y >= py && (uzerinde(xk) || uzerinde(o.x)))) {
-        if (n === 0 && o.y < py) continue;
-        o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
-        if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
-        const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
-        const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
-        if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
-        if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
-        if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
-        buzKirigi(o.x, o.y, 4); // iniş
-        if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
-        if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
-          o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
-          yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
-        }
-        break;
-      }
+    const n = inisBulC(o.tohum, o.kirik, o.kat, o.x, o.y, eskiX, eskiY); // iniş aranır (Rust çekirdeği ya da JS); -1 = inilmedi
+    if (n >= 0) {
+      const f = o.kat(n), py = katY(n);
+    o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
+    if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
+    const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
+    const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
+    if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
+    if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
+    if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
+    buzKirigi(o.x, o.y, 4); // iniş
+    if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
+    const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+    if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
+      o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
+      yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
+    }
     }
   }
   if (!o.havada && o.katNo > 0 && o.kat(o.katNo).tur === 'kirilgan') { // kırılgan basamakta durdukça sayaç artar, dolunca basamak kırılır

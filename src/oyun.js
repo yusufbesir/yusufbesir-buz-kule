@@ -1,18 +1,18 @@
 // description: Oyun döngüsü, fizik hissi (kenar toleransı, coyote süresi, zıplama tamponu), kamera, takla, kristaller, güç öğeleri ve çizim (özgün kod). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
-import { katUret, KARO, KAT_ARALIK } from './kat.js';
+import { katUret, KARO, KAT_ARALIK, ZEMIN_Y, AYAK } from './kat.js';
 import { yeniPuan, toplam } from './puan.js';
 import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, kirmaSesi } from './ses.js';
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
-import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC, puanInisC, puanKareC } from './cekirdek.js';
+import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC, puanInisC, puanKareC, inisBulC } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
-const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
+const KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
-export const AYAK = 10;     // ayak yarı genişliği: basamak kenarından bu kadar taşan ayak hâlâ basamağa basar
+// AYAK (ayak yarı genişliği) ve ZEMIN_Y kat.js'te: Rust çekirdeğiyle ortak sabitler
 const COYOTE = 6;           // basamaktan yürüyerek çıktıktan sonra hâlâ zıplayabilme süresi (kare)
 const TAMPON = 7;           // inişten hemen önce basılan zıplama tuşu bu kadar kare hatırlanır
 const SAAT_SURE = 480, MIKNATIS_SURE = 500; // güç öğesi süreleri (kare)
@@ -88,29 +88,23 @@ export function adim(o, giris) {
   if (o.havada) { o.vy = dikeyGuncelleC(o.vy); o.y += o.vy; if (o.donuyor) o.aci += o.aciHiz; }
   // Yalnız düşerken platforma konulur. Yatay konum, geçiş anına doğrusal ara değerle (hızlı koşuda basamağı atlamasın) ve ±AYAK toleransla denetlenir.
   if (o.havada && o.vy >= 0) {
-    for (let n = Math.max(0, Math.floor((ZEMIN_Y - o.y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
-      const f = o.kat(n), py = katY(n), [kx0, kx1] = basamakAralik(f);
-      if (o.kirik.has(n)) continue; // kırılan basamaktan geçilir
-      const t = o.y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (o.y - eskiY))) : 1, xk = eskiX + (o.x - eskiX) * t;
-      const uzerinde = (x) => x >= kx0 - AYAK && x <= kx1 + AYAK;
-      if (n === 0 ? true : (eskiY <= py && o.y >= py && (uzerinde(xk) || uzerinde(o.x)))) {
-        if (n === 0 && o.y < py) continue;
-        o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
-        if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
-        const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
-        const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
-        if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
-        if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
-        if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
-        buzKirigi(o.x, o.y, 4); // iniş
-        if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
-        const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
-        if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
-          o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
-          yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
-        }
-        break;
-      }
+    const n = inisBulC(o.tohum, o.kirik, o.kat, o.x, o.y, eskiX, eskiY); // iniş aranır (Rust çekirdeği ya da JS); -1 = inilmedi
+    if (n >= 0) {
+      const f = o.kat(n), py = katY(n);
+    o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
+    if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
+    const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
+    const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
+    if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
+    if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
+    if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
+    buzKirigi(o.x, o.y, 4); // iniş
+    if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
+    const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
+    if (f.tur === 'yay') { // yay basamak: otomatik yukarı fırlatır ve takla attırır
+      o.vy = -YAY_HIZI; o.havada = true; o.donuyor = true; o.aci = 0; o.aciHiz = o.yon * 2 * Math.PI / (2.5 * YAY_HIZI); o.yaySayisi++;
+      yaySesi(); parcacikEkle(o.x, o.y, 16, '#ff9a9a', 4);
+    }
     }
   }
   if (!o.havada && o.katNo > 0 && o.kat(o.katNo).tur === 'kirilgan') { // kırılgan basamakta durdukça sayaç artar, dolunca basamak kırılır

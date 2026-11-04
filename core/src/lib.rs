@@ -154,3 +154,43 @@ pub extern "C" fn puan_kare(var: u32, toplam: f64, sayac: f64, zip: f64) {
     let s = sayac - 1.0;
     if s <= 0.0 { puan_bitir(true, toplam, zip); } else { puan_yaz(1.0, toplam, s, zip, 0.0, 0.0, 0.0, 0.0); }
 }
+
+// ---- Aşama 3a: iniş araması (src/oyun.js adim() içindeki basamak çarpışma döngüsü; src/cekirdek.js inisBulJS ile aynı) ----
+const ZEMIN_Y: f64 = 440.0;
+const KAT_ARALIK_PX: f64 = 80.0;
+const KARO: f64 = 16.0;
+const AYAK: f64 = 10.0;
+
+fn kat_bas_w(tohum: u32, n: u32) -> (u32, u32) {
+    let mut r = kat_rnd(tohum, n);
+    let w = genislik(n, &mut r);
+    let bas = 5 + if w == SATIR_KARO { 0 } else { floor(r.sonraki() * (SATIR_KARO - w + 1) as f64) as u32 };
+    (bas, w)
+}
+
+// n0..=n1 katları ascending taranır; kirik_maske bit i = (n0+i). katın kırık olması. İlk inilen kat ya da -1.
+#[no_mangle]
+pub extern "C" fn inis_ara(tohum: u32, x: f64, y: f64, eski_x: f64, eski_y: f64, n0: u32, n1: u32, kirik_maske: u32) -> i32 {
+    let mut n = n0;
+    while n <= n1 {
+        let i = n - n0;
+        let kirik = i < 32 && (kirik_maske >> i) & 1 == 1;
+        if !kirik {
+            let py = ZEMIN_Y - (n as f64) * KAT_ARALIK_PX;
+            let uygun = if n == 0 {
+                true
+            } else {
+                let (bas, w) = kat_bas_w(tohum, n);
+                let kx0 = 85.0 + ((bas - 5) as f64) * KARO;
+                let kx1 = kx0 + (w as f64) * KARO;
+                let t = if y > eski_y { buyuk(0.0, kucuk(1.0, (py - eski_y) / (y - eski_y))) } else { 1.0 };
+                let xk = eski_x + (x - eski_x) * t;
+                let uz = |v: f64| v >= kx0 - AYAK && v <= kx1 + AYAK;
+                eski_y <= py && y >= py && (uz(xk) || uz(x))
+            };
+            if uygun && !(n == 0 && y < py) { return n as i32; }
+        }
+        n += 1;
+    }
+    -1
+}

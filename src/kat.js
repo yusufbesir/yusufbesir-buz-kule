@@ -1,5 +1,6 @@
 // description: Prosedürel kat üretimi (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 export const KARO = 16, KAT_ARALIK = 80, SATIR_KARO = 30;
+export const ZEMIN_Y = 440, AYAK = 10; // zemin çizgisi; ayak yarı genişliği: basamak kenarından bu kadar taşan ayak hâlâ basamağa basar (Rust çekirdeğiyle ortak)
 export function genislik(kat, rnd) {
   if (kat > 0 && kat % 50 === 0) return SATIR_KARO;
   const aralik = Math.max(1, Math.round((300 - kat) / 30));

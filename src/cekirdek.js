@@ -1,5 +1,5 @@
 // description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
-import { katUret, KAT_ARALIK } from './kat.js';
+import { katUret, KAT_ARALIK, KARO, ZEMIN_Y, AYAK } from './kat.js';
 import { katRnd } from './hayalet.js';
 import { yatayGuncelle, zipla, duvarSekmesi, dikeyGuncelle } from './fizik.js';
 import { yeniPuan, inis, kare, odulAdi } from './puan.js';
@@ -50,6 +50,37 @@ function puanSinav() {
   }
   return true;
 }
+// Aşama 3a: iniş araması (basamak çarpışması). JS sürümü: ilk inilen kat ya da -1.
+export function inisBulJS(katFn, kirikHas, x, y, eskiX, eskiY) {
+  for (let n = Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1); n <= Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1; n++) {
+    const f = katFn(n), py = ZEMIN_Y - n * KAT_ARALIK, kx0 = 85 + (f.xKaro - 5) * KARO, kx1 = kx0 + f.genislikKaro * KARO;
+    if (kirikHas(n)) continue;
+    const t = y > eskiY ? Math.min(1, Math.max(0, (py - eskiY) / (y - eskiY))) : 1, xk = eskiX + (x - eskiX) * t;
+    const uzerinde = (v) => v >= kx0 - AYAK && v <= kx1 + AYAK;
+    if (n === 0 ? true : (eskiY <= py && y >= py && (uzerinde(xk) || uzerinde(x)))) {
+      if (n === 0 && y < py) continue;
+      return n;
+    }
+  }
+  return -1;
+}
+// Rust çekirdeği varsa ve oyun tohumluysa Rust, yoksa JS. kirik: kırık katların Set'i, katFn: o.kat.
+export function inisBulC(tohum, kirik, katFn, x, y, eskiX, eskiY) {
+  const n0 = Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1), n1 = Math.floor((ZEMIN_Y - eskiY) / KAT_ARALIK) + 1;
+  if (!cekirdekIc || tohum === null || n1 < n0 || n1 - n0 >= 32) return inisBulJS(katFn, (n) => kirik.has(n), x, y, eskiX, eskiY);
+  let maske = 0; for (let i = 0; i <= n1 - n0; i++) if (kirik.has(n0 + i)) maske |= 1 << i;
+  return cekirdekIc.inis_ara(tohum >>> 0, x, y, eskiX, eskiY, n0, n1, maske >>> 0);
+}
+function inisSinav() {
+  let s = 4242; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 6000; i++) {
+    const tohum = (r() * 4294967296) >>> 0, katFn = (n) => katUret(n, katRnd(tohum, n));
+    const eskiY = ZEMIN_Y - r() * (i % 3 === 0 ? 400 : 20000), y = eskiY + r() * 12.2, eskiX = 60 + r() * 520, x = eskiX + (r() - 0.5) * 24;
+    const kirik = new Set(); for (let k = 0; k < 4; k++) if (r() < 0.3) kirik.add(Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1 + Math.floor(r() * 4)));
+    if (inisBulC(tohum, kirik, katFn, x, y, eskiX, eskiY) !== inisBulJS(katFn, (n) => kirik.has(n), x, y, eskiX, eskiY)) return false;
+  }
+  return true;
+}
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
   let s = 12345; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -72,6 +103,7 @@ export function cekirdekYukle(b64) {
       if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
     if (!fizikSinav()) throw new Error('fizik uyuşmazlığı');
     if (!puanSinav()) throw new Error('puan uyuşmazlığı');
+    if (!inisSinav()) throw new Error('iniş uyuşmazlığı');
   } catch { cekirdekIc = null; }
   return cekirdekIc !== null;
 }
