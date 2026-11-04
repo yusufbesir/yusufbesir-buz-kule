@@ -11,6 +11,19 @@ const temaNo = (kat) => Math.floor(kat / 100) % TEMALAR.length;
 const tema = (kat) => TEMALAR[temaNo(kat)];
 let zaman = 0;
 
+// Çizim önbellekleri (yalnız görünüm): sabit gradyanlar tema+boyut anahtarıyla, duvar taş şeridi OffscreenCanvas'ta bir kez çizilir.
+// Bağlam değişirse (yeni tuval/test) gradyan önbelleği sıfırlanır; OffscreenCanvas yoksa eski çizim yoluna düşülür.
+let gkCtx = null; const gk = new Map();
+function gradyan(c, anahtar, uret) {
+  if (gkCtx !== c) { gk.clear(); gkCtx = c; }
+  let g = gk.get(anahtar); if (!g) { g = uret(); gk.set(anahtar, g); } return g;
+}
+const SERIT_SATIR = 64, DUV_BH = 22, DUV_BW = 42; // taş şeridi 64 sıra (1408 px) sonra tekrarlanır
+const duvarSeritleri = new Map();
+function olusTuval(g, h) {
+  try { if (typeof OffscreenCanvas !== 'function') return null; const o = new OffscreenCanvas(g, h), k = o.getContext('2d'); return k ? { tuval: o, k } : null; } catch (e) { return null; }
+}
+
 function yuvarlak(c, x, y, g, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + g, y, x + g, y + h, r); c.arcTo(x + g, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + g, y, r); c.closePath();
@@ -29,8 +42,9 @@ export function arkaPlan(c, W, H, kamY, kat, akisHedef = 0) {
   if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
   akis += (akisHedef - akis) * (akisHedef > akis ? 0.04 : 0.025); // giriş biraz hızlı, çıkış daha yumuşak
   if (Math.abs(akisHedef - akis) < 0.004) akis = akisHedef;
-  const t = tema(kat), g = c.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, t.ust); g.addColorStop(1, t.alt); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  const t = tema(kat), tn = temaNo(kat);
+  const g = gradyan(c, 'bg|' + tn + '|' + H, () => { const q = c.createLinearGradient(0, 0, 0, H); q.addColorStop(0, t.ust); q.addColorStop(1, t.alt); return q; });
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
   if (akis > 0.01 && AYAR.parilti > 0.05) { // akış hali: arka plan tonu yavaşça kayar (ekleme karışımıyla tek dikdörtgen)
     const guc = akis * Math.min(1, AYAR.parilti), ton = (zaman * 0.4 + kat * 0.5) % 360;
     c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.14 * guc;
@@ -41,10 +55,11 @@ export function arkaPlan(c, W, H, kamY, kat, akisHedef = 0) {
   c.save(); c.globalCompositeOperation = 'lighter';
   t.serit.forEach((renk, k) => {
     const y0 = 120 + k * 130 - (kamY * 0.05) % 260;
-    const gr = c.createLinearGradient(0, y0 - 70, 0, y0 + 70); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, renk); gr.addColorStop(1, 'rgba(0,0,0,0)');
-    c.globalAlpha = 0.16 * Math.min(1.5, AYAR.parilti); c.fillStyle = gr; c.beginPath(); c.moveTo(0, y0 + 80);
-    for (let x = 0; x <= W; x += 10) c.lineTo(x, y0 + Math.sin(x * 0.012 + zaman * 0.012 + k * 2) * 34 + Math.sin(x * 0.03 - zaman * 0.02) * 10);
-    c.lineTo(W, y0 + 160); c.lineTo(0, y0 + 160); c.closePath(); c.fill();
+    const gr = gradyan(c, 'au|' + tn + '|' + k, () => { const q = c.createLinearGradient(0, -70, 0, 70); q.addColorStop(0, 'rgba(0,0,0,0)'); q.addColorStop(0.5, renk); q.addColorStop(1, 'rgba(0,0,0,0)'); return q; });
+    c.save(); c.translate(0, y0); // gradyan y0'a göre göreli kurulur; böylece kamera kayarken yeniden üretilmez
+    c.globalAlpha = 0.16 * Math.min(1.5, AYAR.parilti); c.fillStyle = gr; c.beginPath(); c.moveTo(0, 80);
+    for (let x = 0; x <= W; x += 10) c.lineTo(x, Math.sin(x * 0.012 + zaman * 0.012 + k * 2) * 34 + Math.sin(x * 0.03 - zaman * 0.02) * 10);
+    c.lineTo(W, 160); c.lineTo(0, 160); c.closePath(); c.fill(); c.restore();
   });
   c.restore();
   // uzak kristal siluetleri (paralaks)
@@ -97,28 +112,50 @@ function mesaleCiz(c, x, y, t, yon) {
   c.fillStyle = '#fff6d0'; c.beginPath(); c.moveTo(x - 3, y + 2); c.quadraticCurveTo(x - 3, y - 6, x, y - 11 * titrek); c.quadraticCurveTo(x + 4, y - 4, x + 3, y + 2); c.closePath(); c.fill();
 }
 
+// Taş sıraları [r0, r1) aralığı için çizilir; ox yatay başlangıç, ky kamera kayması (şerit için 0). Hash sıra numarasının mod 64'ünü kullanır.
+function taslar(c, t, ox, gen, r0, r1, ky, sag) {
+  const bh = DUV_BH, bw = DUV_BW;
+  for (let r = r0; r < r1; r++) {
+    const y = r * bh - ky, kay = (r & 1) * (bw / 2), rm = r & (SERIT_SATIR - 1);
+    for (let b = -1; b < gen / bw + 2; b++) {
+      const bx = ox + b * bw - kay, h = hash(rm * 131 + b * 17 + (sag ? 7 : 3)), ton = (h - 0.5) * 0.28;
+      c.fillStyle = karisim(t.duvar, ton);
+      yuvarlak(c, bx + 1.5, y + 1.5, bw - 3, bh - 3, 3); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.07)'; c.fillRect(bx + 3, y + 2, bw - 8, 2);          // üst kenar ışığı
+      if (h > 0.82) { c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(bx + 8 + h * 10, y + 8, 7, 3); } // kırağı lekesi
+    }
+  }
+}
+function duvarSerit(t, tn, x0, gen) { // tema+kenar+genişlik anahtarlı taş şeridi; yoksa null (eski yol)
+  const anahtar = tn + '|' + x0 + '|' + gen; let o = duvarSeritleri.get(anahtar);
+  if (!o) {
+    o = olusTuval(gen, SERIT_SATIR * DUV_BH);
+    if (o) { o.k.fillStyle = t.harc; o.k.fillRect(0, 0, gen, SERIT_SATIR * DUV_BH); taslar(o.k, t, 0, gen, 0, SERIT_SATIR, 0, x0 !== 0); }
+    if (o) duvarSeritleri.set(anahtar, o); // null saklanmaz: OffscreenCanvas sonradan gelirse kullanılır
+  }
+  return o || null;
+}
+
 export function duvarlar(c, W, H, kamY, kat) {
-  const t = tema(kat);
+  const t = tema(kat), tn = temaNo(kat), P = SERIT_SATIR * DUV_BH;
   for (const x0 of [0, 555]) {
     const gen = x0 === 0 ? 85 : W - 555;
     c.save(); c.beginPath(); c.rect(x0, 0, gen, H); c.clip();
-    c.fillStyle = t.harc; c.fillRect(x0, 0, gen, H);
-    // taş duvar: kaydırmayla birlikte hareket eden sıralar, her taş kendi tonunda
-    const bh = 22, bw = 42;
-    for (let r = Math.floor(kamY / bh) - 1; r < Math.floor((kamY + H) / bh) + 1; r++) {
-      const y = r * bh - kamY, kay = (r & 1) * (bw / 2);
-      for (let b = -1; b < gen / bw + 2; b++) {
-        const bx = x0 + b * bw - kay, h = hash(r * 131 + b * 17 + (x0 ? 7 : 3)), ton = (h - 0.5) * 0.28;
-        c.fillStyle = karisim(t.duvar, ton);
-        yuvarlak(c, bx + 1.5, y + 1.5, bw - 3, bh - 3, 3); c.fill();
-        c.fillStyle = 'rgba(255,255,255,0.07)'; c.fillRect(bx + 3, y + 2, bw - 8, 2);          // üst kenar ışığı
-        if (h > 0.82) { c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(bx + 8 + h * 10, y + 8, 7, 3); } // kırağı lekesi
-      }
+    const serit = duvarSerit(t, tn, x0, gen);
+    if (serit) { // önbellekli yol: şerit kamY'ye göre kaydırılarak (en fazla iki blit) çizilir
+      const off = ((kamY % P) + P) % P;
+      for (let y = -off; y < H; y += P) c.drawImage(serit.tuval, x0, y);
+    } else {
+      c.fillStyle = t.harc; c.fillRect(x0, 0, gen, H);
+      taslar(c, t, x0, gen, Math.floor(kamY / DUV_BH) - 1, Math.floor((kamY + H) / DUV_BH) + 1, kamY, x0 !== 0);
     }
     // kenara doğru derinlik gölgesi (kule içine bakış)
-    const gr = c.createLinearGradient(x0, 0, x0 + gen, 0);
-    if (x0 === 0) { gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0.5)'); }
-    else { gr.addColorStop(0, 'rgba(0,0,0,0.5)'); gr.addColorStop(0.4, 'rgba(0,0,0,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0.55)'); }
+    const gr = gradyan(c, 'dv|' + x0 + '|' + gen, () => {
+      const q = c.createLinearGradient(x0, 0, x0 + gen, 0);
+      if (x0 === 0) { q.addColorStop(0, 'rgba(0,0,0,0.55)'); q.addColorStop(0.6, 'rgba(0,0,0,0.12)'); q.addColorStop(1, 'rgba(0,0,0,0.5)'); }
+      else { q.addColorStop(0, 'rgba(0,0,0,0.5)'); q.addColorStop(0.4, 'rgba(0,0,0,0.12)'); q.addColorStop(1, 'rgba(0,0,0,0.55)'); }
+      return q;
+    });
     c.fillStyle = gr; c.fillRect(x0, 0, gen, H);
     c.restore();
     // mesaleCizler: her 280 px'te bir, iki duvar dönüşümlü
@@ -126,12 +163,24 @@ export function duvarlar(c, W, H, kamY, kat) {
       if (((r & 1) === 0) !== (x0 === 0)) continue;
       mesaleCiz(c, x0 === 0 ? 60 : 580, r * 280 + 100 - kamY, t, x0 === 0 ? 1 : -1);
     }
-    // iç kenar: parlak taş silmesi
-    c.save(); c.shadowColor = t.plat; c.shadowBlur = 10 * AYAR.parilti; c.fillStyle = karisim(t.plat, -0.2); c.fillRect(x0 === 0 ? 83 : 555, 0, 2, H); c.restore();
+    // iç kenar: parlak taş silmesi; shadowBlur yerine önbellekli yatay parıltı gradyanı (tek dikdörtgen) + 2 px çizgi
+    const ex = x0 === 0 ? 83 : 555;
+    if (AYAR.parilti > 0.02) {
+      const pg = gradyan(c, 'pr|' + tn + '|' + ex, () => { const q = c.createLinearGradient(ex - 11, 0, ex + 13, 0);
+        q.addColorStop(0, t.plat + '00'); q.addColorStop(0.3, t.plat + '22'); q.addColorStop(0.46, t.plat + '5a'); q.addColorStop(0.54, t.plat + '5a'); q.addColorStop(0.7, t.plat + '22'); q.addColorStop(1, t.plat + '00'); return q; });
+      c.save(); c.globalAlpha = Math.min(1, AYAR.parilti); c.fillStyle = pg; c.fillRect(ex - 11, 0, 24, H); c.restore();
+    }
+    c.fillStyle = karisim(t.plat, -0.2); c.fillRect(ex, 0, 2, H);
   }
 }
 
 // ---- Basamaklar: tema başına ayrı malzeme ----
+// shadowBlur yerine ucuz eşdeğer: yuvarlak gövdenin genişleyen, düşük alfalı birkaç katmanı (dy: gölge kayması).
+function hale(c, x, y, gen, kal, r, renk, alfa, dy = 0) {
+  c.save(); c.fillStyle = renk;
+  for (let d = 2; d <= 8; d += 3) { c.globalAlpha = alfa * (1 - d / 11); yuvarlak(c, x - d, y - d + dy, gen + 2 * d, kal + 2 * d, r + d); c.fill(); }
+  c.restore();
+}
 const kabarik = (c, x0, x1, yUst, h, tohum) => { // yumuşak kabarık üst kenar çizgisi (kar/yosun başlığı)
   c.moveTo(x0, yUst + h);
   c.lineTo(x0, yUst + h * 0.4);
@@ -142,9 +191,9 @@ const kabarik = (c, x0, x1, yUst, h, tohum) => { // yumuşak kabarık üst kenar
 
 function platformBuz(c, x, y, gen, n, no, t) {
   const kal = 22;
-  c.save(); c.shadowColor = no ? '#ffd24a' : t.plat; c.shadowBlur = 14 * AYAR.parilti;
+  if (AYAR.parilti > 0.02) hale(c, x, y, gen, kal, 8, no ? '#ffd24a' : t.plat, 0.16 * Math.min(1.5, AYAR.parilti));
   const g = c.createLinearGradient(0, y, 0, y + kal); g.addColorStop(0, '#e8fbff'); g.addColorStop(0.3, '#a9e6fb'); g.addColorStop(1, '#3c8fc9');
-  c.fillStyle = g; yuvarlak(c, x, y, gen, kal, 8); c.fill(); c.restore();
+  c.fillStyle = g; yuvarlak(c, x, y, gen, kal, 8); c.fill();
   c.save(); c.beginPath(); yuvarlak(c, x, y, gen, kal, 8); c.clip();
   // iç yansımalar (çapraz ışık şeritleri) ve çatlaklar
   c.fillStyle = 'rgba(255,255,255,0.28)';
@@ -167,8 +216,8 @@ function platformBuz(c, x, y, gen, n, no, t) {
 
 function platformAmetist(c, x, y, gen, n, no, t) {
   const kal = 22;
-  c.save(); c.shadowColor = no ? '#ffd24a' : t.plat; c.shadowBlur = 14 * AYAR.parilti;
-  c.fillStyle = '#5a2d99'; yuvarlak(c, x, y + 2, gen, kal - 2, 6); c.fill(); c.restore();
+  if (AYAR.parilti > 0.02) hale(c, x, y + 2, gen, kal - 2, 6, no ? '#ffd24a' : t.plat, 0.16 * Math.min(1.5, AYAR.parilti));
+  c.fillStyle = '#5a2d99'; yuvarlak(c, x, y + 2, gen, kal - 2, 6); c.fill();
   // yüzeyler: üst yüz açık, ön yüz koyu, köşeler eğik
   const g1 = c.createLinearGradient(x, 0, x + gen, 0); g1.addColorStop(0, '#d9a8ff'); g1.addColorStop(0.5, '#f3dcff'); g1.addColorStop(1, '#c08bf5');
   c.fillStyle = g1; c.beginPath(); c.moveTo(x + 6, y); c.lineTo(x + gen - 6, y); c.lineTo(x + gen, y + 7); c.lineTo(x, y + 7); c.closePath(); c.fill();
@@ -185,9 +234,9 @@ function platformAmetist(c, x, y, gen, n, no, t) {
 
 function platformTahta(c, x, y, gen, n, no, t) {
   const kal = 20;
-  c.save(); c.shadowColor = 'rgba(0,0,0,0.5)'; c.shadowBlur = 8; c.shadowOffsetY = 4;
+  hale(c, x, y, gen, kal, 4, '#000000', 0.26, 4);
   const g = c.createLinearGradient(0, y, 0, y + kal); g.addColorStop(0, '#d79a62'); g.addColorStop(0.15, '#b9743f'); g.addColorStop(1, '#6f3f20');
-  c.fillStyle = g; yuvarlak(c, x, y, gen, kal, 4); c.fill(); c.restore();
+  c.fillStyle = g; yuvarlak(c, x, y, gen, kal, 4); c.fill();
   c.save(); c.beginPath(); yuvarlak(c, x, y, gen, kal, 4); c.clip();
   // tahta aralıkları ve damarlar
   for (let px = x + 46; px < x + gen - 10; px += 46 + hash(n + px) * 24) { c.fillStyle = 'rgba(40,20,8,0.55)'; c.fillRect(px, y, 2, kal); }
@@ -203,8 +252,8 @@ function platformTahta(c, x, y, gen, n, no, t) {
 
 function platformYosun(c, x, y, gen, n, no, t) {
   const kal = 22;
-  c.save(); c.shadowColor = no ? '#ffd24a' : 'rgba(0,0,0,0.5)'; c.shadowBlur = no ? 14 * AYAR.parilti : 8; c.shadowOffsetY = no ? 0 : 4;
-  c.fillStyle = '#6d7f78'; yuvarlak(c, x, y + 4, gen, kal - 4, 5); c.fill(); c.restore();
+  if (no) { if (AYAR.parilti > 0.02) hale(c, x, y + 4, gen, kal - 4, 5, '#ffd24a', 0.16 * Math.min(1.5, AYAR.parilti)); } else hale(c, x, y + 4, gen, kal - 4, 5, '#000000', 0.26, 4);
+  c.fillStyle = '#6d7f78'; yuvarlak(c, x, y + 4, gen, kal - 4, 5); c.fill();
   c.save(); c.beginPath(); yuvarlak(c, x, y + 4, gen, kal - 4, 5); c.clip();
   // taş blokları + harç
   for (let px = x; px < x + gen; px += 38) {
