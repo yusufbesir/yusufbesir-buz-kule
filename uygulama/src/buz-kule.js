@@ -4,9 +4,11 @@
 // description: Buz Kule kullanıcı ayarları (parıltı, parçacık, sarsıntı, ses, karakter) ve azaltılmış hareket desteği. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Fizik ve oyun kuralları bu ayarlardan etkilenmez; yalnız görünüm ve ses.
 const AZ = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8, karakter: 0, hud: 1, efektAcik: 1, muzikAcik: 0 }); // efektler açık, müzik kapalı başlar
-const ARALIK = Object.freeze({ parilti: [0, 2], parcacik: [0, 2], sarsinti: [0, 2], ses: [0, 1], karakter: [0, 4], hud: [0, 1.5], efektAcik: [0, 1], muzikAcik: [0, 1] });
+const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8, karakter: 0, hud: 1, efektAcik: 1, muzikAcik: 0, zorluk: 1 }); // efektler açık, müzik kapalı başlar
+const ARALIK = Object.freeze({ parilti: [0, 2], parcacik: [0, 2], sarsinti: [0, 2], ses: [0, 1], karakter: [0, 4], hud: [0, 1.5], efektAcik: [0, 1], muzikAcik: [0, 1], zorluk: [0, 3] });
 const KARAKTERLER = Object.freeze(['player', 'adventurer', 'female', 'soldier', 'zombie']);
+// Zorluk: 0 kolay, 1 orta (varsayılan), 2 zor, 3 çok zor. Orta dışındaki seviyelerin skor ve hayalet kayıtları ayrı anahtarlarda tutulur.
+const zSonek = (z) => (z === 1 || !Number.isInteger(z) ? '' : '.z' + z);
 const AYAR = { ...VARSAYILAN, azaltilmisHareket: AZ };
 const ANAHTAR = 'buzkule.ayar';
 
@@ -61,26 +63,27 @@ function izRengi(zaman) {
 
 // ---- skorlar ----
 // description: Buz Kule yerel skor tabloları: her oyun kipi (yeni, hayalet, günün kulesi) için ayrı ilk 5, kalıcı. Eski tek tablo "yeni" kipine devredilir. Oyun kurallarını etkilemez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 const SKOR_SAYISI = 5;
 const SKOR_ESKI_ANAHTAR = 'buzkule.skorlar'; // 0.10-0.14: tek tablo; artık "yeni" kipinin tablosu
 const bugun = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); };
-const skorAnahtari = (mod) => (mod === 'hayalet' ? 'buzkule.skorlar.hayalet' : mod === 'gunun' ? 'buzkule.skorlar.gunun.' + bugun() : SKOR_ESKI_ANAHTAR);
+const skorAnahtari = (mod, z = 1) => (mod === 'hayalet' ? 'buzkule.skorlar.hayalet' : mod === 'gunun' ? 'buzkule.skorlar.gunun.' + bugun() : SKOR_ESKI_ANAHTAR) + zSonek(z);
 
 const gecerli = (x) => x && Number.isFinite(x.skor) && x.skor > 0 && Number.isFinite(x.kat) && Number.isFinite(x.t);
 // Kipin tablosunu okur (sıralı, en çok 5, geçersiz satırlar atılır); bozuk kayıtta boş tablo döner.
-function skorListesi(mod) {
+function skorListesi(mod, z = 1) {
   try {
-    const k = JSON.parse(localStorage.getItem(skorAnahtari(mod)) || '[]');
+    const k = JSON.parse(localStorage.getItem(skorAnahtari(mod, z)) || '[]');
     return Array.isArray(k) ? k.filter(gecerli).sort((a, b) => b.skor - a.skor || a.t - b.t).slice(0, SKOR_SAYISI) : [];
   } catch { return []; }
 }
 // Skoru kipin tablosuna ekler; sırasını (1'den başlar) döndürür, ilk 5'e giremediyse 0. Sıfır skor eklenmez.
-function skorEkle(mod, skor, kat) {
+function skorEkle(mod, skor, kat, z = 1) {
   if (!(skor > 0)) return 0;
-  const kayit = { skor, kat, t: Date.now() }, liste = skorListesi(mod);
+  const kayit = { skor, kat, t: Date.now() }, liste = skorListesi(mod, z);
   liste.push(kayit); liste.sort((a, b) => b.skor - a.skor || a.t - b.t);
   const kesik = liste.slice(0, SKOR_SAYISI);
-  try { localStorage.setItem(skorAnahtari(mod), JSON.stringify(kesik)); } catch { /* sessiz */ }
+  try { localStorage.setItem(skorAnahtari(mod, z), JSON.stringify(kesik)); } catch { /* sessiz */ }
   return kesik.indexOf(kayit) + 1;
 }
 
@@ -118,6 +121,7 @@ const bildirimAdim = () => { for (let i = BILDIRIM.length - 1; i >= 0; i--) if (
 
 // ---- hayalet ----
 // description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 const SOL = 1, SAG = 2, ZIPLA = 4;
 
 // mulberry32: küçük, hızlı, tekrarlanabilir rastgele sayı üreteci
@@ -131,7 +135,7 @@ const yeniTohum = () => (Math.random() * 4294967296) >>> 0;
 function gunlukTohum(tarih = new Date()) { // yerel tarihe göre günlük tohum
   const s = tarih.getFullYear() * 10000 + (tarih.getMonth() + 1) * 100 + tarih.getDate(); return (Math.imul(s, 2654435761) >>> 0) || 1;
 }
-const gunlukAnahtar = (tarih = new Date()) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate();
+const gunlukAnahtar = (tarih = new Date(), z = 1) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate() + zSonek(z);
 
 const girisBit = (g) => (g.sol ? SOL : 0) | (g.sag ? SAG : 0) | (g.zipla ? ZIPLA : 0);
 const bitGiris = (b) => ({ sol: !!(b & SOL), sag: !!(b & SAG), zipla: !!(b & ZIPLA) });
@@ -157,6 +161,7 @@ function kayitOku(anahtar) {
 }
 function kayitYaz(anahtar, kayit) { try { localStorage.setItem(anahtar, JSON.stringify(kayit)); } catch { /* sessiz */ } }
 const HAYALET_ANAHTAR = 'buzkule.hayalet';
+const hayaletAnahtar = (z = 1) => HAYALET_ANAHTAR + zSonek(z);
 
 // ---- fizik ----
 // description: Buz Kule fizik çekirdeği (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
@@ -849,7 +854,9 @@ function kapanisCiz(c) {
 
 
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
-const KAYMA_ENFAZLA = 4; // kamera kayma hızı tavanı (px/kare); 30 sn'de bir artar. Yusuf kararı 2026-11-04: üst katlar biraz daha kolay (eskiden 5)
+// Zorluk (0 kolay, 1 orta, 2 zor, 3 çok zor): kamera kayma hızı tavanı (px/kare); 30 sn'de bir artar. Orta = Yusuf kararı 2026-11-04 (eskiden 5).
+const KAYMA_TAVANI = [2.5, 4, 5, 6.5];
+const kaymaTavani = (o) => KAYMA_TAVANI[o.zorluk] ?? KAYMA_TAVANI[1];
 const KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
 // AYAK (ayak yarı genişliği) ve ZEMIN_Y kat.js'te: Rust çekirdeğiyle ortak sabitler
@@ -865,11 +872,11 @@ const KIL_PAYI_SINIR = H - KAT_ARALIK;                  // ekranda bu çizginin 
 
 // rnd bir sayıysa tohumdur: kat n her zaman aynı (katRnd), böylece aynı tohum + aynı girişler = aynı oyun (hayalet, günlük kule).
 // rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
-function yeniOyun(rnd = Math.random) {
+function yeniOyun(rnd = Math.random, zorluk = 1) {
   const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
   const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUretTohum(n, tohum)), katlar.get(n));
   return {
-    rnd, tohum, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
+    rnd, tohum, kat, zorluk, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
@@ -978,8 +985,8 @@ function adim(o, giris) {
   o.kamTaban = Math.min(o.kamTaban, katY(o.enYuksek) - 200);
   if (!o.kaymaBasladi && o.enYuksek >= 5) o.kaymaBasladi = true; // kat 5'ten sonra kayma başlar
   if (o.kaymaBasladi) {
-    o.kayma = o.kare < SAAT ? 0.5 : Math.min(KAYMA_ENFAZLA, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
-    if (o.kare % SAAT === 0 && o.kare <= KAYMA_ENFAZLA * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
+    o.kayma = o.kare < SAAT ? 0.5 : Math.min(kaymaTavani(o), Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
+    if (o.kare % SAAT === 0 && o.kare <= Math.ceil(kaymaTavani(o)) * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
   }
   // Yukarı çıkarken kamera hedefe yumuşakça (üstel) yaklaşır; yükselen oyuncunun biraz önüne bakar (gecikme birikmesin). Aşağı dönüş eskisi gibi sınırlı hızda.
   const kamHedef = Math.min(o.kamTaban, o.y - 100 + (o.vy < 0 ? o.vy * 2.5 : 0));
@@ -1342,19 +1349,19 @@ function durumDegistir(d, yeni = false) {
 // Oyun kipleri: 'yeni' (rastgele kule), 'hayalet' (en iyi oyunun kulesi ve yarı saydam kaydı), 'gunun' (bugünün sabit kulesi ve günlük en iyi kaydı).
 function basla() {
   let tohum = yeniTohum(), kayit = null;
-  if (mod === 'hayalet') { kayit = kayitOku(HAYALET_ANAHTAR); if (kayit) tohum = kayit.tohum; }
-  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar()); }
-  o = yeniOyun(tohum); o.rekorKat = skorListesi(mod).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
-  hayalet = kayit ? yeniOyun(tohum) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
+  if (mod === 'hayalet') { kayit = kayitOku(hayaletAnahtar(AYAR.zorluk)); if (kayit) tohum = kayit.tohum; }
+  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar(undefined, AYAR.zorluk)); }
+  o = yeniOyun(tohum, AYAR.zorluk); o.rekorKat = skorListesi(mod, AYAR.zorluk).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
+  hayalet = kayit ? yeniOyun(tohum, AYAR.zorluk) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
   durumDegistir('oyun', true); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
 }
 function oyunBitti() {
   const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
-  const anahtar = mod === 'gunun' ? gunlukAnahtar() : HAYALET_ANAHTAR, eski = kayitOku(anahtar);
+  const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, o.zorluk) : hayaletAnahtar(o.zorluk), eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
   hayaletSonuc = hayalet && eski ? (s > eski.skor ? 'Hayaleti geçtin! (' + eski.skor + ')' : 'Hayalet önde: ' + eski.skor) : '';
-  sonSira = skorEkle(mod, s, o.enYuksek); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
+  sonSira = skorEkle(mod, s, o.enYuksek, o.zorluk); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
 
@@ -1384,17 +1391,25 @@ gostergeKonumla(kimlik('t-oyna'), true);
 // ---- Oyun kipi seçici ----
 const modDugmeleri = { yeni: kimlik('mod-yeni'), hayalet: kimlik('mod-hayalet'), gunun: kimlik('mod-gunun') };
 function modYaz() {
-  const var_ = !!kayitOku(HAYALET_ANAHTAR);
+  const var_ = !!kayitOku(hayaletAnahtar(AYAR.zorluk));
   if (mod === 'hayalet' && !var_) mod = 'yeni';
   modDugmeleri.hayalet.disabled = !var_;
   for (const [ad, b] of Object.entries(modDugmeleri)) { b.setAttribute('aria-pressed', String(mod === ad)); b.className = 'mod' + (mod === ad ? ' secili' : ''); }
 }
 for (const [ad, b] of Object.entries(modDugmeleri)) b.addEventListener('click', () => { mod = ad; modYaz(); listeYaz(kimlik('m-liste'), 5, 0); });
 modYaz();
+// ---- Zorluk seçici (kolay / orta / zor / çok zor) ----
+const zorlukDugmeleri = [0, 1, 2, 3].map((i) => kimlik('zorluk-' + i));
+function zorlukYaz() {
+  zorlukDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.zorluk === i)); b.className = 'mod' + (AYAR.zorluk === i ? ' secili' : ''); });
+  modYaz();
+}
+zorlukDugmeleri.forEach((b, i) => b.addEventListener('click', () => { AYAR.zorluk = i; ayarKaydet(); zorlukYaz(); listeYaz(kimlik('m-liste'), 5, 0); }));
+zorlukYaz();
 // ---- Skor tablosu ----
 function listeYaz(ol, adet, vurgu, oyunMod = mod) {
   if (!ol) return; ol.textContent = '';
-  skorListesi(oyunMod).slice(0, adet).forEach((kayit, i) => {
+  skorListesi(oyunMod, AYAR.zorluk).slice(0, adet).forEach((kayit, i) => {
     const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('b');
     a.textContent = 'kat ' + kayit.kat; b.textContent = String(kayit.skor); li.appendChild(a); li.appendChild(b);
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);

@@ -1,4 +1,5 @@
 // description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+import { zSonek } from './ayar.js';
 export const SOL = 1, SAG = 2, ZIPLA = 4;
 
 // mulberry32: küçük, hızlı, tekrarlanabilir rastgele sayı üreteci
@@ -12,7 +13,7 @@ export const yeniTohum = () => (Math.random() * 4294967296) >>> 0;
 export function gunlukTohum(tarih = new Date()) { // yerel tarihe göre günlük tohum
   const s = tarih.getFullYear() * 10000 + (tarih.getMonth() + 1) * 100 + tarih.getDate(); return (Math.imul(s, 2654435761) >>> 0) || 1;
 }
-export const gunlukAnahtar = (tarih = new Date()) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate();
+export const gunlukAnahtar = (tarih = new Date(), z = 1) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate() + zSonek(z);
 
 export const girisBit = (g) => (g.sol ? SOL : 0) | (g.sag ? SAG : 0) | (g.zipla ? ZIPLA : 0);
 export const bitGiris = (b) => ({ sol: !!(b & SOL), sag: !!(b & SAG), zipla: !!(b & ZIPLA) });
@@ -38,3 +39,4 @@ export function kayitOku(anahtar) {
 }
 export function kayitYaz(anahtar, kayit) { try { localStorage.setItem(anahtar, JSON.stringify(kayit)); } catch { /* sessiz */ } }
 export const HAYALET_ANAHTAR = 'buzkule.hayalet';
+export const hayaletAnahtar = (z = 1) => HAYALET_ANAHTAR + zSonek(z);
