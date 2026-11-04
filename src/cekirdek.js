@@ -88,7 +88,7 @@ export function kayitCozC(kayit) {
   const adres = cekirdekIc.kosu_adresi(), tampon = cekirdekIc.bellek.buffer;
   new Uint32Array(tampon, adres, kosu.length).set(kosu);
   const n = cekirdekIc.kayit_coz(kosu.length);
-  return n === 0xFFFFFFFF ? kayitCoz(kayit) : Array.from(new Uint8Array(tampon, cekirdekIc.kare_adresi(), n));
+  return n < 0 ? kayitCoz(kayit) : Array.from(new Uint8Array(tampon, cekirdekIc.kare_adresi(), n));
 }
 function kayitSinav() {
   let s = 99; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
