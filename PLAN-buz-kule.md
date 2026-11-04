@@ -23,6 +23,9 @@ Bu oyunda ağır hesap azdır: simülasyon adımı (`adim`) mikrosaniye düzeyin
 4. **Hayalet kaydı** (`kayitCoz`, run-length, doğrulama sınırları): Rust; bozuk kayıt sınır testleri (güvenlik bulgusuyla uyumlu).
 5. Python: her aşamada araç/test betiği; son aşamada tek `derle.py`.
 
+## Aşama 1 sözleşmesi (Rust ↔ JS)
+`core.wasm` (uygulama/src/varlik/core.wasm) şu dışa aktarımları sağlar: `bellek` (WebAssembly.Memory), `cikis_adresi() -> u32` (çıkış tamponu adresi), `kat_uret(tohum: u32, n: u32)` (tamponun başına 9 adet f64 yazar: kat, xKaro, genislikKaro, no(0/1), tema, kristal(0/1), kristalX, guc(0 yok, 1 saat, 2 miknatis), tur(0 normal, 1 kirilgan, 2 yay)). Hesap `katRnd` (mulberry32 + 0x9E3779B1 karışımı) ve `katUret` ile bit düzeyinde aynı olmalı. Doğrulama: `node --test test/altin-kat.test.js` (core.wasm varsa otomatik çalışır, yoksa atlanır). wasm yüklemede JS tarafı için CSP/yükleme kararı çekirdek hazır olunca verilir (fetch `connect-src 'none'` ile engelli; alternatif: wasm baytları birleştirilmiş betiğe gömülür).
+
 ## Kurallar
 - Test (95 mevcut + eşdeğerlik) geçmeden aşama birleşmez; her aşama kendi sürümü (0.16.0 = aşama 1, …).
 - **Fizik davranışı değişmez**; davranış değişikliği (ör. süpürmeli çarpışma) Yusuf'un kararıdır ve geçişten ayrı yapılır.
