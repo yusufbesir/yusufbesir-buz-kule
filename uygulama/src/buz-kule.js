@@ -37,7 +37,7 @@ function cuzdanYukle() {
   try {
     const k = JSON.parse(localStorage.getItem(CUZDAN_ANAHTAR) || 'null');
     if (k && Number.isFinite(k.kristal) && k.kristal >= 0) {
-      CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Math.max(0, Math.floor(k.toplam || 0));
+      CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Number.isFinite(k.toplam) ? Math.max(0, Math.floor(k.toplam)) : 0;
       CUZDAN.acik = Array.isArray(k.acik) ? k.acik.filter(i => Number.isInteger(i) && i >= 0 && i < IZLER.length) : [0];
       if (!CUZDAN.acik.includes(0)) CUZDAN.acik.push(0);
       CUZDAN.secili = CUZDAN.acik.includes(k.secili) ? k.secili : 0;
@@ -148,7 +148,8 @@ function kayitCoz(kayit) { // kare kare giriş bitleri dizisi
 }
 function kayitGecerli(k) {
   return !!k && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
-    && k.kosu.every(v => Number.isInteger(v) && v >= 0);
+    && k.kosu.every((v, i) => Number.isInteger(v) && v >= 0 && (i % 2 === 0 ? v <= 7 : v >= 1 && v <= 200000)) // çift: giriş bitleri, tek: tekrar sayısı
+    && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
 function kayitOku(anahtar) {
   try { const k = JSON.parse(localStorage.getItem(anahtar) || 'null'); return kayitGecerli(k) ? k : null; } catch { return null; }
@@ -746,7 +747,7 @@ function adim(o, giris) {
   if (!o.kaymaBasladi && o.enYuksek >= 5) o.kaymaBasladi = true; // kat 5'ten sonra kayma başlar
   if (o.kaymaBasladi) {
     o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
-    if (o.kare % SAAT === 0) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
+    if (o.kare % SAAT === 0 && o.kare <= 5 * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
   }
   const kamHedef = Math.min(o.kamTaban, o.y - 100);
   if (kamHedef < o.kamY) o.kamY = kamHedef; else o.kamY += Math.min(8, kamHedef - o.kamY);

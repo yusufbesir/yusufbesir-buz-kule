@@ -48,3 +48,13 @@ test('günlük kule: aynı gün aynı tohum ve anahtar, ertesi gün farklı', ()
   assert.equal(gunlukTohum(d1), gunlukTohum(d2)); assert.notEqual(gunlukTohum(d1), gunlukTohum(d3));
   assert.equal(gunlukAnahtar(d1), gunlukAnahtar(d2)); assert.notEqual(gunlukAnahtar(d1), gunlukAnahtar(d3)); assert.ok(katRnd(1, 2)() !== katRnd(1, 3)());
 });
+
+// Bozuk/kötü niyetli kayıt: devasa tekrar sayısı ve geçersiz giriş biti reddedilir (belleği tüketmesin).
+import { kayitGecerli as _gecerli } from '../src/hayalet.js';
+test('kayitGecerli: devasa tekrar sayısı ve geçersiz giriş biti reddedilir', () => {
+  const temel = { tohum: 1, skor: 5, kat: 2 };
+  assert.equal(_gecerli({ ...temel, kosu: [0, 10, 3, 5] }), true);
+  assert.equal(_gecerli({ ...temel, kosu: [0, 1e9] }), false);
+  assert.equal(_gecerli({ ...temel, kosu: [9, 3] }), false);
+  assert.equal(_gecerli({ ...temel, kosu: [0, 600000, 1, 600000] }), false);
+});

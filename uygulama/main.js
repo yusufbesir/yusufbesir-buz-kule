@@ -11,5 +11,6 @@ function createWindow() {
   win.webContents.session.setPermissionRequestHandler((_wc, _izin, cb) => cb(false));
   win.loadFile(ANA);
 }
-app.whenReady().then(createWindow);
+if (!app.requestSingleInstanceLock()) app.quit(); // tek pencere: iki örnek aynı skor kaydına yazıp birbirini ezmesin
+else app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());

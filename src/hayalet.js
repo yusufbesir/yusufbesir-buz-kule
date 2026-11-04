@@ -29,7 +29,8 @@ export function kayitCoz(kayit) { // kare kare giriş bitleri dizisi
 }
 export function kayitGecerli(k) {
   return !!k && Number.isFinite(k.tohum) && Number.isFinite(k.skor) && Number.isFinite(k.kat) && Array.isArray(k.kosu) && k.kosu.length % 2 === 0 && k.kosu.length < 40000
-    && k.kosu.every(v => Number.isInteger(v) && v >= 0);
+    && k.kosu.every((v, i) => Number.isInteger(v) && v >= 0 && (i % 2 === 0 ? v <= 7 : v >= 1 && v <= 200000)) // çift: giriş bitleri, tek: tekrar sayısı
+    && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
 export function kayitOku(anahtar) {
   try { const k = JSON.parse(localStorage.getItem(anahtar) || 'null'); return kayitGecerli(k) ? k : null; } catch { return null; }

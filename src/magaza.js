@@ -13,7 +13,7 @@ export function cuzdanYukle() {
   try {
     const k = JSON.parse(localStorage.getItem(CUZDAN_ANAHTAR) || 'null');
     if (k && Number.isFinite(k.kristal) && k.kristal >= 0) {
-      CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Math.max(0, Math.floor(k.toplam || 0));
+      CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Number.isFinite(k.toplam) ? Math.max(0, Math.floor(k.toplam)) : 0;
       CUZDAN.acik = Array.isArray(k.acik) ? k.acik.filter(i => Number.isInteger(i) && i >= 0 && i < IZLER.length) : [0];
       if (!CUZDAN.acik.includes(0)) CUZDAN.acik.push(0);
       CUZDAN.secili = CUZDAN.acik.includes(k.secili) ? k.secili : 0;
