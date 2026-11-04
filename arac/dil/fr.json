@@ -134,5 +134,9 @@
  "hud_odul8": "EPIQUE",
  "hud_odul9": "PARFAIT",
  "j_dil": "Langue",
- "j_profil": "{n} parties · étage max {k} · plus grand combo {c}"
+ "j_profil": "{n} parties · étage max {k} · plus grand combo {c}",
+ "j_golge": "Ombre d'atterrissage",
+ "j_perde": "Filtre de combo",
+ "j_kaygan": "Glace glissante",
+ "j_ozellikler": "Options supplémentaires"
 }

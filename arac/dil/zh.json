@@ -134,5 +134,9 @@
  "hud_odul8": "MYTH",
  "hud_odul9": "PERFECT",
  "j_dil": "语言",
- "j_profil": "{n} 局 · 最高层数 {k} · 最大连击 {c}"
+ "j_profil": "{n} 局 · 最高层数 {k} · 最大连击 {c}",
+ "j_golge": "落地阴影",
+ "j_perde": "连击滤镜",
+ "j_kaygan": "滑溜冰面",
+ "j_ozellikler": "额外功能"
 }

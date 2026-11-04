@@ -134,5 +134,9 @@
  "hud_odul8": "EPIC",
  "hud_odul9": "FLAWLESS",
  "j_dil": "Language",
- "j_profil": "{n} games · highest floor {k} · biggest combo {c}"
+ "j_profil": "{n} games · highest floor {k} · biggest combo {c}",
+ "j_golge": "Landing shadow",
+ "j_perde": "Combo filter",
+ "j_kaygan": "Slippery ice",
+ "j_ozellikler": "Extra features"
 }

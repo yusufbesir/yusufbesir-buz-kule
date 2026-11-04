@@ -31,6 +31,8 @@ function boyutla() {
 }
 boyutla(); addEventListener('resize', boyutla); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', boyutla);
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(boyutla).observe(tuval); // pencere büyütülünce ya da başka ekrana taşınınca yeniden boyutla
+// Skor ve hayalet kayıt anahtarı: zorluk (0-3) + kaygan buz açıksa 10. Orta zorluk ve kaygan kapalı = eski anahtarlar.
+const zk = () => AYAR.zorluk + (AYAR.kaygan ? 10 : 0), oz = (g) => g.zorluk + (g.kaygan ? 10 : 0);
 let o = yeniOyun(), durum = 'baslik', en = 0, yeniRekor = false, sekme = 'oyna', sonSira = 0;
 let mod = 'yeni', sonMod = 'yeni', hayalet = null, hayaletGiris = [], kaydedici = kayitBaslat(), hayaletSonuc = '';
 ayarYukle(); cuzdanYukle(); basarimYukle();
@@ -61,19 +63,19 @@ function durumDegistir(d, yeni = false) {
 // Oyun kipleri: 'yeni' (rastgele kule), 'hayalet' (en iyi oyunun kulesi ve yarı saydam kaydı), 'gunun' (bugünün sabit kulesi ve günlük en iyi kaydı).
 function basla() {
   let tohum = yeniTohum(), kayit = null;
-  if (mod === 'hayalet') { kayit = kayitOku(hayaletAnahtar(AYAR.zorluk)); if (kayit) tohum = kayit.tohum; }
-  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar(undefined, AYAR.zorluk)); }
-  o = yeniOyun(tohum, AYAR.zorluk); o.rekorKat = skorListesi(mod, AYAR.zorluk).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
-  hayalet = kayit ? yeniOyun(tohum, AYAR.zorluk) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
+  if (mod === 'hayalet') { kayit = kayitOku(hayaletAnahtar(zk())); if (kayit) tohum = kayit.tohum; }
+  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar(undefined, zk())); }
+  o = yeniOyun(tohum, AYAR.zorluk, AYAR.kaygan); o.rekorKat = skorListesi(mod, zk()).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
+  hayalet = kayit ? yeniOyun(tohum, AYAR.zorluk, AYAR.kaygan) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
   durumDegistir('oyun', true); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
 }
 function oyunBitti() {
   const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
-  const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, o.zorluk) : hayaletAnahtar(o.zorluk), eski = kayitOku(anahtar);
+  const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, oz(o)) : hayaletAnahtar(oz(o)), eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
   hayaletSonuc = hayalet && eski ? (s > eski.skor ? t('j_hayalet_gecti', { n: eski.skor }) : t('j_hayalet_onde', { n: eski.skor })) : '';
-  profilGuncelle(o); profilYaz(); sonSira = skorEkle(mod, s, o.enYuksek, o.zorluk); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
+  profilGuncelle(o); profilYaz(); sonSira = skorEkle(mod, s, o.enYuksek, oz(o)); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
 
@@ -103,7 +105,7 @@ gostergeKonumla(kimlik('t-oyna'), true);
 // ---- Oyun kipi seçici ----
 const modDugmeleri = { yeni: kimlik('mod-yeni'), hayalet: kimlik('mod-hayalet'), gunun: kimlik('mod-gunun') };
 function modYaz() {
-  const var_ = !!kayitOku(hayaletAnahtar(AYAR.zorluk));
+  const var_ = !!kayitOku(hayaletAnahtar(zk()));
   if (mod === 'hayalet' && !var_) mod = 'yeni';
   modDugmeleri.hayalet.disabled = !var_;
   for (const [ad, b] of Object.entries(modDugmeleri)) { b.setAttribute('aria-pressed', String(mod === ad)); b.className = 'mod' + (mod === ad ? ' secili' : ''); }
@@ -121,7 +123,7 @@ zorlukYaz();
 // ---- Skor tablosu ----
 function listeYaz(ol, adet, vurgu, oyunMod = mod) {
   if (!ol) return; ol.textContent = '';
-  skorListesi(oyunMod, AYAR.zorluk).slice(0, adet).forEach((kayit, i) => {
+  skorListesi(oyunMod, zk()).slice(0, adet).forEach((kayit, i) => {
     const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('b');
     a.textContent = t('j_kat') + ' ' + kayit.kat; b.textContent = String(kayit.skor); li.appendChild(a); li.appendChild(b);
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);
@@ -158,11 +160,15 @@ magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); basarimYaz();
 
 // ---- Ses ve müzik düğmeleri (aç/kapa) ----
 function sesDugmeleriYaz() {
-  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')]]) {
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')], ['golge', 'a-golge', t('j_golge')], ['perde', 'a-perde', t('j_perde')], ['kaygan', 'a-kaygan', t('j_kaygan')]]) {
     const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? t('j_acik') : t('j_kapali')); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
   }
 }
 kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
+for (const [ayar, id] of [['golge', 'a-golge'], ['perde', 'a-perde'], ['kaygan', 'a-kaygan']]) kimlik(id).addEventListener('click', () => {
+  AYAR[ayar] = AYAR[ayar] ? 0 : 1; ayarKaydet(); sesDugmeleriYaz();
+  if (ayar === 'kaygan') { modYaz(); listeYaz(kimlik('m-liste'), 5, 0); } // kaygan buz skor ve hayalet kayıtlarını ayırır
+});
 kimlik('a-muzik').addEventListener('click', () => { AYAR.muzikAcik = AYAR.muzikAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); muzikGuncelle(durum === 'oyun'); });
 sesDugmeleriYaz();
 // ---- Canlı ayar paneli ----

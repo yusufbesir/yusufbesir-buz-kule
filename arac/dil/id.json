@@ -134,5 +134,9 @@
  "hud_odul8": "EPIK",
  "hud_odul9": "SEMPURNA",
  "j_dil": "Bahasa",
- "j_profil": "{n} permainan · lantai tertinggi {k} · kombo terbesar {c}"
+ "j_profil": "{n} permainan · lantai tertinggi {k} · kombo terbesar {c}",
+ "j_golge": "Bayangan mendarat",
+ "j_perde": "Filter kombo",
+ "j_kaygan": "Es licin",
+ "j_ozellikler": "Fitur tambahan"
 }

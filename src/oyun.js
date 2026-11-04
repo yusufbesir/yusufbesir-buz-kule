@@ -13,6 +13,9 @@ import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcaci
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 // Zorluk (0 kolay, 1 orta, 2 zor, 3 çok zor): kamera kayma hızı tavanı (px/kare); 30 sn'de bir artar. Orta = Yusuf kararı 2026-11-04 (eskiden 5).
 const KAYMA_TAVANI = [2.5, 4, 5, 6.5];
+// Kaygan buz (isteğe bağlı ayar, varsayılan kapalı): 400. kattan sonra nadir (~%12) basamaklar yatay hızı korur. Seçim tohumdan türer: aynı tohum = aynı kaygan basamaklar.
+export const kayganKat = (tohum, n) => tohum !== null && n >= 400 && n % 10 !== 0 && katRnd((tohum ^ 0x5bd1e995) >>> 0, n)() < 0.12;
+const KAYGAN_SURTUNME = 0.985, KAYGAN_INIS = 0.97; // tuşsuz durumda hızın kare başı korunma oranı / iniş sönümü (normal: 0.9 / 0.8)
 const kaymaTavani = (o) => KAYMA_TAVANI[o.zorluk] ?? KAYMA_TAVANI[1];
 const KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
@@ -29,11 +32,11 @@ const KIL_PAYI_SINIR = H - KAT_ARALIK;                  // ekranda bu çizginin 
 
 // rnd bir sayıysa tohumdur: kat n her zaman aynı (katRnd), böylece aynı tohum + aynı girişler = aynı oyun (hayalet, günlük kule).
 // rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
-export function yeniOyun(rnd = Math.random, zorluk = 1) {
+export function yeniOyun(rnd = Math.random, zorluk = 1, kaygan = 0) {
   const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
   const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUretTohum(n, tohum)), katlar.get(n));
   return {
-    rnd, tohum, kat, zorluk, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
+    rnd, tohum, kat, zorluk, kaygan: kaygan ? 1 : 0, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
@@ -52,7 +55,7 @@ const kristalKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * K
 const gucKonum = (f) => ({ x: 85 + (f.xKaro - 5) * KARO + f.genislikKaro * KARO * (0.15 + 0.7 * f.kristalX), y: katY(f.kat) - 40 });
 
 function zipladi(o) {
-  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx, o.puan.kombo ? o.puan.kombo.zip : 0); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
+  o.vy = ziplaC(o.vx); o.havada = true; o.coyote = 0; o.tampon = 0; zipSesi(o.vx, AYAR.perde && o.puan.kombo ? o.puan.kombo.zip : 0); parcacikEkle(o.x, o.y, 6, '#ffffff', 2);
   o.donuyor = Math.abs(o.vy) >= TAKLA_HIZI; o.aci = 0;
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
@@ -76,7 +79,8 @@ export function adim(o, giris) {
   if (o.saat > 0) o.saat--; if (o.miknatis > 0) o.miknatis--; if (o.komboPuls > 0) o.komboPuls--;
   if (o.kilPayi > 0) o.kilPayi--; if (o.kilPayiBekle > 0) o.kilPayiBekle--;
   let indi = false; // bu karede bir basamağa konuldu mu (kıl payı denetimi için)
-  o.vx = yatayGuncelleC(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
+  const kayiyor = o.kaygan && !o.havada && o.katNo > 0 && kayganKat(o.tohum, o.katNo);
+  o.vx = kayiyor && !giris.sol && !giris.sag ? o.vx * KAYGAN_SURTUNME : yatayGuncelleC(o.vx, giris.sol, giris.sag); if (Math.abs(o.vx) > 0.5) o.yon = o.vx > 0 ? 1 : -1;
   // zıplama tamponu: tuşa basış (yükselen kenar) kısa süre hatırlanır
   const basildi = !!giris.zipla && !o.oncekiZ; o.oncekiZ = !!giris.zipla;
   if (basildi) o.tampon = TAMPON; else if (o.tampon > 0) o.tampon--;
@@ -96,7 +100,7 @@ export function adim(o, giris) {
     if (n >= 0) {
       const f = o.kat(n), py = katY(n);
     o.y = py; o.vy = 0; o.havada = false; o.donuyor = false; o.aci = 0; o.coyote = 0; indi = true;
-    if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
+    if (!giris.sol && !giris.sag) o.vx *= o.kaygan && kayganKat(o.tohum, n) ? KAYGAN_INIS : 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
     const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
     const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
     if (yeniRekor && n % 50 === 0) o.rozet = { metin: th('hud_kat') + ' ' + n, guc: 110 };
@@ -182,12 +186,13 @@ export function ciz(c, o, hayalet = null) {
     const f = o.kat(n), sy = katY(n) - o.kamY;
     if (n === 0) platform(c, 85, sy, 470, 0, true, 0);
     else if (!o.kirik.has(n)) platform(c, 85 + (f.xKaro - 5) * KARO, sy, f.genislikKaro * KARO, n, f.no, n, f.tur, o.sayacKat === n ? o.sayac / KIRILMA : 0);
+    if (o.kaygan && n > 0 && !o.kirik.has(n) && kayganKat(o.tohum, n)) { const bx = 85 + (f.xKaro - 5) * KARO, bw = f.genislikKaro * KARO; c.save(); c.globalAlpha = 0.28; c.fillStyle = '#7fe3ff'; c.fillRect(bx, sy - 3, bw, 7); c.globalAlpha = 0.6; c.fillStyle = '#f2fdff'; c.fillRect(bx + 4, sy - 1, bw - 8, 2); c.restore(); } // kaygan buz parlaması
     const tab = katTabelasi(n);
     if (tab) pikselYaz(c, tab, 85 + (f.xKaro - 5) * KARO - 8, sy - 8, 2, '#dff6ff', { hiza: 'sag', golge: 'rgba(0,0,0,0.85)' });
     if (f.kristal && !o.alinan.has(n)) { const p = kristalKonum(f); kristalCiz(c, p.x, p.y - o.kamY, n); }
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
-  inisGolgesi(c, o); // düşerken altındaki basamağa ince soluk gölge (yalnız görünüm)
+  if (AYAR.golge) inisGolgesi(c, o); // düşerken altındaki basamağa ince soluk gölge (yalnız görünüm)
   if (hayalet && !hayalet.bitti) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
   c.restore();

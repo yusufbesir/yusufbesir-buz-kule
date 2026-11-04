@@ -134,5 +134,9 @@
  "hud_odul8": "DESTAN",
  "hud_odul9": "KUSURSUZ",
  "j_dil": "Dil",
- "j_profil": "{n} oyun · en yüksek kat {k} · en büyük kombo {c}"
+ "j_profil": "{n} oyun · en yüksek kat {k} · en büyük kombo {c}",
+ "j_golge": "İniş gölgesi",
+ "j_perde": "Kombo perdesi",
+ "j_kaygan": "Kaygan buz",
+ "j_ozellikler": "Ek özellikler"
 }
