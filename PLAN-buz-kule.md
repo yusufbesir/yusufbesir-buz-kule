@@ -15,7 +15,8 @@ Bu oyunda ağır hesap azdır: simülasyon adımı (`adim`) mikrosaniye düzeyin
 - Kayan nokta: JS sayıları f64; Rust'ta f64 kullanılır, sim içinde sin/cos/exp kullanılmaz (yalnız + − × ÷ floor), böylece sonuçlar bit düzeyinde aynı çıkar.
 
 ## Aşamalar
-0. **Ölçüm (önce):** `arac/kare-olcum.mjs` genişletilir: yalnız `adim`, yalnız `katUret`, yalnız `kayitCoz` süreleri, 100.000 kare uzun koşu, bellek. Sonuç bu dosyaya eklenir.
+0. **Ölçüm (YAPILDI, 2026-11-04, `arac/olcum-asama0.mjs`, Node, JS tabanı):** `katUret` 0,09 µs/çağrı; `adim` 0,6 µs/çağrı (50 FPS kare bütçesi 20.000 µs → %0,003); `kayitCoz` 10.000 koşuluk kayıtta 4,6 ms (yalnız hayalet/günün kulesi başlangıcında bir kez). **Sonuç: simülasyon hız darboğazı değil; Rust'ın hız kazancı ölçülemeyecek kadar küçük. Rust yalnız belirlenimlilik, ortak çekirdek ve Yusuf'un dil tercihi için alınır.** JS'in ürettiği kat verisi `test/altin/kat.json` altın vektörü olarak kaydedildi (200 tohum × 300 kat; `arac/altin-vektor.mjs`); Rust çekirdeği bununla birebir eşleşmeli.
+   Eski ölçüm adımı (genişletme): `arac/kare-olcum.mjs` genişletilir: yalnız `adim`, yalnız `katUret`, yalnız `kayitCoz` süreleri, 100.000 kare uzun koşu, bellek. Sonuç bu dosyaya eklenir.
 1. **Kat üretimi + PRNG** (`katRnd` mulberry32, `katUret`, genişlik/aralık): en küçük, saf, en kolay doğrulanan kısım. `core/` Rust crate → `core.wasm`; JS yükleyici + geri düşme; 10.000 tohum × 500 kat eşdeğerlik testi.
 2. **Fizik + puan** (`fizik.js`, `puan.js`): saf fonksiyonlar; sınır değerlerle ve rastgele girdiyle eşdeğerlik.
 3. **Simülasyon adımı** (`oyun.js adim`: iniş, yay, kırılgan, güç nesneleri, kamera, ölüm): durum yapısı wasm belleğinde; JS `o` nesnesine okunur kopya. En riskli aşama: ancak 1 ve 2 oturduktan sonra, kare kare 1 milyon kare eşdeğerlik koşusuyla.
