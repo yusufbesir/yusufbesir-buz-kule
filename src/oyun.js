@@ -134,7 +134,7 @@ export function skor(o) { return toplam(o.puan, o.enYuksek) + o.ek; }
 export function ciz(c, o, hayalet = null) {
   const titre = Math.max(o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0, o.sars * 0.45) * AYAR.sarsinti; // büyük kombo ödülünde ve 100/200/500. katta kısa ekran sarsıntısı (azaltılmış harekette 0)
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
-  arkaPlan(c, W, H, o.kamY, o.enYuksek); duvarlar(c, W, H, o.kamY, o.enYuksek);
+  arkaPlan(c, W, H, o.kamY, o.enYuksek, o.puan.kombo && o.puan.kombo.zip >= 5 ? 1 : 0); duvarlar(c, W, H, o.kamY, o.enYuksek); // akış hali: kombo x5+ (yalnız görünüm)
   const ilk = Math.max(0, Math.floor((ZEMIN_Y - (o.kamY + H)) / KAT_ARALIK) - 1), son = Math.ceil((ZEMIN_Y - o.kamY) / KAT_ARALIK) + 1;
   for (let n = ilk; n <= son; n++) {
     const f = o.kat(n), sy = katY(n) - o.kamY;

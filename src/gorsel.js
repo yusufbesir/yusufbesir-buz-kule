@@ -1,4 +1,4 @@
-// description: Buz Kule görsel katmanı: aurora gökyüzü, kristal siluetleri, taş duvarlar ve mesaleCizler, temaya göre detaylı basamaklar (buz, ametist, ahşap, yosunlu taş), kristal toplanabilirleri, parçacıklar (prosedürel vektör çizim; yüksek çözünürlükte keskin). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Buz Kule görsel katmanı: aurora gökyüzü, kristal siluetleri, taş duvarlar ve mesaleCizler, temaya göre detaylı basamaklar (buz, ametist, ahşap, yosunlu taş), kristal toplanabilirleri, parçacıklar, akış hali (kombo x5+: ton kayması ve kenar hız çizgileri; yalnız görünüm) (prosedürel vektör çizim; yüksek çözünürlükte keskin). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { AYAR } from './ayar.js';
 export const TEMALAR = [
   { ad: 'buz', ust: '#050a1f', alt: '#12356a', serit: ['#38f2c8', '#5aa8ff'], plat: '#7fe9ff', koyu: '#1b6f9a', kristal: '#0b2a55', duvar: '#2a3f66', harc: '#16233f', mesale: '#8fe3ff' },
@@ -20,10 +20,23 @@ const karisim = (hex, k) => { // hex rengi k (-1..1) kadar koyulaştır/açıkla
   return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
 };
 
-export function arkaPlan(c, W, H, kamY, kat) {
+// "Akış hali" (yalnız görünüm): kombo x5 ve üstünde hedef 1, yoksa 0; değer her karede yumuşakça hedefe yaklaşır.
+let akis = 0;
+export const akisDegeri = () => akis;
+export const akisSifirla = () => { akis = 0; };
+
+export function arkaPlan(c, W, H, kamY, kat, akisHedef = 0) {
   if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
+  akis += (akisHedef - akis) * (akisHedef > akis ? 0.04 : 0.025); // giriş biraz hızlı, çıkış daha yumuşak
+  if (Math.abs(akisHedef - akis) < 0.004) akis = akisHedef;
   const t = tema(kat), g = c.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, t.ust); g.addColorStop(1, t.alt); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  if (akis > 0.01 && AYAR.parilti > 0.05) { // akış hali: arka plan tonu yavaşça kayar (ekleme karışımıyla tek dikdörtgen)
+    const guc = akis * Math.min(1, AYAR.parilti), ton = (zaman * 0.4 + kat * 0.5) % 360;
+    c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.14 * guc;
+    const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, `hsl(${ton},80%,55%)`); gr.addColorStop(1, `hsl(${(ton + 70) % 360},80%,45%)`);
+    c.fillStyle = gr; c.fillRect(0, 0, W, H); c.restore();
+  }
   // aurora şeritleri (ekleme karışımı, yavaş dalgalanma)
   c.save(); c.globalCompositeOperation = 'lighter';
   t.serit.forEach((renk, k) => {
@@ -61,6 +74,17 @@ export function arkaPlan(c, W, H, kamY, kat) {
     }
   }
   c.globalAlpha = 1;
+  // akış hali: oyun alanı kenarlarında aşağı akan ince dikey hız çizgileri (azaltılmış harekette çizilmez; kare başına 16 küçük dikdörtgen)
+  if (akis > 0.01 && !AYAR.azaltilmisHareket && AYAR.parilti > 0.05) {
+    const guc = akis * Math.min(1, AYAR.parilti), periyot = H + 120;
+    c.fillStyle = '#ffffff';
+    for (let i = 0; i < 16; i++) {
+      const sol = i < 8, x = (sol ? 92 : 514) + hash(i * 23 + 5) * 36, boy = 40 + hash(i * 31) * 70;
+      const y = ((((hash(i * 41) * periyot + zaman * (6 + hash(i * 7) * 8) - kamY * 0.3) % periyot) + periyot) % periyot) - 60; // kamera yükselirken aşağı akar
+      c.globalAlpha = (0.12 + hash(i * 3) * 0.18) * guc; c.fillRect(Math.round(x), Math.round(y), 1, Math.round(boy * (0.4 + 0.6 * akis)));
+    }
+    c.globalAlpha = 1;
+  }
 }
 
 function mesaleCiz(c, x, y, t, yon) {
