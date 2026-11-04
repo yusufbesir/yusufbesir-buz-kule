@@ -91,7 +91,7 @@ export function hudCiz(c, o, en, hayalet = null) {
   // önceki en iyi kat: kulede ince kesikli çizgi; geçilince kaybolur
   if (o.rekorKat > 0 && o.enYuksek <= o.rekorKat) {
     const ry = Math.round(katY(o.rekorKat) - o.kamY - 6);
-    if (ry > 20 && ry < 470) {
+    if (ry > 66 && ry < 470) {
       c.save(); c.globalAlpha = 0.8; c.fillStyle = SARI; for (let x = 92; x < 548; x += 12) c.fillRect(x, ry, 7, 2);
       vur(c, 'REKOR KAT ' + o.rekorKat, 546, ry - 9, 1, SARI, 'sag'); c.restore();
     }
