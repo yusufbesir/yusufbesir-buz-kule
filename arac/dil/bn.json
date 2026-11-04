@@ -138,5 +138,18 @@
  "j_golge": "অবতরণ ছায়া",
  "j_perde": "কম্বো ফিল্টার",
  "j_kaygan": "পিচ্ছিল বরফ",
- "j_ozellikler": "অতিরিক্ত বৈশিষ্ট্য"
+ "j_ozellikler": "অতিরিক্ত বৈশিষ্ট্য",
+ "j_hayalet_goster": "ভূত",
+ "j_kontrast": "উচ্চ কনট্রাস্ট",
+ "j_mukemmel": "নিখুঁত অবতরণ",
+ "hud_mukemmel": "PERFECT",
+ "j_muzik_ses": "সঙ্গীতের মাত্রা",
+ "j_haftalik": "সপ্তাহের টাওয়ার",
+ "j_haftalik_ipucu": "এই সপ্তাহের স্থির টাওয়ার; সাপ্তাহিক সেরা রেকর্ডের ভূত",
+ "j_kod_etiket": "টাওয়ার কোড",
+ "j_kod_oyna": "এই কোড দিয়ে খেলুন",
+ "j_kod_gecersiz": "অবৈধ কোড",
+ "j_ozet_kopyala": "সারাংশ কপি করুন",
+ "j_kopyalandi": "কপি হয়েছে",
+ "j_ozet_metin": "বরফ টাওয়ার: তল {k}, {s} পয়েন্ট, সেরা কম্বো {c}, টাওয়ার কোড {kod}"
 }

@@ -1,5 +1,5 @@
 // description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
-import { zSonek } from './ayar.js';
+import { zSonek, haftaKimlik } from './ayar.js';
 export const SOL = 1, SAG = 2, ZIPLA = 4;
 
 // mulberry32: küçük, hızlı, tekrarlanabilir rastgele sayı üreteci
@@ -15,6 +15,11 @@ export function gunlukTohum(tarih = new Date()) { // yerel tarihe göre günlük
 }
 export const gunlukAnahtar = (tarih = new Date(), z = 1) => 'buzkule.hayalet.' + tarih.getFullYear() + '-' + (tarih.getMonth() + 1) + '-' + tarih.getDate() + zSonek(z);
 
+// Haftalık meydan okuma: haftaya özel sabit kule ve kayıt anahtarı; kule kodu: 1-8 onaltılık hane = tohum.
+export function haftalikTohum(tarih = new Date()) { let h = 2166136261; for (const ch of 'buzkule-' + haftaKimlik(tarih)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) || 1; }
+export const haftalikAnahtar = (tarih = new Date(), z = 1) => 'buzkule.hayalet.hafta.' + haftaKimlik(tarih) + zSonek(z);
+export const kodAnahtar = (tohum, z = 1) => 'buzkule.hayalet.kod.' + (tohum >>> 0).toString(16) + zSonek(z);
+export const kodCoz = (metin) => (/^[0-9a-f]{1,8}$/i.test(String(metin).trim()) ? parseInt(String(metin).trim(), 16) >>> 0 : null);
 export const girisBit = (g) => (g.sol ? SOL : 0) | (g.sag ? SAG : 0) | (g.zipla ? ZIPLA : 0);
 export const bitGiris = (b) => ({ sol: !!(b & SOL), sag: !!(b & SAG), zipla: !!(b & ZIPLA) });
 

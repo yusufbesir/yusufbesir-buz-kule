@@ -119,10 +119,13 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <p class="etiket" style="margin:0 0 4px"><span data-d="h22">en iyi skor</span></p><p class="skor" id="m-en">0</p>
         <p class="ince" style="margin:2px 0 0"><span data-d="h23">Kristal cüzdanı:</span> <b id="m-kristal">0</b> <span aria-hidden="true">◆</span></p>
         <p class="ince" id="m-profil" style="margin:2px 0 0"></p>
+        <div class="kod-satir" style="display:flex;gap:6px;align-items:center;margin:8px 0 0;flex-wrap:wrap"><label class="etiket" for="kod-giris" style="margin:0"><span data-d="j_kod_etiket">Kule kodu</span></label><input id="kod-giris" type="text" maxlength="8" autocomplete="off" spellcheck="false" placeholder="1a2b3c" style="width:96px;font:inherit;color:inherit;background:rgba(8,6,28,.8);border:2px solid #2de6ff;border-radius:6px;padding:5px 7px"><button class="mod" id="kod-oyna" type="button"><span data-d="j_kod_oyna">Bu kodla oyna</span></button></div>
+        <p class="ince" id="kod-hata" hidden style="margin:4px 0 0;color:#ff7a7a"></p>
         <p class="etiket" style="margin:10px 0 4px"><span data-d="h24">oyun kipi</span></p>
         <div class="modlar" role="group" aria-label="Oyun kipi" data-dt="aria-label:h03">
           <button class="mod secili" id="mod-yeni" type="button" aria-pressed="true" title="Her seferinde yeni, rastgele bir kule" data-dt="title:h04"><span data-d="h25">Yeni kule</span></button>
           <button class="mod" id="mod-hayalet" type="button" aria-pressed="false" title="En iyi oyununun kulesi; kaydı yarı saydam hayalet olarak koşar" data-dt="title:h05"><span data-d="h26">Hayaletle yarış</span></button>
+          <button class="mod" id="mod-hafta" type="button" aria-pressed="false" title="Bu haftaya özel sabit kule; haftalık en iyi kaydın hayaleti" data-dt="title:j_haftalik_ipucu"><span data-d="j_haftalik">Haftanın kulesi</span></button>
           <button class="mod" id="mod-gunun" type="button" aria-pressed="false" title="Bugüne özel sabit kule; günlük en iyi kaydın hayaleti" data-dt="title:h06"><span data-d="h27">Günün kulesi</span></button>
         </div>
         <p class="etiket" style="margin:10px 0 4px"><span data-d="h28">zorluk</span></p>
@@ -152,8 +155,9 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <div class="satir"><label class="etiket" for="a-sarsinti"><span data-d="h42">Ekran sarsıntısı</span></label><output id="o-sarsinti" for="a-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-hud"><span data-d="h43">Oyun içi bilgi (HUD)</span></label><output id="o-hud" for="a-hud"></output><input id="a-hud" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-ses"><span data-d="h44">Ses</span></label><output id="o-ses" for="a-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-muzikSes"><span data-d="j_muzik_ses">Müzik düzeyi</span></label><output id="o-muzikSes" for="a-muzikSes"></output><input id="a-muzikSes" type="range" min="0" max="1" step="0.05"></div>
         <div class="satir"><span class="etiket" id="karakter-etiket"><span data-d="h45">Karakter</span></span><span></span><div class="karakterler" id="karakterler" role="group" aria-labelledby="karakter-etiket"></div></div>
-        <div class="sesdugme" role="group" aria-label="Ek özellikler" data-dt="aria-label:j_ozellikler"><button class="dugme ikincil" type="button" id="a-golge" aria-pressed="true"><span data-d="j_golge">İniş gölgesi</span></button><button class="dugme ikincil" type="button" id="a-perde" aria-pressed="true"><span data-d="j_perde">Kombo perdesi</span></button><button class="dugme ikincil" type="button" id="a-kaygan" aria-pressed="false"><span data-d="j_kaygan">Kaygan buz</span></button></div>
+        <div class="sesdugme" role="group" aria-label="Ek özellikler" data-dt="aria-label:j_ozellikler"><button class="dugme ikincil" type="button" id="a-golge" aria-pressed="true"><span data-d="j_golge">İniş gölgesi</span></button><button class="dugme ikincil" type="button" id="a-perde" aria-pressed="true"><span data-d="j_perde">Kombo perdesi</span></button><button class="dugme ikincil" type="button" id="a-kaygan" aria-pressed="false"><span data-d="j_kaygan">Kaygan buz</span></button><button class="dugme ikincil" type="button" id="a-hayaletGoster" aria-pressed="true"><span data-d="j_hayalet_goster">Hayalet</span></button><button class="dugme ikincil" type="button" id="a-kontrast" aria-pressed="false"><span data-d="j_kontrast">Yüksek kontrast</span></button><button class="dugme ikincil" type="button" id="a-mukemmel" aria-pressed="true"><span data-d="j_mukemmel">Mükemmel iniş</span></button></div>
         <div class="satir"><label class="etiket" for="a-dil" id="dil-etiket"><span data-d="j_dil">Dil</span></label><span></span><select id="a-dil" class="dil-sec" aria-labelledby="dil-etiket"></select></div>
         <div class="sesdugme" role="group" aria-label="Ses düğmeleri" data-dt="aria-label:h13"><button class="dugme ikincil" type="button" id="a-efekt" aria-pressed="true"><span data-d="h46">Efektler</span></button><button class="dugme ikincil" type="button" id="a-muzik" aria-pressed="false"><span data-d="h47">Müzik</span></button></div>
         <button class="dugme ikincil" id="a-sifirla" type="button"><span data-d="h48">Varsayılana dön</span></button>
@@ -189,6 +193,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <p class="ince">+<span id="s-kristal">0</span> <span aria-hidden="true">◆</span> <span data-d="h67">kristal cüzdana eklendi</span></p>
       <p class="ince rekor" id="s-hayalet" hidden></p>
       <ol class="liste" id="s-liste"></ol>
+      <button class="dugme ikincil" id="ozet-kopyala" type="button" style="margin-top:10px">Özeti kopyala</button>
       <button class="dugme" id="tekrar" type="button" style="margin-top:14px"><span data-d="h68">Tekrar dene</span> <kbd>Space</kbd></button>
     </div>
   </div>

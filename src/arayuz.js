@@ -3,7 +3,7 @@ import { yeniOyun, adim, ciz, skor } from './oyun.js';
 import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
 import { skorListesi, skorEkle } from './skorlar.js';
-import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitOku, kayitYaz, bitGiris, hayaletAnahtar } from './hayalet.js';
+import { yeniTohum, gunlukTohum, gunlukAnahtar, haftalikTohum, haftalikAnahtar, kodAnahtar, kodCoz, kayitBaslat, kayitEkle, kayitBitir, kayitOku, kayitYaz, bitGiris, hayaletAnahtar } from './hayalet.js';
 import { muzikGuncelle } from './ses.js';
 import { kayitCozC } from './cekirdek.js';
 import { t, dilUygula, DILLER } from './dil.js';
@@ -60,11 +60,18 @@ function durumDegistir(d, yeni = false) {
     kimlik('s-hayalet').textContent = hayaletSonuc; kimlik('s-hayalet').hidden = !hayaletSonuc;
   }
 }
+let kodTohum = 0; // 'kod' kipi: oyuncunun girdiği kule kodu
+// Sabit kuleli kipler (günün / haftanın / kod): tohum ve en iyi koşunun (hayalet) kayıt anahtarı.
+function kipBilgi(m) {
+  if (m === 'hafta') return { tohum: haftalikTohum(), anahtar: haftalikAnahtar(undefined, zk()) };
+  if (m === 'kod') return { tohum: kodTohum, anahtar: kodAnahtar(kodTohum, zk()) };
+  return { tohum: gunlukTohum(), anahtar: gunlukAnahtar(undefined, zk()) };
+}
 // Oyun kipleri: 'yeni' (rastgele kule), 'hayalet' (en iyi oyunun kulesi ve yarı saydam kaydı), 'gunun' (bugünün sabit kulesi ve günlük en iyi kaydı).
 function basla() {
   let tohum = yeniTohum(), kayit = null;
   if (mod === 'hayalet') { kayit = kayitOku(hayaletAnahtar(zk())); if (kayit) tohum = kayit.tohum; }
-  else if (mod === 'gunun') { tohum = gunlukTohum(); kayit = kayitOku(gunlukAnahtar(undefined, zk())); }
+  else if (mod === 'gunun' || mod === 'hafta' || mod === 'kod') { const b = kipBilgi(mod); tohum = b.tohum; kayit = kayitOku(b.anahtar); }
   o = yeniOyun(tohum, AYAR.zorluk, AYAR.kaygan); o.rekorKat = skorListesi(mod, zk()).reduce((m, k) => Math.max(m, k.kat), 0); yeniRekor = false; kaydedici = kayitBaslat();
   hayalet = kayit ? yeniOyun(tohum, AYAR.zorluk, AYAR.kaygan) : null; hayaletGiris = kayit ? kayitCozC(kayit) : []; hayaletSonuc = '';
   durumDegistir('oyun', true); // odak tuvale geçer; Space odaktaki düğmeyi tekrar tıklamaz
@@ -72,7 +79,7 @@ function basla() {
 function oyunBitti() {
   const s = skor(o);
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
-  const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, oz(o)) : hayaletAnahtar(oz(o)), eski = kayitOku(anahtar);
+  const anahtar = mod === 'gunun' || mod === 'hafta' || mod === 'kod' ? kipBilgi(mod).anahtar : hayaletAnahtar(oz(o)), eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
   hayaletSonuc = hayalet && eski ? (s > eski.skor ? t('j_hayalet_gecti', { n: eski.skor }) : t('j_hayalet_onde', { n: eski.skor })) : '';
   profilGuncelle(o); profilYaz(); sonSira = skorEkle(mod, s, o.enYuksek, oz(o)); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
@@ -103,7 +110,7 @@ kimlik('tekrar').addEventListener('click', basla);
 gostergeKonumla(kimlik('t-oyna'), true);
 
 // ---- Oyun kipi seçici ----
-const modDugmeleri = { yeni: kimlik('mod-yeni'), hayalet: kimlik('mod-hayalet'), gunun: kimlik('mod-gunun') };
+const modDugmeleri = { yeni: kimlik('mod-yeni'), hayalet: kimlik('mod-hayalet'), gunun: kimlik('mod-gunun'), hafta: kimlik('mod-hafta') };
 function modYaz() {
   const var_ = !!kayitOku(hayaletAnahtar(zk()));
   if (mod === 'hayalet' && !var_) mod = 'yeni';
@@ -112,6 +119,18 @@ function modYaz() {
 }
 for (const [ad, b] of Object.entries(modDugmeleri)) b.addEventListener('click', () => { mod = ad; modYaz(); listeYaz(kimlik('m-liste'), 5, 0); });
 modYaz();
+// ---- Kule kodu: oyun sonunda görünen kodla aynı kuleyi oynamak (arkadaşla yarış) ----
+kimlik('kod-oyna').addEventListener('click', () => {
+  const k = kodCoz(kimlik('kod-giris').value), hata = kimlik('kod-hata');
+  hata.textContent = k === null ? t('j_kod_gecersiz') : ''; hata.hidden = k !== null;
+  if (k === null) return; kodTohum = k; mod = 'kod'; modYaz(); basla();
+});
+// ---- Özet kartı: oyun sonu özetini panoya kopyalar ----
+kimlik('ozet-kopyala').addEventListener('click', () => {
+  const b = kimlik('ozet-kopyala'), metin = t('j_ozet_metin', { k: o.enYuksek, s: skor(o), c: o.enIyiKombo, kod: o.tohum == null ? '-' : o.tohum.toString(16) });
+  const bitti = () => { b.textContent = t('j_kopyalandi'); setTimeout(() => { b.textContent = t('j_ozet_kopyala'); }, 1600); };
+  try { if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(metin).then(bitti, () => {}); } catch { /* pano yoksa sessiz */ }
+});
 // ---- Zorluk seçici (kolay / orta / zor / çok zor) ----
 const zorlukDugmeleri = [0, 1, 2, 3].map((i) => kimlik('zorluk-' + i));
 function zorlukYaz() {
@@ -160,19 +179,19 @@ magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); basarimYaz();
 
 // ---- Ses ve müzik düğmeleri (aç/kapa) ----
 function sesDugmeleriYaz() {
-  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')], ['golge', 'a-golge', t('j_golge')], ['perde', 'a-perde', t('j_perde')], ['kaygan', 'a-kaygan', t('j_kaygan')]]) {
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')], ['golge', 'a-golge', t('j_golge')], ['perde', 'a-perde', t('j_perde')], ['kaygan', 'a-kaygan', t('j_kaygan')], ['hayaletGoster', 'a-hayaletGoster', t('j_hayalet_goster')], ['kontrast', 'a-kontrast', t('j_kontrast')], ['mukemmel', 'a-mukemmel', t('j_mukemmel')]]) {
     const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? t('j_acik') : t('j_kapali')); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
   }
 }
 kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
-for (const [ayar, id] of [['golge', 'a-golge'], ['perde', 'a-perde'], ['kaygan', 'a-kaygan']]) kimlik(id).addEventListener('click', () => {
+for (const [ayar, id] of [['golge', 'a-golge'], ['perde', 'a-perde'], ['kaygan', 'a-kaygan'], ['hayaletGoster', 'a-hayaletGoster'], ['kontrast', 'a-kontrast'], ['mukemmel', 'a-mukemmel']]) kimlik(id).addEventListener('click', () => {
   AYAR[ayar] = AYAR[ayar] ? 0 : 1; ayarKaydet(); sesDugmeleriYaz();
   if (ayar === 'kaygan') { modYaz(); listeYaz(kimlik('m-liste'), 5, 0); } // kaygan buz skor ve hayalet kayıtlarını ayırır
 });
 kimlik('a-muzik').addEventListener('click', () => { AYAR.muzikAcik = AYAR.muzikAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); muzikGuncelle(durum === 'oyun'); });
 sesDugmeleriYaz();
 // ---- Canlı ayar paneli ----
-const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses'];
+const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses', 'muzikSes'];
 function ayarYaz() {
   for (const a of ayarAnahtarlari) { kimlik('a-' + a).value = String(AYAR[a]); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; }
 }
@@ -200,7 +219,7 @@ const notYaz = () => { kimlik('a-not').textContent = AYAR.azaltilmisHareket ? t(
 const dilSec = kimlik('a-dil');
 DILLER.forEach((d, i) => { const op = document.createElement('option'); op.value = String(i); op.textContent = d.ad; dilSec.appendChild(op); });
 function dilYenile() {
-  dilSec.value = String(AYAR.dil); dilUygula(); profilYaz(); // sekme etiketleri değişince genişlikler değişir: gösterge yeniden konumlanır
+  dilSec.value = String(AYAR.dil); dilUygula(); profilYaz(); kimlik('ozet-kopyala').textContent = t('j_ozet_kopyala'); // sekme etiketleri değişince genişlikler değişir: gösterge yeniden konumlanır
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => sekmeSec(sekme, false)); notYaz(); sesDugmeleriYaz(); basarimYaz(); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0);
   karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-label', t('j_karakter', { ad: t('kar_' + i) })); b.title = t('kar_' + i); });
 }

@@ -138,5 +138,18 @@
  "j_golge": "İniş gölgesi",
  "j_perde": "Kombo perdesi",
  "j_kaygan": "Kaygan buz",
- "j_ozellikler": "Ek özellikler"
+ "j_ozellikler": "Ek özellikler",
+ "j_hayalet_goster": "Hayalet",
+ "j_kontrast": "Yüksek kontrast",
+ "j_mukemmel": "Mükemmel iniş",
+ "j_muzik_ses": "Müzik düzeyi",
+ "j_haftalik": "Haftanın kulesi",
+ "j_haftalik_ipucu": "Bu haftaya özel sabit kule; haftalık en iyi kaydın hayaleti",
+ "j_kod_etiket": "Kule kodu",
+ "j_kod_oyna": "Bu kodla oyna",
+ "j_kod_gecersiz": "Geçersiz kod",
+ "j_ozet_kopyala": "Özeti kopyala",
+ "j_kopyalandi": "Kopyalandı",
+ "j_ozet_metin": "Buz Kule: {k}. kat, {s} puan, en büyük kombo {c}, kule kodu {kod}",
+ "hud_mukemmel": "MUKEMMEL"
 }

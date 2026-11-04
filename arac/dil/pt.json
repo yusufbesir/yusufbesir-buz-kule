@@ -138,5 +138,18 @@
  "j_golge": "Sombra de aterrissagem",
  "j_perde": "Filtro de combo",
  "j_kaygan": "Gelo escorregadio",
- "j_ozellikler": "Recursos extras"
+ "j_ozellikler": "Recursos extras",
+ "j_hayalet_goster": "Fantasma",
+ "j_kontrast": "Alto contraste",
+ "j_mukemmel": "Pouso perfeito",
+ "hud_mukemmel": "PERFEITO",
+ "j_muzik_ses": "Nível da música",
+ "j_haftalik": "Torre da semana",
+ "j_haftalik_ipucu": "Torre fixa desta semana; o fantasma do seu melhor recorde semanal",
+ "j_kod_etiket": "Código da torre",
+ "j_kod_oyna": "Jogar com este código",
+ "j_kod_gecersiz": "Código inválido",
+ "j_ozet_kopyala": "Copiar resumo",
+ "j_kopyalandi": "Copiado",
+ "j_ozet_metin": "Buz Kule: andar {k}, {s} pontos, melhor combo {c}, código da torre {kod}"
 }

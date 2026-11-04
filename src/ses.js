@@ -58,7 +58,7 @@ export function muzikGuncelle(calsin, bastan = false) { // bastan: yeni oyun, pa
   try {
     istek = !!calsin;
     if (!muzik) { muzik = new Audio(YOL + 'muzik.wav'); muzik.loop = true; }
-    muzik.volume = Math.max(0, Math.min(1, MUZIK_SES * AYAR.ses));
+    muzik.volume = Math.max(0, Math.min(1, MUZIK_SES * AYAR.muzikSes));
     if (bastan) { try { muzik.currentTime = 0; } catch { /* yüklenmemiş olabilir */ } }
     if (calmali()) dene(); else muzik.pause();
   } catch { /* müzik yoksa oyun sessiz sürer */ }

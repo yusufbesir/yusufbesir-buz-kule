@@ -42,6 +42,7 @@ export function yeniOyun(rnd = Math.random, zorluk = 1, kaygan = 0) {
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
     px: 320, py: ZEMIN_Y, pk: 0, // önceki adım konumu (çizim ara değeri)
+    mukSeri: 0, enMukSeri: 0, // mükemmel iniş serisi (basamağın ortasına inişler; yalnız görünüm sayacı)
     sars: 0, rekorKat: 0, // kilometre taşı sarsıntısı süresi; önceki en iyi kat (arayuz.js yazar, yalnız görünüm)
     sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
     tehlike: false, kilPayi: 0, kilPayiBekle: 0, kilPayiSayisi: 0, // kıl payı: tehlike bölgesine girildi mi, yazı süresi, bekleme süresi, verilen bonus sayısı
@@ -106,6 +107,7 @@ export function adim(o, giris) {
     if (yeniRekor && n % 50 === 0) o.rozet = { metin: th('hud_kat') + ' ' + n, guc: 110 };
     if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
     if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: th('hud_yeni_kat_rekoru'), guc: 110, olcek: 5 };
+    { const [mx0, mx1] = basamakAralik(f); const orta = (mx0 + mx1) / 2, yari = (mx1 - mx0) / 2; if (n > 0 && Math.abs(o.x - orta) <= yari * 0.3) { o.mukSeri++; o.enMukSeri = Math.max(o.enMukSeri, o.mukSeri); } else o.mukSeri = 0; } // mükemmel iniş: basamağın orta %30'u (yalnız görünüm sayacı)
     buzKirigi(o.x, o.y, 4); // iniş
     if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
     const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }
@@ -193,7 +195,7 @@ export function ciz(c, o, hayalet = null) {
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
   if (AYAR.golge) inisGolgesi(c, o); // düşerken altındaki basamağa ince soluk gölge (yalnız görünüm)
-  if (hayalet && !hayalet.bitti) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
+  if (hayalet && !hayalet.bitti && AYAR.hayaletGoster) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);
   c.restore();
 }

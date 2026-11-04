@@ -1,9 +1,9 @@
 // description: Buz Kule yerel skor tabloları: her oyun kipi (yeni, hayalet, günün kulesi) için ayrı ilk 5, kalıcı. Eski tek tablo "yeni" kipine devredilir. Oyun kurallarını etkilemez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
-import { zSonek } from './ayar.js';
+import { zSonek, haftaKimlik } from './ayar.js';
 export const SKOR_SAYISI = 5;
 const SKOR_ESKI_ANAHTAR = 'buzkule.skorlar'; // 0.10-0.14: tek tablo; artık "yeni" kipinin tablosu
 const bugun = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); };
-export const skorAnahtari = (mod, z = 1) => (mod === 'hayalet' ? 'buzkule.skorlar.hayalet' : mod === 'gunun' ? 'buzkule.skorlar.gunun.' + bugun() : SKOR_ESKI_ANAHTAR) + zSonek(z);
+export const skorAnahtari = (mod, z = 1) => (mod === 'hayalet' ? 'buzkule.skorlar.hayalet' : mod === 'gunun' ? 'buzkule.skorlar.gunun.' + bugun() : mod === 'hafta' ? 'buzkule.skorlar.hafta.' + haftaKimlik() : mod === 'kod' ? 'buzkule.skorlar.kod' : SKOR_ESKI_ANAHTAR) + zSonek(z);
 
 const gecerli = (x) => x && Number.isFinite(x.skor) && x.skor > 0 && Number.isFinite(x.kat) && Number.isFinite(x.t);
 // Kipin tablosunu okur (sıralı, en çok 5, geçersiz satırlar atılır); bozuk kayıtta boş tablo döner.

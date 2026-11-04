@@ -138,5 +138,18 @@
  "j_golge": "Sombra de aterrizaje",
  "j_perde": "Filtro de combo",
  "j_kaygan": "Hielo resbaladizo",
- "j_ozellikler": "Funciones extra"
+ "j_ozellikler": "Funciones extra",
+ "j_hayalet_goster": "Fantasma",
+ "j_kontrast": "Alto contraste",
+ "j_mukemmel": "Aterrizaje perfecto",
+ "hud_mukemmel": "PERFECTO",
+ "j_muzik_ses": "Nivel de música",
+ "j_haftalik": "Torre de la semana",
+ "j_haftalik_ipucu": "Torre fija de esta semana; el fantasma de tu mejor récord semanal",
+ "j_kod_etiket": "Código de torre",
+ "j_kod_oyna": "Jugar con este código",
+ "j_kod_gecersiz": "Código no válido",
+ "j_ozet_kopyala": "Copiar resumen",
+ "j_kopyalandi": "Copiado",
+ "j_ozet_metin": "Torre de Hielo: piso {k}, {s} puntos, mejor combo {c}, código de torre {kod}"
 }

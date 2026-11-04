@@ -138,5 +138,18 @@
  "j_golge": "ظل الهبوط",
  "j_perde": "مرشح الكومبو",
  "j_kaygan": "جليد زلق",
- "j_ozellikler": "ميزات إضافية"
+ "j_ozellikler": "ميزات إضافية",
+ "j_hayalet_goster": "شبح",
+ "j_kontrast": "تباين عالٍ",
+ "j_mukemmel": "هبوط مثالي",
+ "hud_mukemmel": "PERFECT",
+ "j_muzik_ses": "مستوى الموسيقى",
+ "j_haftalik": "برج الأسبوع",
+ "j_haftalik_ipucu": "برج ثابت لهذا الأسبوع؛ شبح أفضل سجل أسبوعي",
+ "j_kod_etiket": "رمز البرج",
+ "j_kod_oyna": "العب بهذا الرمز",
+ "j_kod_gecersiz": "رمز غير صالح",
+ "j_ozet_kopyala": "نسخ الملخص",
+ "j_kopyalandi": "تم النسخ",
+ "j_ozet_metin": "برج الجليد: الطابق {k}، {s} نقطة، أفضل كومبو {c}، رمز البرج {kod}"
 }

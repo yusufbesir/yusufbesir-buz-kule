@@ -138,5 +138,18 @@
  "j_golge": "Ombre d'atterrissage",
  "j_perde": "Filtre de combo",
  "j_kaygan": "Glace glissante",
- "j_ozellikler": "Options supplémentaires"
+ "j_ozellikler": "Options supplémentaires",
+ "j_hayalet_goster": "Fantôme",
+ "j_kontrast": "Contraste élevé",
+ "j_mukemmel": "Atterrissage parfait",
+ "hud_mukemmel": "PARFAIT",
+ "j_muzik_ses": "Niveau de musique",
+ "j_haftalik": "Tour de la semaine",
+ "j_haftalik_ipucu": "Tour fixe de cette semaine ; le fantôme de ton meilleur record hebdomadaire",
+ "j_kod_etiket": "Code de la tour",
+ "j_kod_oyna": "Jouer avec ce code",
+ "j_kod_gecersiz": "Code invalide",
+ "j_ozet_kopyala": "Copier le résumé",
+ "j_kopyalandi": "Copié",
+ "j_ozet_metin": "Buz Kule : étage {k}, {s} points, meilleur combo {c}, code de la tour {kod}"
 }

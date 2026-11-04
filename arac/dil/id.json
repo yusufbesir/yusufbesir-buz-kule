@@ -138,5 +138,18 @@
  "j_golge": "Bayangan mendarat",
  "j_perde": "Filter kombo",
  "j_kaygan": "Es licin",
- "j_ozellikler": "Fitur tambahan"
+ "j_ozellikler": "Fitur tambahan",
+ "j_hayalet_goster": "Hantu",
+ "j_kontrast": "Kontras tinggi",
+ "j_mukemmel": "Pendaratan sempurna",
+ "hud_mukemmel": "SEMPURNA",
+ "j_muzik_ses": "Level musik",
+ "j_haftalik": "Menara mingguan",
+ "j_haftalik_ipucu": "Menara tetap minggu ini; hantu dari rekor mingguan terbaikmu",
+ "j_kod_etiket": "Kode menara",
+ "j_kod_oyna": "Main dengan kode ini",
+ "j_kod_gecersiz": "Kode tidak valid",
+ "j_ozet_kopyala": "Salin ringkasan",
+ "j_kopyalandi": "Disalin",
+ "j_ozet_metin": "Menara Es: lantai {k}, {s} poin, kombo terbaik {c}, kode menara {kod}"
 }

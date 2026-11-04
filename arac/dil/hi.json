@@ -138,5 +138,18 @@
  "j_golge": "लैंडिंग छाया",
  "j_perde": "कॉम्बो फ़िल्टर",
  "j_kaygan": "फिसलन वाली बर्फ़",
- "j_ozellikler": "अतिरिक्त सुविधाएँ"
+ "j_ozellikler": "अतिरिक्त सुविधाएँ",
+ "j_hayalet_goster": "भूत",
+ "j_kontrast": "उच्च कंट्रास्ट",
+ "j_mukemmel": "परफेक्ट लैंडिंग",
+ "hud_mukemmel": "PERFECT",
+ "j_muzik_ses": "संगीत स्तर",
+ "j_haftalik": "सप्ताह का टावर",
+ "j_haftalik_ipucu": "इस सप्ताह का स्थिर टावर; साप्ताहिक सर्वश्रेष्ठ रिकॉर्ड का भूत",
+ "j_kod_etiket": "टावर कोड",
+ "j_kod_oyna": "इस कोड से खेलें",
+ "j_kod_gecersiz": "अमान्य कोड",
+ "j_ozet_kopyala": "सारांश कॉपी करें",
+ "j_kopyalandi": "कॉपी हो गया",
+ "j_ozet_metin": "आइस टॉवर: मंज़िल {k}, {s} अंक, सर्वश्रेष्ठ कॉम्बो {c}, टावर कोड {kod}"
 }

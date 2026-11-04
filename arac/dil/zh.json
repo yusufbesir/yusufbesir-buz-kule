@@ -138,5 +138,18 @@
  "j_golge": "落地阴影",
  "j_perde": "连击滤镜",
  "j_kaygan": "滑溜冰面",
- "j_ozellikler": "额外功能"
+ "j_ozellikler": "额外功能",
+ "j_hayalet_goster": "幽灵",
+ "j_kontrast": "高对比度",
+ "j_mukemmel": "完美降落",
+ "hud_mukemmel": "PERFECT",
+ "j_muzik_ses": "音乐音量",
+ "j_haftalik": "本周之塔",
+ "j_haftalik_ipucu": "本周固定的塔；每周最佳记录的幽灵",
+ "j_kod_etiket": "塔码",
+ "j_kod_oyna": "用此代码开始",
+ "j_kod_gecersiz": "代码无效",
+ "j_ozet_kopyala": "复制摘要",
+ "j_kopyalandi": "已复制",
+ "j_ozet_metin": "冰塔：第{k}层，{s}分，最佳连击{c}，塔码{kod}"
 }

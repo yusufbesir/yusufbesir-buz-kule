@@ -12,7 +12,9 @@ const odulAd = (ad) => { const i = ODUL_SIRA.indexOf(ad); return i < 0 ? ad : th
 const basarimAd = (b) => (b.id ? th('b_' + b.id + '_ad') : b.ad);
 import { kapanisEkle, kapanisCiz, kapanisNokta } from './gorsel.js';
 
-const ARKA = 'rgba(8,6,28,0.78)', NEON1 = '#ff3df2', NEON2 = '#2de6ff', SARI = '#ffd62e', KIRMIZI = '#ff4d4d', YESIL = '#5dff6a', BEYAZ = '#ffffff', SOLUK = '#9aa6d6';
+let ARKA = 'rgba(8,6,28,0.78)', NEON1 = '#ff3df2', NEON2 = '#2de6ff', SARI = '#ffd62e', KIRMIZI = '#ff4d4d', YESIL = '#5dff6a', BEYAZ = '#ffffff', SOLUK = '#9aa6d6';
+// Yüksek kontrast (ayar): koyu zemin üzerinde saf, ayırt edilebilir renkler (renk körlüğü dostu); kapalıyken eski palet.
+const kontrastUygula = (a) => { if (a) { ARKA = '#000000'; NEON1 = '#ffffff'; NEON2 = '#00e5ff'; SARI = '#ffee00'; KIRMIZI = '#ff7a4d'; YESIL = '#4dff91'; BEYAZ = '#ffffff'; SOLUK = '#ffffff'; } else { ARKA = 'rgba(8,6,28,0.78)'; NEON1 = '#ff3df2'; NEON2 = '#2de6ff'; SARI = '#ffd62e'; KIRMIZI = '#ff4d4d'; YESIL = '#5dff6a'; BEYAZ = '#ffffff'; SOLUK = '#9aa6d6'; } };
 const sifirli = (n, adet) => String(Math.max(0, Math.floor(n))).padStart(adet, '0');
 
 // Arcade paneli: koyu zemin, çift çizgili neon çerçeve, kesik köşeler ve ince tarama çizgileri.
@@ -63,6 +65,7 @@ function kapanisCizHud(c) {
 }
 
 export function hudCiz(c, o, en, hayalet = null) {
+  kontrastUygula(AYAR.kontrast);
   const kare = o.kare, yanip = (Math.floor(kare / 12) % 2) === 0;
   if (o.mesaj !== sonKapanis) { sonKapanis = o.mesaj; if (o.mesaj && o.mesaj.zip) kapanisBaslat(o.mesaj); } // her kombo kapanışında bir kez
   if (skorVurgu > 0) skorVurgu--;
@@ -78,7 +81,8 @@ export function hudCiz(c, o, en, hayalet = null) {
     // ikinci satır: kristal sayacı, hayalet, güç öğeleri
     let sx = 94;
     pikselKristal(c, sx, 45, 2); vur(c, 'X' + sifirli(o.alinan.size, 2), sx + 14, 46, 2, BEYAZ); sx += 14 + pikselGenislik('X00', 2) + 14;
-    if (hayalet) { const fark = o.enYuksek - hayalet.enYuksek, t = th('hud_hayalet') + ' ' + (hayalet.bitti ? th('hud_bitti') : th('hud_kat') + ' ' + hayalet.enYuksek); vur(c, t, sx, 48, 1, fark >= 0 ? YESIL : KIRMIZI); sx += pikselGenislik(t, 1) + 14; }
+    if (hayalet && AYAR.hayaletGoster) { const fark = o.enYuksek - hayalet.enYuksek, t = th('hud_hayalet') + ' ' + (hayalet.bitti ? th('hud_bitti') : th('hud_kat') + ' ' + hayalet.enYuksek); vur(c, t, sx, 48, 1, fark >= 0 ? YESIL : KIRMIZI); sx += pikselGenislik(t, 1) + 14; }
+    if (AYAR.mukemmel && o.mukSeri >= 2) vur(c, th('hud_mukemmel') + ' X' + o.mukSeri, 546, 48, 1, YESIL, 'sag'); // mükemmel iniş serisi (kapatılabilir)
     [[th('hud_saat'), o.saat, 480, SARI], [th('hud_miknatis'), o.miknatis, 500, KIRMIZI]].filter(g => g[1] > 0).forEach((g) => {
       vur(c, g[0], sx, 48, 1, g[3]); const bx = sx + pikselGenislik(g[0], 1) + 5; parcaliCubuk(c, bx, 47, 8, Math.ceil(8 * g[1] / g[2]), 5, 7, 1, () => g[3]); sx = bx + 8 * 6 + 12;
     });

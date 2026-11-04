@@ -138,5 +138,18 @@
  "j_golge": "Landing shadow",
  "j_perde": "Combo filter",
  "j_kaygan": "Slippery ice",
- "j_ozellikler": "Extra features"
+ "j_ozellikler": "Extra features",
+ "j_hayalet_goster": "Ghost",
+ "j_kontrast": "High contrast",
+ "j_mukemmel": "Perfect landing",
+ "hud_mukemmel": "PERFECT",
+ "j_muzik_ses": "Music level",
+ "j_haftalik": "Tower of the week",
+ "j_haftalik_ipucu": "A fixed tower for this week; the ghost of the best weekly record",
+ "j_kod_etiket": "Tower code",
+ "j_kod_oyna": "Play with this code",
+ "j_kod_gecersiz": "Invalid code",
+ "j_ozet_kopyala": "Copy summary",
+ "j_kopyalandi": "Copied",
+ "j_ozet_metin": "Ice Tower: floor {k}, {s} points, best combo {c}, tower code {kod}"
 }
