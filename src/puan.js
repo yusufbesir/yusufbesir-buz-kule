@@ -1,6 +1,7 @@
 // description: Puan ve kombo kuralları (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 export const KOMBO_KARE = 100;
 const ODULLER = [[200,'KUSURSUZ'],[140,'DESTAN'],[100,'EFSANE'],[70,'OLAĞANÜSTÜ'],[50,'İNANILMAZ'],[35,'MUHTEŞEM'],[25,'SÜPER'],[15,'HARİKA'],[7,'GÜZEL'],[0,'İYİ']];
+export const ODUL_SIRA = ODULLER.map((e) => e[1]).reverse(); // küçükten büyüğe ödül adları (dil anahtarı hud_odul<sıra>)
 export const odulAdi = (toplamKat) => ODULLER.find(([e]) => toplamKat >= e)[1];
 
 export function yeniPuan() { return { katPuani: 0, bonus: 0, kombo: null }; }

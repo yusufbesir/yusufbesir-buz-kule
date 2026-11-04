@@ -22,7 +22,7 @@ export function basarimKontrol(o) {
   const yeni = [];
   for (const b of BASARIMLAR) {
     if (ACIK.has(b.id) || !b.sart(o)) continue;
-    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
+    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, id: b.id, odul: b.odul, guc: 200 });
   }
   if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
   return yeni;

@@ -6,6 +6,10 @@ import { W, SAAT, skor, katY, KIL_PAYI_PUAN } from './oyun.js';
 import { AYAR } from './ayar.js';
 import { BILDIRIM } from './basarim.js';
 import { pikselYaz, pikselGenislik } from './piksel.js';
+import { th } from './dil.js';
+import { ODUL_SIRA } from './puan.js';
+const odulAd = (ad) => { const i = ODUL_SIRA.indexOf(ad); return i < 0 ? ad : th('hud_odul' + i); }; // ödül adı seçili dilde (piksel yazı için)
+const basarimAd = (b) => (b.id ? th('b_' + b.id + '_ad') : b.ad);
 import { kapanisEkle, kapanisCiz, kapanisNokta } from './gorsel.js';
 
 const ARKA = 'rgba(8,6,28,0.78)', NEON1 = '#ff3df2', NEON2 = '#2de6ff', SARI = '#ffd62e', KIRMIZI = '#ff4d4d', YESIL = '#5dff6a', BEYAZ = '#ffffff', SOLUK = '#9aa6d6';
@@ -68,14 +72,14 @@ export function hudCiz(c, o, en, hayalet = null) {
     c.save(); c.globalAlpha = Math.min(1, gorunur);
     // ana şerit: SKOR | REKOR | KAT
     panelArcade(c, 92, 6, 456, 34, NEON1);
-    vur(c, '1UP', 100, 10, 1, yanip ? KIRMIZI : '#7a2b2b'); vur(c, sifirli(skor(o), 7), 100, 20, 2, skorVurgu > 0 ? BEYAZ : SARI);
-    vur(c, 'REKOR', 320, 10, 1, SOLUK, 'orta'); vur(c, sifirli(Math.max(en, skor(o)), 7), 320, 20, 2, NEON2, 'orta');
-    vur(c, 'KAT', 540, 10, 1, SOLUK, 'sag'); vur(c, sifirli(o.enYuksek, 3), 540, 20, 2, YESIL, 'sag');
+    vur(c, th('hud_1up'), 100, 10, 1, yanip ? KIRMIZI : '#7a2b2b'); vur(c, sifirli(skor(o), 7), 100, 20, 2, skorVurgu > 0 ? BEYAZ : SARI);
+    vur(c, th('hud_rekor'), 320, 10, 1, SOLUK, 'orta'); vur(c, sifirli(Math.max(en, skor(o)), 7), 320, 20, 2, NEON2, 'orta');
+    vur(c, th('hud_kat'), 540, 10, 1, SOLUK, 'sag'); vur(c, sifirli(o.enYuksek, 3), 540, 20, 2, YESIL, 'sag');
     // ikinci satır: kristal sayacı, hayalet, güç öğeleri
     let sx = 94;
     pikselKristal(c, sx, 45, 2); vur(c, 'X' + sifirli(o.alinan.size, 2), sx + 14, 46, 2, BEYAZ); sx += 14 + pikselGenislik('X00', 2) + 14;
-    if (hayalet) { const fark = o.enYuksek - hayalet.enYuksek, t = 'HAYALET ' + (hayalet.bitti ? 'BITTI' : 'KAT ' + hayalet.enYuksek); vur(c, t, sx, 48, 1, fark >= 0 ? YESIL : KIRMIZI); sx += pikselGenislik(t, 1) + 14; }
-    [['SAAT', o.saat, 480, SARI], ['MIKNATIS', o.miknatis, 500, KIRMIZI]].filter(g => g[1] > 0).forEach((g) => {
+    if (hayalet) { const fark = o.enYuksek - hayalet.enYuksek, t = th('hud_hayalet') + ' ' + (hayalet.bitti ? th('hud_bitti') : th('hud_kat') + ' ' + hayalet.enYuksek); vur(c, t, sx, 48, 1, fark >= 0 ? YESIL : KIRMIZI); sx += pikselGenislik(t, 1) + 14; }
+    [[th('hud_saat'), o.saat, 480, SARI], [th('hud_miknatis'), o.miknatis, 500, KIRMIZI]].filter(g => g[1] > 0).forEach((g) => {
       vur(c, g[0], sx, 48, 1, g[3]); const bx = sx + pikselGenislik(g[0], 1) + 5; parcaliCubuk(c, bx, 47, 8, Math.ceil(8 * g[1] / g[2]), 5, 7, 1, () => g[3]); sx = bx + 8 * 6 + 12;
     });
     c.restore();
@@ -83,7 +87,7 @@ export function hudCiz(c, o, en, hayalet = null) {
     if (o.puan.kombo) {
       const k = o.puan.kombo; c.save(); c.globalAlpha = Math.max(0.55, Math.min(1, gorunur));
       panelArcade(c, 10, 74, 54, 212, NEON2);
-      vur(c, 'KOMBO', 37, 79, 1, SOLUK, 'orta');
+      vur(c, th('hud_kombo'), 37, 79, 1, SOLUK, 'orta');
       parcaliCubuk(c, 20, 262, 14, Math.ceil(14 * k.sayac / 100), 34, 9, 3, (i, seg) => (i < seg * 0.4 ? KIRMIZI : i < seg * 0.7 ? SARI : YESIL), true);
       vur(c, 'X' + k.zip, 37, 268, 2, SARI, 'orta'); c.restore();
     }
@@ -93,18 +97,18 @@ export function hudCiz(c, o, en, hayalet = null) {
     const ry = Math.round(katY(o.rekorKat) - o.kamY - 6);
     if (ry > 66 && ry < 470) {
       c.save(); c.globalAlpha = 0.8; c.fillStyle = SARI; for (let x = 92; x < 548; x += 12) c.fillRect(x, ry, 7, 2);
-      vur(c, 'REKOR KAT ' + o.rekorKat, 546, ry - 9, 1, SARI, 'sag'); c.restore();
+      vur(c, th('hud_rekor_kat') + ' ' + o.rekorKat, 546, ry - 9, 1, SARI, 'sag'); c.restore();
     }
   }
   // kombo yazısı: kombo sürerken ortada büyüyen "XN KOMBO"; her kombo zıplamasında vurgulanır, süre bitmeye yaklaşırken yanıp söner
   if (o.puan.kombo && o.puan.kombo.zip >= 2) {
     const k = o.puan.kombo, zip = k.zip, renk = zip >= 6 ? NEON1 : zip >= 4 ? NEON2 : SARI, boyut = Math.min(7, 2 + Math.floor(zip * 0.6)) + (o.komboPuls > 10 ? 1 : 0);
-    const yazi = 'X' + zip + ' KOMBO', kalan = k.sayac, soluk = kalan < 30 && Math.floor(kalan / 4) % 2 === 0;
+    const yazi = 'X' + zip + ' ' + th('hud_kombo'), kalan = k.sayac, soluk = kalan < 30 && Math.floor(kalan / 4) % 2 === 0;
     if (!soluk) {
       c.save(); c.globalAlpha = 0.95;
       const ust = 188 - Math.round(boyut * 3.5);
       pikselYaz(c, yazi, W / 2, ust, boyut, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.85)' });
-      pikselYaz(c, '+' + k.toplam + ' KAT', W / 2, ust + 7 * boyut + 10, 2, BEYAZ, { hiza: 'orta', golge: 'rgba(0,0,0,0.85)' }); c.restore();
+      pikselYaz(c, '+' + k.toplam + ' ' + th('hud_kat'), W / 2, ust + 7 * boyut + 10, 2, BEYAZ, { hiza: 'orta', golge: 'rgba(0,0,0,0.85)' }); c.restore();
     }
     if (AYAR.parilti > 0.05) { // oyun alanı kenarlarında kombo rengiyle kısa parıltı
       const a = Math.min(0.55, 0.12 + o.komboPuls * 0.025 + zip * 0.02) * Math.min(1, AYAR.parilti); c.save(); c.globalAlpha = a;
@@ -114,17 +118,17 @@ export function hudCiz(c, o, en, hayalet = null) {
   }
   // geçici uyarılar (her zaman görünür)
   BILDIRIM.slice(0, 2).forEach((b, i) => { // başarım bildirimi
-    const a = Math.min(1, b.guc / 20, (200 - b.guc) / 12), g = Math.max(pikselGenislik('BASARIM!', 2), pikselGenislik(b.ad + ' +' + b.odul, 1)) + 24, y = 112 + i * 46;
+    const a = Math.min(1, b.guc / 20, (200 - b.guc) / 12), g = Math.max(pikselGenislik(th('hud_basarim'), 2), pikselGenislik(basarimAd(b) + ' +' + b.odul, 1)) + 24, y = 112 + i * 46;
     c.save(); c.globalAlpha = Math.max(0, a); panelArcade(c, W / 2 - g / 2, y, g, 38, SARI);
-    vur(c, 'BASARIM!', W / 2, y + 6, 2, yanip ? SARI : BEYAZ, 'orta'); vur(c, b.ad + ' +' + b.odul, W / 2, y + 24, 1, NEON2, 'orta'); c.restore();
+    vur(c, th('hud_basarim'), W / 2, y + 6, 2, yanip ? SARI : BEYAZ, 'orta'); vur(c, basarimAd(b) + ' +' + b.odul, W / 2, y + 24, 1, NEON2, 'orta'); c.restore();
   });
   if (o.hizlan > 0) { // her 30 sn'de hızlanma uyarısı
-    const t = 'HIZLANIYOR X' + (Math.floor(kare / SAAT) + 1), g = pikselGenislik(t, 3) + 24;
+    const t = th('hud_hizlaniyor') + ' X' + (Math.floor(kare / SAAT) + 1), g = pikselGenislik(t, 3) + 24;
     if (yanip || o.hizlan < 20) { c.save(); c.globalAlpha = Math.min(1, o.hizlan / 15); panelArcade(c, W / 2 - g / 2, 72, g, 34, KIRMIZI); vur(c, t, W / 2, 80, 3, SARI, 'orta'); c.restore(); }
   }
   if (o.kilPayi > 0) { // kıl payı bonusu: ekran altına çok yaklaşıp kurtulunca kısa yeşil yazı ve küçük puan
     const s = o.kilPayi > 62 ? 4 : 3; c.save(); c.globalAlpha = Math.min(1, o.kilPayi / 15);
-    pikselYaz(c, 'KIL PAYI!', W / 2, 300 - (70 - o.kilPayi) * 0.3, s, yanip ? YESIL : BEYAZ, { hiza: 'orta', cizgi: '#0a3a14', golge: 'rgba(0,0,0,0.9)' });
+    pikselYaz(c, th('hud_kil_payi'), W / 2, 300 - (70 - o.kilPayi) * 0.3, s, yanip ? YESIL : BEYAZ, { hiza: 'orta', cizgi: '#0a3a14', golge: 'rgba(0,0,0,0.9)' });
     vur(c, '+' + KIL_PAYI_PUAN, W / 2, 300 - (70 - o.kilPayi) * 0.3 + 7 * s + 6, 2, SARI, 'orta'); c.restore();
   }
   if (o.rozet) { // 50 katta kilometre taşı
@@ -133,9 +137,9 @@ export function hudCiz(c, o, en, hayalet = null) {
     c.restore();
   }
   if (o.mesaj && o.mesaj.guc > 0) { // kombo ödülü: büyük yanıp sönen renkli yazı, altında kombo özeti
-    const renk = [SARI, NEON2, NEON1, YESIL][Math.floor(kare / 5) % 4], t = o.mesaj.ad + '!', s = pikselGenislik(t, 5) > 380 ? 3 : 5;
+    const renk = [SARI, NEON2, NEON1, YESIL][Math.floor(kare / 5) % 4], t = odulAd(o.mesaj.ad) + '!', s = pikselGenislik(t, 5) > 380 ? 3 : 5;
     c.save(); c.globalAlpha = Math.min(1, o.mesaj.guc / 15);
-    if (o.mesaj.zip) vur(c, 'KOMBO BITTI: X' + o.mesaj.zip + '  +' + o.mesaj.toplam * o.mesaj.toplam + ' PUAN', W / 2, 140 - (60 - o.mesaj.guc) * 0.35 + 7 * s + 8, 2, BEYAZ, 'orta'); pikselYaz(c, t, W / 2, 140 - (60 - o.mesaj.guc) * 0.35, s, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.9)' }); c.restore();
+    if (o.mesaj.zip) vur(c, th('hud_kombo_bitti') + ': X' + o.mesaj.zip + '  +' + o.mesaj.toplam * o.mesaj.toplam + ' ' + th('hud_puan'), W / 2, 140 - (60 - o.mesaj.guc) * 0.35 + 7 * s + 8, 2, BEYAZ, 'orta'); pikselYaz(c, t, W / 2, 140 - (60 - o.mesaj.guc) * 0.35, s, renk, { hiza: 'orta', cizgi: '#150a3a', golge: 'rgba(0,0,0,0.9)' }); c.restore();
   }
   kapanisCizHud(c); // kombo kapanış patlaması: parçacıklar, ışınlar ve skora uçan "+N" etiketi (en üstte)
 }

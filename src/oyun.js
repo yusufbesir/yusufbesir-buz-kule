@@ -5,6 +5,7 @@ import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, ki
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
+import { th } from './dil.js';
 import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC, puanInisC, puanKareC, inisBulC } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
@@ -62,7 +63,7 @@ export function buzKirigi(x, y, adet) {
   parcacikEkle(x, y, adet, '#e8f8ff', 2.2); parcacikEkle(x, y, adet, '#8fd0ff', 2.8);
 }
 // Her 100. katta kule tabelası metni (yalnız görünüm); diğer katlarda null.
-export const katTabelasi = (n) => (n > 0 && n % 100 === 0 ? 'KAT ' + n : null);
+export const katTabelasi = (n) => (n > 0 && n % 100 === 0 ? th('hud_kat') + ' ' + n : null);
 
 const KAM_YUMUSAK = 0.22; // yukarı kamera yaklaşma oranı (kare başına)
 
@@ -98,9 +99,9 @@ export function adim(o, giris) {
     if (!giris.sol && !giris.sag) o.vx *= 0.8; // tutunma: yön tuşu yokken inişte hız hemen sönümlenir
     const fark = n - o.sonInisKat; o.sonInisKat = n; o.katNo = n;
     const yeniRekor = n > o.enYuksek; o.enYuksek = Math.max(o.enYuksek, n);
-    if (yeniRekor && n % 50 === 0) o.rozet = { metin: 'KAT ' + n, guc: 110 };
+    if (yeniRekor && n % 50 === 0) o.rozet = { metin: th('hud_kat') + ' ' + n, guc: 110 };
     if (yeniRekor && (n === 100 || n === 200 || n === 500)) o.sars = 22; // büyük kilometre taşı: kısa ekran sarsıntısı
-    if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: 'YENİ KAT REKORU', guc: 110, olcek: 5 };
+    if (yeniRekor && o.rekorKat > 0 && n === o.rekorKat + 1) o.rozet = { metin: th('hud_yeni_kat_rekoru'), guc: 110, olcek: 5 };
     buzKirigi(o.x, o.y, 4); // iniş
     if (fark >= 2) parcacikEkle(o.x, o.y, 10, '#ffd24a', 3);
     const od = puanInisC(o.puan, fark); if (od) { o.mesaj = { ...od, guc: 60 }; odulSesi(od.toplam); o.enIyiKombo = Math.max(o.enIyiKombo, od.toplam); }

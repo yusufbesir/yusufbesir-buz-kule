@@ -24,7 +24,7 @@ const G = {
   '*': ['.....', '#.#.#', '.###.', '#####', '.###.', '#.#.#', '.....'], ' ': ['.....', '.....', '.....', '.....', '.....', '.....', '.....'],
 };
 const TR = { İ: 'I', I: 'I', Ğ: 'G', Ü: 'U', Ş: 'S', Ö: 'O', Ç: 'C' };
-const harf = (ch) => { const b = ch.toLocaleUpperCase('tr'); return G[TR[b] || b] || G[' ']; };
+const harf = (ch) => { const b = ch.toLocaleUpperCase('tr'); return G[TR[b] || b] || G[b.normalize('NFD').charAt(0)] || G[' ']; };
 export const pikselGenislik = (metin, olcek) => Math.max(0, [...metin].length * 6 * olcek - olcek);
 
 // Önbellek: metin+ölçek+renk+kontur+gölge anahtarıyla bir kez çizilip drawImage ile basılır (en çok PBOY giriş, LRU). Düzgün ölçekli olmayan dönüşümde (döndürme/eğme), yarı saydamlık kat çakışması varsa veya tuval yoksa eski yola düşer.

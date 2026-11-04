@@ -6,6 +6,7 @@ import { skorListesi, skorEkle } from './skorlar.js';
 import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitOku, kayitYaz, bitGiris, hayaletAnahtar } from './hayalet.js';
 import { muzikGuncelle } from './ses.js';
 import { kayitCozC } from './cekirdek.js';
+import { t, dilUygula, DILLER } from './dil.js';
 import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
@@ -50,8 +51,8 @@ function durumDegistir(d, yeni = false) {
   odakla(durumOdak[d]());
   if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); modYaz(); }
   if (d === 'bitti') {
-    kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en); kimlik('s-kombo').textContent = String(o.enIyiKombo); kimlik('s-olum').textContent = o.enYuksek + '. katta düştün' + (o.katNo < o.enYuksek ? ' (' + (o.enYuksek - o.katNo) + ' kat aşağıya)' : '') + '.';
-    kimlik('s-tohum').hidden = o.tohum == null; kimlik('s-tohum').textContent = o.tohum == null ? '' : 'kule no: ' + o.tohum.toString(16);
+    kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en); kimlik('s-kombo').textContent = String(o.enIyiKombo); kimlik('s-olum').textContent = o.katNo < o.enYuksek ? t('j_dustun_asagi', { n: o.enYuksek, k: o.enYuksek - o.katNo }) : t('j_dustun', { n: o.enYuksek });
+    kimlik('s-tohum').hidden = o.tohum == null; kimlik('s-tohum').textContent = o.tohum == null ? '' : t('j_kule_no') + ': ' + o.tohum.toString(16);
     kimlik('s-rekor').hidden = !yeniRekor; kimlik('s-kristal').textContent = String(o.alinan.size); listeYaz(kimlik('s-liste'), 5, sonSira, sonMod);
     kimlik('s-hayalet').textContent = hayaletSonuc; kimlik('s-hayalet').hidden = !hayaletSonuc;
   }
@@ -70,7 +71,7 @@ function oyunBitti() {
   if (s > en) { en = s; yeniRekor = s > 0; try { localStorage.setItem('buzkule.en', String(s)); } catch { /* sessiz */ } }
   const anahtar = mod === 'gunun' ? gunlukAnahtar(undefined, o.zorluk) : hayaletAnahtar(o.zorluk), eski = kayitOku(anahtar);
   if (s > (eski ? eski.skor : 0)) kayitYaz(anahtar, kayitBitir(kaydedici, o.tohum, s, o.enYuksek)); // en iyi oyun hayalet olarak saklanır
-  hayaletSonuc = hayalet && eski ? (s > eski.skor ? 'Hayaleti geçtin! (' + eski.skor + ')' : 'Hayalet önde: ' + eski.skor) : '';
+  hayaletSonuc = hayalet && eski ? (s > eski.skor ? t('j_hayalet_gecti', { n: eski.skor }) : t('j_hayalet_onde', { n: eski.skor })) : '';
   sonSira = skorEkle(mod, s, o.enYuksek, o.zorluk); sonMod = mod; kristalKazan(o.alinan.size); // toplanan kristaller kalıcı cüzdana eklenir (mağazada harcanır)
   durumDegistir('bitti');
 }
@@ -121,7 +122,7 @@ function listeYaz(ol, adet, vurgu, oyunMod = mod) {
   if (!ol) return; ol.textContent = '';
   skorListesi(oyunMod, AYAR.zorluk).slice(0, adet).forEach((kayit, i) => {
     const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('b');
-    a.textContent = 'kat ' + kayit.kat; b.textContent = String(kayit.skor); li.appendChild(a); li.appendChild(b);
+    a.textContent = t('j_kat') + ' ' + kayit.kat; b.textContent = String(kayit.skor); li.appendChild(a); li.appendChild(b);
     li.className = i + 1 === vurgu ? 'yeni' : ''; ol.appendChild(li);
   });
 }
@@ -130,7 +131,7 @@ function basarimYaz() {
   const ol = kimlik('b-liste'); if (!ol) return; ol.textContent = ''; kimlik('b-sayi').textContent = ACIK.size + ' / ' + BASARIMLAR.length;
   for (const b of BASARIMLAR) {
     const li = document.createElement('li'), a = document.createElement('span'), r = document.createElement('b'), acik = ACIK.has(b.id);
-    a.textContent = (acik ? '★ ' : '☆ ') + b.ad + ' — ' + b.acik; r.textContent = acik ? 'alındı' : '+' + b.odul + ' ◆';
+    a.textContent = (acik ? '★ ' : '☆ ') + t('b_' + b.id + '_ad') + ' — ' + t('b_' + b.id + '_acik'); r.textContent = acik ? t('j_alindi') : '+' + b.odul + ' ◆';
     li.className = acik ? 'yeni' : ''; li.appendChild(a); li.appendChild(r); ol.appendChild(li);
   }
 }
@@ -138,10 +139,10 @@ function basarimYaz() {
 const izDugmeleri = [];
 function magazaYaz() {
   kimlik('g-kristal').textContent = String(CUZDAN.kristal); kimlik('m-kristal').textContent = String(CUZDAN.kristal);
-  izDugmeleri.forEach(({ b, ek }, i) => {
+  izDugmeleri.forEach(({ b, ek, ad }, i) => {
     const acik = CUZDAN.acik.includes(i), secili = CUZDAN.secili === i;
     b.className = 'iz' + (secili ? ' secili' : ''); b.setAttribute('aria-pressed', String(secili));
-    ek.textContent = secili ? 'Seçili' : acik ? 'Seç' : IZLER[i].fiyat + ' ◆';
+    ek.textContent = secili ? t('j_secili') : acik ? t('j_sec') : IZLER[i].fiyat + ' ◆'; ad.textContent = t('iz_' + i);
     b.disabled = !acik && CUZDAN.kristal < IZLER[i].fiyat;
   });
 }
@@ -150,14 +151,14 @@ IZLER.forEach((iz, i) => {
   b.type = 'button'; ad.textContent = iz.ad; ad.className = 'iz-ad'; ek.className = 'iz-ek';
   b.appendChild(ad); b.appendChild(ek);
   b.addEventListener('click', () => { if (!CUZDAN.acik.includes(i)) izAl(i); izSec(i); magazaYaz(); });
-  kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek });
+  kimlik('izler').appendChild(b); izDugmeleri.push({ b, ek, ad });
 });
 magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); basarimYaz();
 
 // ---- Ses ve müzik düğmeleri (aç/kapa) ----
 function sesDugmeleriYaz() {
-  for (const [a, id, ad] of [['efektAcik', 'a-efekt', 'Efektler'], ['muzikAcik', 'a-muzik', 'Müzik']]) {
-    const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? 'AÇIK' : 'KAPALI'); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')]]) {
+    const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? t('j_acik') : t('j_kapali')); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
   }
 }
 kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
@@ -173,11 +174,11 @@ for (const a of ayarAnahtarlari) {
 }
 kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); sesDugmeleriYaz(); muzikGuncelle(false); });
 // Karakter seçici (Kenney CC0 beş karakter)
-const karakterAdlari = ['Yeşil', 'Kâşif', 'Kızıl', 'Asker', 'Zombi'], karakterDugmeleri = [];
+const karakterDugmeleri = [];
 function karakterIsaretle() { karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.karakter === i)); b.className = 'karakter' + (AYAR.karakter === i ? ' secili' : ''); }); }
 KARAKTERLER.forEach((ad, i) => {
   const b = document.createElement('button'), im = document.createElement('img');
-  b.type = 'button'; b.setAttribute('aria-label', 'Karakter: ' + karakterAdlari[i]); b.title = karakterAdlari[i];
+  b.type = 'button'; b.setAttribute('aria-label', t('j_karakter', { ad: t('kar_' + i) })); b.title = t('kar_' + i);
   im.src = './varlik/kenney/karakter/' + ad + '/stand.png'; im.alt = ''; b.appendChild(im);
   b.addEventListener('click', () => { AYAR.karakter = i; ayarKaydet(); karakterIsaretle(); });
   kimlik('karakterler').appendChild(b); karakterDugmeleri.push(b);
@@ -185,7 +186,18 @@ KARAKTERLER.forEach((ad, i) => {
 karakterIsaretle();
 ayarYaz();
 if (!document.activeElement || document.activeElement === document.body) odakla(kimlik('t-' + sekme)); // açılışta odak menünün ilk düğmesinde
-kimlik('a-not').textContent = AYAR.azaltilmisHareket ? 'Sistem "hareketi azalt" ayarın açık: sarsıntı kapalı, parçacık azaltıldı, animasyonlar donuk.' : 'Ayarlar canlı uygulanır ve kaydedilir; oyun kuralları değişmez.';
+const notYaz = () => { kimlik('a-not').textContent = AYAR.azaltilmisHareket ? t('j_azalt_not') : t('j_ayar_not'); };
+// Dil seçici: seçili dil kalıcıdır; değişince menü, ayar düğmeleri ve listeler yeniden yazılır.
+const dilSec = kimlik('a-dil');
+DILLER.forEach((d, i) => { const op = document.createElement('option'); op.value = String(i); op.textContent = d.ad; dilSec.appendChild(op); });
+function dilYenile() {
+  dilSec.value = String(AYAR.dil); dilUygula(); // sekme etiketleri değişince genişlikler değişir: gösterge yeniden konumlanır
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => sekmeSec(sekme, false)); notYaz(); sesDugmeleriYaz(); basarimYaz(); magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0);
+  karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-label', t('j_karakter', { ad: t('kar_' + i) })); b.title = t('kar_' + i); });
+}
+dilSec.addEventListener('change', () => { AYAR.dil = Number(dilSec.value); ayarKaydet(); dilYenile(); });
+kimlik('a-sifirla').addEventListener('click', () => dilYenile());
+dilYenile();
 
 // ---- Klavye ----
 addEventListener('keydown', e => {

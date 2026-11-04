@@ -95,96 +95,99 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
 /* Hareketi azalt: animasyon ve geçişler kapalı, yanıp sönme yok, hover/aktif kaymaları yok; katmanlar anında görünür */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.giris,.giris .metin{opacity:1;transform:none}.kart,.katman.acik .kart{transform:none}
   .dugme:hover,.dugme:active,.karakter:hover,.mod:hover:not(:disabled),.iz:hover:not(:disabled){transform:none}.sekme-gosterge{transition:none!important}}
+.dil-sec{font:inherit;color:inherit;background:rgba(8,6,28,.8);border:2px solid #2de6ff;border-radius:6px;padding:6px 8px;min-width:150px}
+.dil-sec:focus-visible{outline:3px solid #ffd62e;outline-offset:2px}
 </style>
 <body>
 <div id="sahne">
-  <canvas id="c" width="640" height="480" role="img" tabindex="-1" aria-label="Buz Kule oyun alanı: karakter kuleye tırmanıyor"></canvas>
+  <canvas id="c" width="640" height="480" role="img" tabindex="-1" aria-label="Buz Kule oyun alanı: karakter kuleye tırmanıyor" data-dt="aria-label:h01"></canvas>
 
   <div id="menu" class="katman acik" aria-hidden="false">
     <div class="kart giris" role="dialog" aria-modal="true" aria-labelledby="m-baslik" aria-describedby="m-alt">
-      <div class="metin"><span class="etiket">dikey zıplama</span>
-        <h1 id="m-baslik">Buz Kule</h1>
-        <p class="alt ince" id="m-alt">Kuleye tırman, kombo yap, düşme.</p></div>
-      <div class="sekmeler" role="tablist" aria-label="Menü">
+      <div class="metin"><span class="etiket"><span data-d="h14">dikey zıplama</span></span>
+        <h1 id="m-baslik"><span data-d="h15">Buz Kule</span></h1>
+        <p class="alt ince" id="m-alt"><span data-d="h16">Kuleye tırman, kombo yap, düşme.</span></p></div>
+      <div class="sekmeler" role="tablist" aria-label="Menü" data-dt="aria-label:h02">
         <span class="sekme-gosterge" id="gosterge" aria-hidden="true"></span>
-        <button class="sekme" role="tab" id="t-oyna" aria-selected="true" aria-controls="p-oyna" data-sekme="oyna">Oyna</button>
-        <button class="sekme" role="tab" id="t-magaza" aria-selected="false" aria-controls="p-magaza" data-sekme="magaza" tabindex="-1">Mağaza</button>
-        <button class="sekme" role="tab" id="t-basarim" aria-selected="false" aria-controls="p-basarim" data-sekme="basarim" tabindex="-1">Başarım</button>
-        <button class="sekme" role="tab" id="t-ayar" aria-selected="false" aria-controls="p-ayar" data-sekme="ayar" tabindex="-1">Ayarlar</button>
-        <button class="sekme" role="tab" id="t-nasil" aria-selected="false" aria-controls="p-nasil" data-sekme="nasil" tabindex="-1">Nasıl</button>
+        <button class="sekme" role="tab" id="t-oyna" aria-selected="true" aria-controls="p-oyna" data-sekme="oyna"><span data-d="h17">Oyna</span></button>
+        <button class="sekme" role="tab" id="t-magaza" aria-selected="false" aria-controls="p-magaza" data-sekme="magaza" tabindex="-1"><span data-d="h18">Mağaza</span></button>
+        <button class="sekme" role="tab" id="t-basarim" aria-selected="false" aria-controls="p-basarim" data-sekme="basarim" tabindex="-1"><span data-d="h19">Başarım</span></button>
+        <button class="sekme" role="tab" id="t-ayar" aria-selected="false" aria-controls="p-ayar" data-sekme="ayar" tabindex="-1"><span data-d="h20">Ayarlar</span></button>
+        <button class="sekme" role="tab" id="t-nasil" aria-selected="false" aria-controls="p-nasil" data-sekme="nasil" tabindex="-1"><span data-d="h21">Nasıl</span></button>
       </div>
       <section class="panel" id="p-oyna" role="tabpanel" aria-labelledby="t-oyna">
-        <p class="etiket" style="margin:0 0 4px">en iyi skor</p><p class="skor" id="m-en">0</p>
-        <p class="ince" style="margin:2px 0 0">Kristal cüzdanı: <b id="m-kristal">0</b> <span aria-hidden="true">◆</span></p>
-        <p class="etiket" style="margin:10px 0 4px">oyun kipi</p>
-        <div class="modlar" role="group" aria-label="Oyun kipi">
-          <button class="mod secili" id="mod-yeni" type="button" aria-pressed="true" title="Her seferinde yeni, rastgele bir kule">Yeni kule</button>
-          <button class="mod" id="mod-hayalet" type="button" aria-pressed="false" title="En iyi oyununun kulesi; kaydı yarı saydam hayalet olarak koşar">Hayaletle yarış</button>
-          <button class="mod" id="mod-gunun" type="button" aria-pressed="false" title="Bugüne özel sabit kule; günlük en iyi kaydın hayaleti">Günün kulesi</button>
+        <p class="etiket" style="margin:0 0 4px"><span data-d="h22">en iyi skor</span></p><p class="skor" id="m-en">0</p>
+        <p class="ince" style="margin:2px 0 0"><span data-d="h23">Kristal cüzdanı:</span> <b id="m-kristal">0</b> <span aria-hidden="true">◆</span></p>
+        <p class="etiket" style="margin:10px 0 4px"><span data-d="h24">oyun kipi</span></p>
+        <div class="modlar" role="group" aria-label="Oyun kipi" data-dt="aria-label:h03">
+          <button class="mod secili" id="mod-yeni" type="button" aria-pressed="true" title="Her seferinde yeni, rastgele bir kule" data-dt="title:h04"><span data-d="h25">Yeni kule</span></button>
+          <button class="mod" id="mod-hayalet" type="button" aria-pressed="false" title="En iyi oyununun kulesi; kaydı yarı saydam hayalet olarak koşar" data-dt="title:h05"><span data-d="h26">Hayaletle yarış</span></button>
+          <button class="mod" id="mod-gunun" type="button" aria-pressed="false" title="Bugüne özel sabit kule; günlük en iyi kaydın hayaleti" data-dt="title:h06"><span data-d="h27">Günün kulesi</span></button>
         </div>
-        <p class="etiket" style="margin:10px 0 4px">zorluk</p>
-        <div class="modlar" role="group" aria-label="Zorluk">
-          <button class="mod" id="zorluk-0" type="button" aria-pressed="false" title="Kamera daha yavaş kayar">Kolay</button>
-          <button class="mod secili" id="zorluk-1" type="button" aria-pressed="true" title="Varsayılan hız">Orta</button>
-          <button class="mod" id="zorluk-2" type="button" aria-pressed="false" title="Kamera hızlı kayar">Zor</button>
-          <button class="mod" id="zorluk-3" type="button" aria-pressed="false" title="Kamera çok hızlı kayar">Çok zor</button>
+        <p class="etiket" style="margin:10px 0 4px"><span data-d="h28">zorluk</span></p>
+        <div class="modlar" role="group" aria-label="Zorluk" data-dt="aria-label:h07">
+          <button class="mod" id="zorluk-0" type="button" aria-pressed="false" title="Kamera daha yavaş kayar" data-dt="title:h08"><span data-d="h29">Kolay</span></button>
+          <button class="mod secili" id="zorluk-1" type="button" aria-pressed="true" title="Varsayılan hız" data-dt="title:h09"><span data-d="h30">Orta</span></button>
+          <button class="mod" id="zorluk-2" type="button" aria-pressed="false" title="Kamera hızlı kayar" data-dt="title:h10"><span data-d="h31">Zor</span></button>
+          <button class="mod" id="zorluk-3" type="button" aria-pressed="false" title="Kamera çok hızlı kayar" data-dt="title:h11"><span data-d="h32">Çok zor</span></button>
         </div>
-        <p class="etiket" style="margin:10px 0 4px">skor tablosu (seçili kip, ilk 5)</p><ol class="liste" id="m-liste"></ol>
-        <button class="dugme" id="basla" type="button" style="margin-top:12px">Başla <kbd>Space</kbd></button>
+        <p class="etiket" style="margin:10px 0 4px"><span data-d="h33">skor tablosu (seçili kip, ilk 5)</span></p><ol class="liste" id="m-liste"></ol>
+        <button class="dugme" id="basla" type="button" style="margin-top:12px"><span data-d="h34">Başla</span> <kbd>Space</kbd></button>
       </section>
       <section class="panel" id="p-magaza" role="tabpanel" aria-labelledby="t-magaza" hidden>
-        <p class="etiket" style="margin:0 0 4px">kristal cüzdanı</p><p class="skor"><span id="g-kristal">0</span> <span style="font-size:22px" aria-hidden="true">◆</span></p>
-        <p class="etiket" style="margin:10px 0 6px">iz rengi</p>
-        <div class="izler" id="izler" role="group" aria-label="İz rengi seçimi"></div>
-        <p class="ince">Oyunda topladığın kristaller buraya eklenir. İz rengi yalnız görünümü değiştirir.</p>
+        <p class="etiket" style="margin:0 0 4px"><span data-d="h35">kristal cüzdanı</span></p><p class="skor"><span id="g-kristal">0</span> <span style="font-size:22px" aria-hidden="true">◆</span></p>
+        <p class="etiket" style="margin:10px 0 6px"><span data-d="h36">iz rengi</span></p>
+        <div class="izler" id="izler" role="group" aria-label="İz rengi seçimi" data-dt="aria-label:h12"></div>
+        <p class="ince"><span data-d="h37">Oyunda topladığın kristaller buraya eklenir. İz rengi yalnız görünümü değiştirir.</span></p>
       </section>
       <section class="panel" id="p-basarim" role="tabpanel" aria-labelledby="t-basarim" hidden>
-        <p class="etiket" style="margin:0 0 4px">başarımlar</p><p class="skor"><span id="b-sayi">0</span></p>
+        <p class="etiket" style="margin:0 0 4px"><span data-d="h38">başarımlar</span></p><p class="skor"><span id="b-sayi">0</span></p>
         <ol class="liste" id="b-liste" style="margin-top:8px"></ol>
-        <p class="ince">Her başarım ilk açıldığında kristal ödülü verir.</p>
+        <p class="ince"><span data-d="h39">Her başarım ilk açıldığında kristal ödülü verir.</span></p>
       </section>
       <section class="panel" id="p-ayar" role="tabpanel" aria-labelledby="t-ayar" hidden>
-        <div class="satir"><label class="etiket" for="a-parilti">Parıltı</label><output id="o-parilti" for="a-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
-        <div class="satir"><label class="etiket" for="a-parcacik">Parçacık</label><output id="o-parcacik" for="a-parcacik"></output><input id="a-parcacik" type="range" min="0" max="1.5" step="0.05"></div>
-        <div class="satir"><label class="etiket" for="a-sarsinti">Ekran sarsıntısı</label><output id="o-sarsinti" for="a-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
-        <div class="satir"><label class="etiket" for="a-hud">Oyun içi bilgi (HUD)</label><output id="o-hud" for="a-hud"></output><input id="a-hud" type="range" min="0" max="1.5" step="0.05"></div>
-        <div class="satir"><label class="etiket" for="a-ses">Ses</label><output id="o-ses" for="a-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
-        <div class="satir"><span class="etiket" id="karakter-etiket">Karakter</span><span></span><div class="karakterler" id="karakterler" role="group" aria-labelledby="karakter-etiket"></div></div>
-        <div class="sesdugme" role="group" aria-label="Ses düğmeleri"><button class="dugme ikincil" type="button" id="a-efekt" aria-pressed="true">Efektler</button><button class="dugme ikincil" type="button" id="a-muzik" aria-pressed="false">Müzik</button></div>
-        <button class="dugme ikincil" id="a-sifirla" type="button">Varsayılana dön</button>
+        <div class="satir"><label class="etiket" for="a-parilti"><span data-d="h40">Parıltı</span></label><output id="o-parilti" for="a-parilti"></output><input id="a-parilti" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-parcacik"><span data-d="h41">Parçacık</span></label><output id="o-parcacik" for="a-parcacik"></output><input id="a-parcacik" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-sarsinti"><span data-d="h42">Ekran sarsıntısı</span></label><output id="o-sarsinti" for="a-sarsinti"></output><input id="a-sarsinti" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-hud"><span data-d="h43">Oyun içi bilgi (HUD)</span></label><output id="o-hud" for="a-hud"></output><input id="a-hud" type="range" min="0" max="1.5" step="0.05"></div>
+        <div class="satir"><label class="etiket" for="a-ses"><span data-d="h44">Ses</span></label><output id="o-ses" for="a-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
+        <div class="satir"><span class="etiket" id="karakter-etiket"><span data-d="h45">Karakter</span></span><span></span><div class="karakterler" id="karakterler" role="group" aria-labelledby="karakter-etiket"></div></div>
+        <div class="satir"><label class="etiket" for="a-dil" id="dil-etiket"><span data-d="j_dil">Dil</span></label><span></span><select id="a-dil" class="dil-sec" aria-labelledby="dil-etiket"></select></div>
+        <div class="sesdugme" role="group" aria-label="Ses düğmeleri" data-dt="aria-label:h13"><button class="dugme ikincil" type="button" id="a-efekt" aria-pressed="true"><span data-d="h46">Efektler</span></button><button class="dugme ikincil" type="button" id="a-muzik" aria-pressed="false"><span data-d="h47">Müzik</span></button></div>
+        <button class="dugme ikincil" id="a-sifirla" type="button"><span data-d="h48">Varsayılana dön</span></button>
         <p class="ince" id="a-not"></p>
       </section>
       <section class="panel" id="p-nasil" role="tabpanel" aria-labelledby="t-nasil" tabindex="0" hidden>
         <ul class="ince" style="margin-top:0">
-          <li><kbd>←</kbd> <kbd>→</kbd> koş; ne kadar hızlıysan o kadar yükseğe zıplarsın.</li>
-          <li><kbd>Space</kbd> zıpla. Duvardan dönünce hızın çoğu korunur.</li>
-          <li>Üst üste en az 2 kat zıplayarak kombo yap; hızlı zıplayınca karakter takla atar. Sayaç dolmadan yeni kombo zıplaması gerekir.</li>
-          <li>Süzülen buz kristallerine dokun: her biri +25 puan, ayrıca mağazada harcanır.</li>
-          <li>Çatlak buz basamak 0,6 sn sonra kırılır, hızlı geç. Kırmızı yaylı basamak seni yukarı fırlatır ve taklaya sokar.</li>
-          <li>Saat kuleyi yavaşlatır, mıknatıs yakındaki kristalleri çeker. Basamak kenarlarında kısa süre tutunur ve kenardan düşerken bile zıplayabilirsin.</li>
-          <li><kbd>P</kbd> duraklat, <kbd>R</kbd> yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</li>
+          <li><kbd>←</kbd> <kbd>→</kbd> <span data-d="h49">koş; ne kadar hızlıysan o kadar yükseğe zıplarsın.</span></li>
+          <li><kbd>Space</kbd> <span data-d="h50">zıpla. Duvardan dönünce hızın çoğu korunur.</span></li>
+          <li><span data-d="h51">Üst üste en az 2 kat zıplayarak kombo yap; hızlı zıplayınca karakter takla atar. Sayaç dolmadan yeni kombo zıplaması gerekir.</span></li>
+          <li><span data-d="h52">Süzülen buz kristallerine dokun: her biri +25 puan, ayrıca mağazada harcanır.</span></li>
+          <li><span data-d="h53">Çatlak buz basamak 0,6 sn sonra kırılır, hızlı geç. Kırmızı yaylı basamak seni yukarı fırlatır ve taklaya sokar.</span></li>
+          <li><span data-d="h54">Saat kuleyi yavaşlatır, mıknatıs yakındaki kristalleri çeker. Basamak kenarlarında kısa süre tutunur ve kenardan düşerken bile zıplayabilirsin.</span></li>
+          <li><kbd>P</kbd> <span data-d="h55">duraklat,</span> <kbd>R</kbd> <span data-d="h56">yeniden başlat. Kat 5'ten sonra kule kayar, her 30 sn hızlanır.</span></li>
         </ul>
       </section>
     </div>
   </div>
 
   <div id="duraklat" class="katman" aria-hidden="true">
-    <div class="kart" id="d-kart" role="dialog" aria-modal="true" aria-labelledby="d-baslik" aria-describedby="d-alt" tabindex="-1"><span class="etiket">duraklatıldı</span><h2 id="d-baslik">Bir nefes al</h2>
-      <p class="ince" id="d-alt">Devam etmek için <kbd>P</kbd>, yeniden başlamak için <kbd>R</kbd>, menüye dönmek için <kbd>Esc</kbd>.</p></div>
+    <div class="kart" id="d-kart" role="dialog" aria-modal="true" aria-labelledby="d-baslik" aria-describedby="d-alt" tabindex="-1"><span class="etiket"><span data-d="h57">duraklatıldı</span></span><h2 id="d-baslik"><span data-d="h58">Bir nefes al</span></h2>
+      <p class="ince" id="d-alt"><span data-d="h59">Devam etmek için</span> <kbd>P</kbd><span data-d="h60">, yeniden başlamak için</span> <kbd>R</kbd><span data-d="h61">, menüye dönmek için</span> <kbd>Esc</kbd>.</p></div>
   </div>
 
   <div id="sonuc" class="katman" aria-hidden="true">
-    <div class="kart" role="dialog" aria-modal="true" aria-labelledby="s-baslik" aria-describedby="s-skor"><span class="etiket">kule seni yendi</span><h2 id="s-baslik">Güzel tırmanış</h2>
+    <div class="kart" role="dialog" aria-modal="true" aria-labelledby="s-baslik" aria-describedby="s-skor"><span class="etiket"><span data-d="h62">kule seni yendi</span></span><h2 id="s-baslik"><span data-d="h63">Güzel tırmanış</span></h2>
       <p class="skor" id="s-skor">0</p>
-      <p class="ince"><span id="s-kat">0</span> kat &nbsp;•&nbsp; en iyi <span id="s-en">0</span></p>
+      <p class="ince"><span id="s-kat">0</span> <span data-d="j_kat">kat</span> &nbsp;•&nbsp; <span data-d="j_en_iyi">en iyi</span> <span id="s-en">0</span></p>
       <p class="ince" id="s-olum"></p>
-      <p class="ince">en büyük kombo: <span id="s-kombo">0</span> kat</p>
+      <p class="ince"><span data-d="h64">en büyük kombo:</span> <span id="s-kombo">0</span> <span data-d="h65">kat</span></p>
       <p class="ince" id="s-tohum" hidden style="font-size:11px;opacity:.6;margin:2px 0"></p>
-      <p class="ince rekor" id="s-rekor" hidden>★ Yeni rekor</p>
-      <p class="ince">+<span id="s-kristal">0</span> <span aria-hidden="true">◆</span> kristal cüzdana eklendi</p>
+      <p class="ince rekor" id="s-rekor" hidden><span data-d="h66">★ Yeni rekor</span></p>
+      <p class="ince">+<span id="s-kristal">0</span> <span aria-hidden="true">◆</span> <span data-d="h67">kristal cüzdana eklendi</span></p>
       <p class="ince rekor" id="s-hayalet" hidden></p>
       <ol class="liste" id="s-liste"></ol>
-      <button class="dugme" id="tekrar" type="button" style="margin-top:14px">Tekrar dene <kbd>Space</kbd></button>
+      <button class="dugme" id="tekrar" type="button" style="margin-top:14px"><span data-d="h68">Tekrar dene</span> <kbd>Space</kbd></button>
     </div>
   </div>
 </div>
