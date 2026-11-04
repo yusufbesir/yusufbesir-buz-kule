@@ -208,6 +208,12 @@ function oyunKolu() {
 }
 
 // ---- Döngü ----
+function araDeger(g, a) {
+  if (g.bitti || a >= 1 || !Number.isFinite(g.px)) return null;
+  const s = { x: g.x, y: g.y, kamY: g.kamY };
+  g.x = g.px + (s.x - g.px) * a; g.y = g.py + (s.y - g.py) * a; g.kamY = g.pk + (s.kamY - g.pk) * a; return s;
+}
+function araGeri(g, s) { if (s) { g.x = s.x; g.y = s.y; g.kamY = s.kamY; } }
 let onceki = 0, acc = 0; const DT = 20;
 function dongu(ms) {
   acc += Math.min(100, ms - onceki); onceki = ms;
@@ -225,8 +231,11 @@ function dongu(ms) {
     bildirimAdim(); acc -= DT;
   }
   c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+  // Çizim, 50 Hz adımlar arasında ara değerle yapılır (yüksek yenileme hızında takılma olmaz); durum çizimden sonra geri yüklenir.
+  const a = durum === 'oyun' ? Math.max(0, Math.min(1, acc / DT)) : 1, s1 = araDeger(o, a), s2 = hayalet ? araDeger(hayalet, a) : null;
   ciz(c, o, hayalet);
   if (durum !== 'baslik') hudCiz(c, o, en, hayalet);
+  araGeri(o, s1); if (s2) araGeri(hayalet, s2);
   requestAnimationFrame(dongu);
 }
 requestAnimationFrame(ms => { onceki = ms; dongu(ms); });

@@ -651,6 +651,7 @@ function yeniOyun(rnd = Math.random) {
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
+    px: 320, py: ZEMIN_Y, pk: 0, // önceki adım konumu (çizim ara değeri)
     sars: 0, rekorKat: 0, // kilometre taşı sarsıntısı süresi; önceki en iyi kat (arayuz.js yazar, yalnız görünüm)
     sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
     tehlike: false, kilPayi: 0, kilPayiBekle: 0, kilPayiSayisi: 0, // kıl payı: tehlike bölgesine girildi mi, yazı süresi, bekleme süresi, verilen bonus sayısı
@@ -669,8 +670,11 @@ function zipladi(o) {
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
 
+const KAM_YUMUSAK = 0.22; // yukarı kamera yaklaşma oranı (kare başına)
+
 function adim(o, giris) {
   if (o.bitti) return;
+  o.px = o.x; o.py = o.y; o.pk = o.kamY; // önceki kare konumu: çizimde ara değer için (simülasyonu etkilemez)
   o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
   if (o.sars > 0) o.sars--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
@@ -749,8 +753,9 @@ function adim(o, giris) {
     o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
     if (o.kare % SAAT === 0 && o.kare <= 5 * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
   }
-  const kamHedef = Math.min(o.kamTaban, o.y - 100);
-  if (kamHedef < o.kamY) o.kamY = kamHedef; else o.kamY += Math.min(8, kamHedef - o.kamY);
+  // Yukarı çıkarken kamera hedefe yumuşakça (üstel) yaklaşır; yükselen oyuncunun biraz önüne bakar (gecikme birikmesin). Aşağı dönüş eskisi gibi sınırlı hızda.
+  const kamHedef = Math.min(o.kamTaban, o.y - 100 + (o.vy < 0 ? o.vy * 2.5 : 0));
+  if (kamHedef < o.kamY) o.kamY += (kamHedef - o.kamY) * KAM_YUMUSAK; else o.kamY += Math.min(8, kamHedef - o.kamY);
   const ekranY = o.y - o.kamY;
   if (ekranY > H) { o.bitti = true; olumSesi(); return; }
   // Kıl payı: önceki karelerde tehlike bölgesine (ekran altına bir kattan az) girmiş oyuncu bir basamağa konunca bonus; bekleme süresi sık tekrarı önler.
@@ -1214,6 +1219,12 @@ function oyunKolu() {
 }
 
 // ---- Döngü ----
+function araDeger(g, a) {
+  if (g.bitti || a >= 1 || !Number.isFinite(g.px)) return null;
+  const s = { x: g.x, y: g.y, kamY: g.kamY };
+  g.x = g.px + (s.x - g.px) * a; g.y = g.py + (s.y - g.py) * a; g.kamY = g.pk + (s.kamY - g.pk) * a; return s;
+}
+function araGeri(g, s) { if (s) { g.x = s.x; g.y = s.y; g.kamY = s.kamY; } }
 let onceki = 0, acc = 0; const DT = 20;
 function dongu(ms) {
   acc += Math.min(100, ms - onceki); onceki = ms;
@@ -1231,8 +1242,11 @@ function dongu(ms) {
     bildirimAdim(); acc -= DT;
   }
   c.setTransform(olcek, 0, 0, olcek, 0, 0); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+  // Çizim, 50 Hz adımlar arasında ara değerle yapılır (yüksek yenileme hızında takılma olmaz); durum çizimden sonra geri yüklenir.
+  const a = durum === 'oyun' ? Math.max(0, Math.min(1, acc / DT)) : 1, s1 = araDeger(o, a), s2 = hayalet ? araDeger(hayalet, a) : null;
   ciz(c, o, hayalet);
   if (durum !== 'baslik') hudCiz(c, o, en, hayalet);
+  araGeri(o, s1); if (s2) araGeri(hayalet, s2);
   requestAnimationFrame(dongu);
 }
 requestAnimationFrame(ms => { onceki = ms; dongu(ms); });

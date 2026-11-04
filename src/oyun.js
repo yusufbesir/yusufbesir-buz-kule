@@ -33,6 +33,7 @@ export function yeniOyun(rnd = Math.random) {
     aci: 0, aciHiz: 0, donuyor: false, alinan: new Set(), alinanGuc: new Set(), ek: 0, hizlan: 0, rozet: null,
     coyote: 0, tampon: 0, oncekiZ: false, saat: 0, miknatis: 0,
     kirik: new Set(), sayac: 0, sayacKat: -1, yaySayisi: 0, enIyiKombo: 0, // kırık basamaklar, kırılma sayacı, başarım sayaçları
+    px: 320, py: ZEMIN_Y, pk: 0, // önceki adım konumu (çizim ara değeri)
     sars: 0, rekorKat: 0, // kilometre taşı sarsıntısı süresi; önceki en iyi kat (arayuz.js yazar, yalnız görünüm)
     sonZip: 0, komboPuls: 0, // kombo yazısı: son görülen kombo zıplama sayısı ve büyüme vurgusu süresi (yalnız görünüm)
     tehlike: false, kilPayi: 0, kilPayiBekle: 0, kilPayiSayisi: 0, // kıl payı: tehlike bölgesine girildi mi, yazı süresi, bekleme süresi, verilen bonus sayısı
@@ -51,8 +52,11 @@ function zipladi(o) {
   o.aciHiz = o.donuyor ? o.yon * 2 * Math.PI / (2.5 * Math.abs(o.vy)) : 0; // havada kalma süresi ≈ 2.5·|vy| kare: tam bir takla
 }
 
+const KAM_YUMUSAK = 0.22; // yukarı kamera yaklaşma oranı (kare başına)
+
 export function adim(o, giris) {
   if (o.bitti) return;
+  o.px = o.x; o.py = o.y; o.pk = o.kamY; // önceki kare konumu: çizimde ara değer için (simülasyonu etkilemez)
   o.kare++; if (o.mesaj && o.mesaj.guc > 0) o.mesaj.guc--;
   if (o.sars > 0) o.sars--;
   if (o.hizlan > 0) o.hizlan--; if (o.rozet && --o.rozet.guc <= 0) o.rozet = null;
@@ -131,8 +135,9 @@ export function adim(o, giris) {
     o.kayma = o.kare < SAAT ? 0.5 : Math.min(5, Math.floor(o.kare / SAAT)); o.kamTaban -= o.kayma * (o.saat > 0 ? 0.4 : 1); // saat: kayma yavaşlar
     if (o.kare % SAAT === 0 && o.kare <= 5 * SAAT) { o.hizlan = 110; hizSesi(); } // her 30 sn'de hızlanma uyarısı
   }
-  const kamHedef = Math.min(o.kamTaban, o.y - 100);
-  if (kamHedef < o.kamY) o.kamY = kamHedef; else o.kamY += Math.min(8, kamHedef - o.kamY);
+  // Yukarı çıkarken kamera hedefe yumuşakça (üstel) yaklaşır; yükselen oyuncunun biraz önüne bakar (gecikme birikmesin). Aşağı dönüş eskisi gibi sınırlı hızda.
+  const kamHedef = Math.min(o.kamTaban, o.y - 100 + (o.vy < 0 ? o.vy * 2.5 : 0));
+  if (kamHedef < o.kamY) o.kamY += (kamHedef - o.kamY) * KAM_YUMUSAK; else o.kamY += Math.min(8, kamHedef - o.kamY);
   const ekranY = o.y - o.kamY;
   if (ekranY > H) { o.bitti = true; olumSesi(); return; }
   // Kıl payı: önceki karelerde tehlike bölgesine (ekran altına bir kattan az) girmiş oyuncu bir basamağa konunca bonus; bekleme süresi sık tekrarı önler.
