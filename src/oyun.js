@@ -6,6 +6,7 @@ import { zipSesi, odulSesi, olumSesi, kristalSesi, hizSesi, gucSesi, yaySesi, ki
 import { AYAR, KARAKTERLER } from './ayar.js';
 import { izRengi } from './magaza.js';
 import { katRnd } from './hayalet.js';
+import { katUretTohum } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
 import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz } from './gorsel.js';
 
@@ -27,7 +28,7 @@ const KIL_PAYI_SINIR = H - KAT_ARALIK;                  // ekranda bu çizginin 
 // rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
 export function yeniOyun(rnd = Math.random) {
   const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
-  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUret(n, katRnd(tohum, n))), katlar.get(n));
+  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUretTohum(n, tohum)), katlar.get(n));
   return {
     rnd, tohum, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,

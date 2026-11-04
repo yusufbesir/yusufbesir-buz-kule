@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+const wasmKurulum = { n: 0 }; // Rust çekirdeğinin kaç kez kurulduğu (paketli betik yüklenirken)
 function ortam() {
   const dinleyiciler = {}, kareler = [], acik = {}, elemanlar = {};
   const ctx = new Proxy({}, {
@@ -21,6 +22,7 @@ function ortam() {
     addEventListener: (ad, f) => { (dinleyiciler[ad] ||= []).push(f); },
     requestAnimationFrame: (f) => { kareler.push(f); },
     localStorage: { getItem: () => null, setItem() {} },
+    atob: globalThis.atob, WebAssembly: { Module: WebAssembly.Module, Instance: class extends WebAssembly.Instance { constructor(...g) { super(...g); wasmKurulum.n++; } } },
     AudioContext: undefined, Image: undefined, setTimeout: () => 0, Math: Object.create(Math), console,
   };
   kutu.globalThis = kutu; kutu.window = kutu;
@@ -62,4 +64,12 @@ test('paket: oyun kolu A düğmesi menüden oyunu başlatır', () => {
   vm.runInContext(fs.readFileSync(new URL('../uygulama/src/buz-kule.js', import.meta.url), 'utf8'), e.kutu);
   let ms = 0; const kare = () => { ms += 20; e.kareler.shift()(ms); };
   kare(); assert.notEqual(e.acik.menu, false); a = true; kare(); assert.equal(e.acik.menu, false, 'A düğmesi oyunu başlatmadı');
+});
+
+test('paket: Rust çekirdeği (core.wasm) paketli betikte kurulur ve oyun yine çalışır', () => {
+  wasmKurulum.n = 0;
+  const e = yukle(); e.kare();
+  assert.equal(wasmKurulum.n, 1, 'çekirdek kurulmadı (CEKIRDEK_B64 gömülü mü, atob/WebAssembly var mı?)');
+  e.tus('keydown', 'Space'); e.tus('keyup', 'Space');
+  assert.equal(e.acik.menu, false);
 });

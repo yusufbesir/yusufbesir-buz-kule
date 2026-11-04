@@ -210,6 +210,37 @@ function katUret(kat, rnd = Math.random) {
   return { kat, y: -kat * KAT_ARALIK, xKaro: bas, genislikKaro: w, no: kat % 10 === 0, tema: Math.floor(kat / 100), kristal, kristalX, guc, tur };
 }
 
+const CEKIRDEK_B64 = "AGFzbQEAAAABCgJgAAF/YAJ/fwADAwIAAQUDAQABBgcBfwFBgCALByQDBmJlbGxlawIADGNpa2lzX2FkcmVzaQAACGthdF91cmV0AAEKsggCCABBgKCAgAALpggFAn8BfAF+An8BfCABQTJwIQIgAUGx893xeWxBsfPd8XlqIABzIQMCQAJAAkACQCABRQ0AIAINAEEeIQJEAAAAAAAAFEAhBAwBC0QAAAAAAADwP0QAAAAAAADwP0QAAAAAAMByQCABuKFEAAAAAAAAPkCjRAAAAAAAAOA/oCIE/AciBbogBVAbIAREAAAAAAAAAABjGyADQfXzrekGaiIAQQ92IABzIABBAXJsIgJBB3YgAnMgAkE9cmwgAmogAnMiAkEOdiACc7hEAAAAAAAA8D2iovwHuvwDQQZqIQZBHiECQR4hBwJAIAFB5ABJDQBBAiEHIAFB8wNLDQBBBiABQf//A3FB5ABuayEHC0QAAAAAAAAUQCEEAkAgBiAHIAYgB0kbIgdBHkYNACADQern29J9aiIAQQ92IABzIABBAXJsIgNBB3YgA3MgA0E9cmwgA2ogA3MiA0EOdiADc7hEAAAAAAAA8D2iIAdBAiAHQQJLGyICQR9zuKL8B7r8A0EFarghBAsgAUUNASAAIQMLIANB9fOt6QZqIgBBD3YgAHMgAEEBcmwiA0EHdiADcyADQT1ybCADaiADcyIDQQ52IANzuEQAAAAAAADwPaJEMzMzMzMz0z9jIQMMAQtBACEDCwJAAkACQCABQQ5LDQAgASABQXZqIAFBCkkbIQcMAQsgAUEKcCIHRQ0AIAJBHUsNAEEAIAQ5A4iggIAAQQAgArg5A5CggIAAQQAgAbg5A4CggIAARAAAAAAAAAAAIQhEAAAAAAAA8D9EAAAAAAAAAEBEAAAAAAAAAAAgAEHf24m8BGoiAkEPdiACcyACQQFybCICQQd2IAJzIAJBPXJsIAJqIAJzIgJBDnYgAnO4RAAAAAAAAPA9oiIEROxRuB6F68E/YxsgBER7FK5H4Xq0P2MbIQQMAQtBACAEOQOIoICAAEEAIAK4OQOQoICAAEEAIAG4OQOAoICAAEQAAAAAAAAAACEERAAAAAAAAAAARAAAAAAAAPA/IAcbIQgLQQAgBDkDwKCAgABBACAIOQOYoICAAEEAIAFB5ABuuDkDoKCAgABBAEQAAAAAAADwP0QAAAAAAAAAACADQQFxIgIbOQOooICAAEEAIABB9fOt6QZqIgNBD3YgA3MgA0EBcmwiA0EHdiADcyADQT1ybCADaiADcyIDQQ52IANzuEQAAAAAAADwPaI5A7CggIAAQQBEAAAAAAAAAABEAAAAAAAAAABEAAAAAAAA8D9EAAAAAAAAAEAgAEHq59vSfWoiAEEPdiAAcyAAQQFybCIAQQd2IABzIABBPXJsIABqIABzIgBBDnYgAHO4RAAAAAAAAPA9oiIEROxRuB6F66E/YxtEAAAAAAAAAAAgBETsUbgeheuxP2MbIAIbIAFBBUkbOQO4oICAAAs=";
+// ---- cekirdek ----
+// description: Buz Kule Rust çekirdeği yükleyici (aşama 1: kat üretimi). core.wasm baytları birleştirilmiş betiğe base64 olarak gömülür (CEKIRDEK_B64, arac/birlestir.py); yüklenemezse ya da kendi kendine sınavda JS ile uyuşmazsa eski JS kat üretimi kullanılır. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı). Sözleşme: PLAN-buz-kule.md.
+
+
+let cekirdekIc = null;
+const GUC_AD = [null, 'saat', 'miknatis'], TUR_AD = ['normal', 'kirilgan', 'yay'];
+const rustKat = (tohum, n) => {
+  cekirdekIc.kat_uret(tohum >>> 0, n);
+  const v = new Float64Array(cekirdekIc.bellek.buffer, cekirdekIc.cikis_adresi(), 9);
+  return { kat: v[0], y: -v[0] * KAT_ARALIK, xKaro: v[1], genislikKaro: v[2], no: v[3] === 1, tema: v[4], kristal: v[5] === 1, kristalX: v[6], guc: GUC_AD[v[7]], tur: TUR_AD[v[8]] };
+};
+const ayni = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+// Baytlardan çekirdeği kurar (küçük modül, eşzamanlı derlenir). Kendi kendine sınav: 8 tohum x 120 kat JS ile birebir aynı olmalı, değilse kapatılır.
+function cekirdekYukle(b64) {
+  cekirdekIc = null;
+  try {
+    const bayt = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    cekirdekIc = new WebAssembly.Instance(new WebAssembly.Module(bayt), {}).exports;
+    for (const t of [0, 1, 7, 42, 1234, 99999, 2147483647, 4294967295]) for (let n = 0; n < 120; n++)
+      if (!ayni(rustKat(t, n), katUret(n, katRnd(t, n)))) throw new Error('çekirdek uyuşmazlığı');
+  } catch { cekirdekIc = null; }
+  return cekirdekIc !== null;
+}
+const cekirdekVar = () => cekirdekIc !== null;
+// Tohumlu kat üretimi: Rust çekirdeği varsa onunla, yoksa JS ile (aynı sonuç).
+const katUretTohum = (n, tohum) => (cekirdekIc ? rustKat(tohum, n) : katUret(n, katRnd(tohum, n)));
+
+if (typeof CEKIRDEK_B64 !== 'undefined') cekirdekYukle(CEKIRDEK_B64);
+
 // ---- puan ----
 // description: Puan ve kombo kuralları (özgün kod). sahip: Claude (Buz Kule iş parçacığı)
 const KOMBO_KARE = 100;
@@ -712,6 +743,7 @@ function kapanisCiz(c) {
 
 
 
+
 const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
 const ZEMIN_Y = 440, KRISTAL_PUAN = 25, TAKLA_HIZI = 16; // |ilk dikey hız| >= 16: en az 2 kat yükselen zıplama takla atar
 // Oyun hissi (platformer pratikleri): basamağa tutunma ve affedici giriş
@@ -730,7 +762,7 @@ const KIL_PAYI_SINIR = H - KAT_ARALIK;                  // ekranda bu çizginin 
 // rnd bir fonksiyonsa eski davranış (testler): ardışık çağrılarla üretilir.
 function yeniOyun(rnd = Math.random) {
   const tohum = typeof rnd === 'number' ? rnd >>> 0 : null, katlar = new Map();
-  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUret(n, katRnd(tohum, n))), katlar.get(n));
+  const kat = (n) => (katlar.has(n) || katlar.set(n, tohum === null ? katUret(n, rnd) : katUretTohum(n, tohum)), katlar.get(n));
   return {
     rnd, tohum, kat, x: 320, y: ZEMIN_Y, vx: 0, vy: 0, yon: 1, havada: false, katNo: 0, enYuksek: 0, kamY: 0, kamTaban: 0, kayma: 0, kaymaBasladi: false,
     kare: 0, puan: yeniPuan(), mesaj: null, bitti: false, sonInisKat: 0,
