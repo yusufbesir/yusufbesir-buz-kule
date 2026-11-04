@@ -1,0 +1,4 @@
+﻿Buz Kule ses varlıkları
+- *.ogg efektler: Kenney, Digital Audio (kenney.nl/assets/digital-audio), CC0. Lisans: LICENSE-Kenney-CC0.txt
+- muzik.wav ("Venus") ve kazanma.wav ("Win Jingle"): SketchyLogic, "NES Shooter Music (5 tracks, 3 jingles)" (opengameart.org/content/nes-shooter-music-5-tracks-3-jingles), CC0 (creativecommons.org/publicdomain/zero/1.0/). Atıf zorunlu değil.
+Orijinal oyunun hiçbir sesi kullanılmadı.

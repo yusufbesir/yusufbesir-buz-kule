@@ -1,22 +1,35 @@
-// description: WebAudio ile üretilen özgün ses efektleri (dosya yok); ses düzeyi ayar.js'den. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Buz Kule ses ve müzik: hazır CC0 dosyalarını (Kenney Digital Audio efektleri, SketchyLogic NES müziği; kaynak varlik/ses/KAYNAK.txt) HTMLAudio ile çalar. Efekt ve müzik ayrı açılıp kapanır; ses düzeyi ayar.js'den. Orijinal oyunun sesi yok. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { AYAR } from './ayar.js';
-let ctx = null;
-function bip(f0, f1, sure, tur = 'square', ses = 0.06) {
-  if (AYAR.ses <= 0) return;
-  try {
-    ctx ??= new AudioContext();
-    if (ctx.state === 'suspended') ctx.resume();
-    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime, v = Math.max(0.0002, ses * AYAR.ses / 0.8);
-    o.type = tur; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + sure);
-    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + sure);
-    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + sure);
-  } catch { /* ses yoksa oyun sessiz sürer */ }
+const YOL = './varlik/ses/', MUZIK_SES = 0.32;
+const kaynaklar = {};
+const ses_var = () => typeof Audio !== 'undefined';
+function dosya(ad) { // ad uzantısız ve ".ogg"; uzantılıysa olduğu gibi
+  if (!kaynaklar[ad]) { const a = new Audio(YOL + (ad.includes('.') ? ad : ad + '.ogg')); a.preload = 'auto'; kaynaklar[ad] = a; }
+  return kaynaklar[ad];
 }
-export const zipSesi = (hiz) => bip(260 + Math.abs(hiz) * 18, 600 + Math.abs(hiz) * 30, 0.14);
-export const odulSesi = (toplamKat) => { bip(500, 1000, 0.25, 'triangle', 0.09); if (toplamKat >= 25) setTimeout(() => bip(800, 1600, 0.3, 'triangle', 0.09), 120); };
-export const olumSesi = () => bip(400, 60, 0.6, 'sawtooth', 0.08);
-export const kristalSesi = () => { bip(900, 1500, 0.12, 'sine', 0.08); setTimeout(() => bip(1300, 2000, 0.14, 'sine', 0.06), 70); };
-export const hizSesi = () => { for (let i = 0; i < 4; i++) setTimeout(() => bip(1500, 1500, 0.07, 'square', 0.05), i * 130); }; // alarm saati
-export const gucSesi = () => { bip(500, 900, 0.1, 'triangle', 0.08); setTimeout(() => bip(900, 1400, 0.16, 'triangle', 0.08), 90); };
-export const yaySesi = () => { bip(300, 1200, 0.22, 'square', 0.07); };
-export const kirmaSesi = () => { bip(900, 200, 0.18, 'sawtooth', 0.06); setTimeout(() => bip(500, 120, 0.2, 'triangle', 0.05), 70); };
+// Efekt çalar: efektler kapalıysa ya da ses düzeyi 0 ise hiçbir şey olmaz. Aynı efekt üst üste çalabilsin diye kopya kullanılır.
+function cal(ad, ses = 1) {
+  if (!ses_var() || !AYAR.efektAcik || AYAR.ses <= 0) return;
+  try { const a = dosya(ad).cloneNode(); a.volume = Math.max(0, Math.min(1, AYAR.ses * ses)); const s = a.play(); if (s && s.catch) s.catch(() => {}); } catch { /* ses yoksa oyun sessiz sürer */ }
+}
+export const zipSesi = (hiz) => cal(Math.abs(hiz) > 9 ? 'phaseJump5' : Math.abs(hiz) > 5 ? 'phaseJump3' : 'phaseJump1', 0.7);
+export const odulSesi = (toplamKat) => cal(toplamKat >= 25 ? 'powerUp8' : 'powerUp5', 0.9);
+export const olumSesi = () => cal('lowDown', 0.9);
+export const kristalSesi = () => cal('pepSound3', 0.8);
+export const hizSesi = () => cal('threeTone1', 0.8);
+export const gucSesi = () => cal('powerUp1', 0.8);
+export const yaySesi = () => cal('phaserUp3', 0.8);
+export const kirmaSesi = () => cal('lowRandom', 0.9);
+export const basarimSesi = () => cal('kazanma.wav', 0.7);
+
+// Müzik: kısa döngülü bir parça; yalnız oyun sürerken çalar. Açık/kapalı ayardan (varsayılan kapalı), duraklatınca durur.
+let muzik = null;
+export function muzikGuncelle(calsin) {
+  if (!ses_var()) return;
+  try {
+    if (!muzik) { muzik = new Audio(YOL + 'muzik.wav'); muzik.loop = true; }
+    muzik.volume = MUZIK_SES;
+    if (calsin && AYAR.muzikAcik) { const s = muzik.play(); if (s && s.catch) s.catch(() => {}); } else muzik.pause();
+  } catch { /* müzik yoksa oyun sessiz sürer */ }
+}
+export const muzikCaliyor = () => !!muzik && !muzik.paused;

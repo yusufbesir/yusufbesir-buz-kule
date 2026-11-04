@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buz Kule</title><link rel="icon" href="data:,">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; media-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <!-- description: Buz Kule, özgün dikey zıplama oyunu; arayüz katmanı (arcade makinesi + buz kule teması: neon çerçeve, buz bloğu düğmeler, karlı kartlar, sekme göstergesi, canlı ayar paneli). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı) -->
 <style>
 /* Arcade makinesi + buz kule teması: koyu taş-mavi zemin, buz mavisi neon çerçeve, karlı saçaklı kartlar, buz bloğu düğmeler, altın skor. HUD (canvas) ile aynı palet. */
@@ -75,6 +75,9 @@ kbd{font:900 11px "Courier New",ui-monospace,Consolas,monospace;background:#1020
 .mod:hover:not(:disabled){transform:translateY(-2px);border-color:var(--buz)}
 .mod:disabled{opacity:.35;cursor:not-allowed}
 .mod.secili{border-color:var(--altin);background:rgba(255,214,46,.16);color:var(--altin)}
+.sesdugme{display:flex;gap:6px;margin-top:4px}
+.sesdugme .dugme{margin-top:0;font-size:11px;padding:10px 6px;flex:1}
+.dugme.ikincil.secili{border-color:var(--altin)}
 .izler{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
 .iz{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:3px solid #24407a;border-radius:0;background:rgba(127,233,255,.07);cursor:pointer;font-family:inherit;color:var(--yazi);font-size:12px;text-transform:uppercase;transition:transform 90ms linear,border-color 90ms linear}
 .iz:hover:not(:disabled){transform:translateY(-2px);border-color:var(--buz)}
@@ -136,6 +139,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         <div class="satir"><label class="etiket" for="a-hud">Oyun içi bilgi (HUD)</label><output id="o-hud"></output><input id="a-hud" type="range" min="0" max="1.5" step="0.05"></div>
         <div class="satir"><label class="etiket" for="a-ses">Ses</label><output id="o-ses"></output><input id="a-ses" type="range" min="0" max="1" step="0.05"></div>
         <div class="satir"><span class="etiket">Karakter</span><span></span><div class="karakterler" id="karakterler" role="group" aria-label="Karakter seçimi"></div></div>
+        <div class="sesdugme"><button type="button" id="a-efekt" aria-pressed="true">Efektler</button><button type="button" id="a-muzik" aria-pressed="false">Müzik</button></div>
         <button class="dugme ikincil" id="a-sifirla" type="button">Varsayılana dön</button>
         <p class="ince" id="a-not"></p>
       </section>

@@ -1,5 +1,6 @@
 // description: Buz Kule başarımları (kalıcı); açılınca kristal ödülü verir. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 import { kristalKazan } from './magaza.js';
+import { basarimSesi } from './ses.js';
 export const BASARIMLAR = Object.freeze([
   { id: 'kat10', ad: 'İlk basamaklar', acik: 'Kat 10\'a ulaş', odul: 5, sart: (o) => o.enYuksek >= 10 },
   { id: 'kat50', ad: 'Yarı yol', acik: 'Kat 50\'ye ulaş', odul: 20, sart: (o) => o.enYuksek >= 50 },
@@ -21,7 +22,7 @@ export function basarimKontrol(o) {
   const yeni = [];
   for (const b of BASARIMLAR) {
     if (ACIK.has(b.id) || !b.sart(o)) continue;
-    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
+    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
   }
   if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
   return yeni;

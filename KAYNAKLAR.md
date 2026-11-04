@@ -8,6 +8,8 @@ description: Buz Kule'de kullanılan hazır varlıkların kaynak ve lisans tablo
 | Eski karakter pozları (yalnız Player) | Aynı paket (Kenney, Platformer Characters 1.0) | CC0 | uygulama/src/varlik/kenney/player_*.png | Kullanılmıyor (0.8.0'dan beri karakter/ klasörü), pakete girmez |
 | Basamak karo dilimleri (Snow, Tundra, Sand, Metal) | Kenney, Platformer Pack: Extended Tiles (kenney.nl/assets/platformer-art-extended-tileset) | CC0 | uygulama/src/varlik/kenney/plat/ | Kullanılmıyor (0.6.0'dan beri basamaklar kodla çiziliyor), pakete girmez |
 | karakter_dur/kos/zipla.png, platform.png | Kendi işim: Blender 4.5.9 ile render edilmiş ilk deneme sprite'ları (arac/blender_sprite.py); Blender GPL araçtır, çıktı kendi eserimdir | Kendi | uygulama/src/varlik/ | Kullanılmıyor, pakete girmez |
-| Diğer her şey (aurora arka plan, taş duvarlar ve meşaleler, buz/ametist/ahşap/yosunlu taş basamaklar, kristaller, piksel yazı, arayüz, ses) | Kendi kodum (prosedürel çizim, WebAudio) | Kendi | src/ | Kullanımda |
+| Ses efektleri (12 kısa OGG: phaseJump1/3/5, powerUp1/5/8, pepSound3, lowDown, phaserUp3, lowRandom, threeTone1, highUp) | Kenney, Digital Audio (kenney.nl/assets/digital-audio) | CC0 | uygulama/src/varlik/ses/*.ogg | Kullanımda, pakete girer |
+| Müzik "Venus" (muzik.wav) ve "Win Jingle" (kazanma.wav) | SketchyLogic, "NES Shooter Music (5 tracks, 3 jingles)" (opengameart.org/content/nes-shooter-music-5-tracks-3-jingles) | CC0 | uygulama/src/varlik/ses/muzik.wav, kazanma.wav | Kullanımda, pakete girer; müzik varsayılan kapalı |
+| Diğer her şey (aurora arka plan, taş duvarlar ve meşaleler, buz/ametist/ahşap/yosunlu taş basamaklar, kristaller, piksel yazı, arayüz) | Kendi kodum (prosedürel çizim) | Kendi | src/ | Kullanımda |
 
 Lisans metinleri: uygulama/src/varlik/kenney/LICENSE-Kenney-CC0.txt, uygulama/src/varlik/kenney/plat/LICENSE-Kenney-CC0.txt.

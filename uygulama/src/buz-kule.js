@@ -4,8 +4,8 @@
 // description: Buz Kule kullanıcı ayarları (parıltı, parçacık, sarsıntı, ses, karakter) ve azaltılmış hareket desteği. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Fizik ve oyun kuralları bu ayarlardan etkilenmez; yalnız görünüm ve ses.
 const AZ = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8, karakter: 0, hud: 1 });
-const ARALIK = Object.freeze({ parilti: [0, 2], parcacik: [0, 2], sarsinti: [0, 2], ses: [0, 1], karakter: [0, 4], hud: [0, 1.5] });
+const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8, karakter: 0, hud: 1, efektAcik: 1, muzikAcik: 0 }); // efektler açık, müzik kapalı başlar
+const ARALIK = Object.freeze({ parilti: [0, 2], parcacik: [0, 2], sarsinti: [0, 2], ses: [0, 1], karakter: [0, 4], hud: [0, 1.5], efektAcik: [0, 1], muzikAcik: [0, 1] });
 const KARAKTERLER = Object.freeze(['player', 'adventurer', 'female', 'soldier', 'zombie']);
 const AYAR = { ...VARSAYILAN, azaltilmisHareket: AZ };
 const ANAHTAR = 'buzkule.ayar';
@@ -83,6 +83,7 @@ function skorEkle(skor, kat) {
 // ---- basarim ----
 // description: Buz Kule başarımları (kalıcı); açılınca kristal ödülü verir. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 
+
 const BASARIMLAR = Object.freeze([
   { id: 'kat10', ad: 'İlk basamaklar', acik: 'Kat 10\'a ulaş', odul: 5, sart: (o) => o.enYuksek >= 10 },
   { id: 'kat50', ad: 'Yarı yol', acik: 'Kat 50\'ye ulaş', odul: 20, sart: (o) => o.enYuksek >= 50 },
@@ -104,7 +105,7 @@ function basarimKontrol(o) {
   const yeni = [];
   for (const b of BASARIMLAR) {
     if (ACIK.has(b.id) || !b.sart(o)) continue;
-    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
+    ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, odul: b.odul, guc: 200 });
   }
   if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
   return yeni;
@@ -233,28 +234,41 @@ function bitir(p) {
 const toplam = (p, enYuksekKat) => enYuksekKat * 10 + p.bonus;
 
 // ---- ses ----
-// description: WebAudio ile üretilen özgün ses efektleri (dosya yok); ses düzeyi ayar.js'den. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+// description: Buz Kule ses ve müzik: hazır CC0 dosyalarını (Kenney Digital Audio efektleri, SketchyLogic NES müziği; kaynak varlik/ses/KAYNAK.txt) HTMLAudio ile çalar. Efekt ve müzik ayrı açılıp kapanır; ses düzeyi ayar.js'den. Orijinal oyunun sesi yok. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 
-let ctx = null;
-function bip(f0, f1, sure, tur = 'square', ses = 0.06) {
-  if (AYAR.ses <= 0) return;
-  try {
-    ctx ??= new AudioContext();
-    if (ctx.state === 'suspended') ctx.resume();
-    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime, v = Math.max(0.0002, ses * AYAR.ses / 0.8);
-    o.type = tur; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + sure);
-    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + sure);
-    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + sure);
-  } catch { /* ses yoksa oyun sessiz sürer */ }
+const YOL = './varlik/ses/', MUZIK_SES = 0.32;
+const kaynaklar = {};
+const ses_var = () => typeof Audio !== 'undefined';
+function dosya(ad) { // ad uzantısız ve ".ogg"; uzantılıysa olduğu gibi
+  if (!kaynaklar[ad]) { const a = new Audio(YOL + (ad.includes('.') ? ad : ad + '.ogg')); a.preload = 'auto'; kaynaklar[ad] = a; }
+  return kaynaklar[ad];
 }
-const zipSesi = (hiz) => bip(260 + Math.abs(hiz) * 18, 600 + Math.abs(hiz) * 30, 0.14);
-const odulSesi = (toplamKat) => { bip(500, 1000, 0.25, 'triangle', 0.09); if (toplamKat >= 25) setTimeout(() => bip(800, 1600, 0.3, 'triangle', 0.09), 120); };
-const olumSesi = () => bip(400, 60, 0.6, 'sawtooth', 0.08);
-const kristalSesi = () => { bip(900, 1500, 0.12, 'sine', 0.08); setTimeout(() => bip(1300, 2000, 0.14, 'sine', 0.06), 70); };
-const hizSesi = () => { for (let i = 0; i < 4; i++) setTimeout(() => bip(1500, 1500, 0.07, 'square', 0.05), i * 130); }; // alarm saati
-const gucSesi = () => { bip(500, 900, 0.1, 'triangle', 0.08); setTimeout(() => bip(900, 1400, 0.16, 'triangle', 0.08), 90); };
-const yaySesi = () => { bip(300, 1200, 0.22, 'square', 0.07); };
-const kirmaSesi = () => { bip(900, 200, 0.18, 'sawtooth', 0.06); setTimeout(() => bip(500, 120, 0.2, 'triangle', 0.05), 70); };
+// Efekt çalar: efektler kapalıysa ya da ses düzeyi 0 ise hiçbir şey olmaz. Aynı efekt üst üste çalabilsin diye kopya kullanılır.
+function cal(ad, ses = 1) {
+  if (!ses_var() || !AYAR.efektAcik || AYAR.ses <= 0) return;
+  try { const a = dosya(ad).cloneNode(); a.volume = Math.max(0, Math.min(1, AYAR.ses * ses)); const s = a.play(); if (s && s.catch) s.catch(() => {}); } catch { /* ses yoksa oyun sessiz sürer */ }
+}
+const zipSesi = (hiz) => cal(Math.abs(hiz) > 9 ? 'phaseJump5' : Math.abs(hiz) > 5 ? 'phaseJump3' : 'phaseJump1', 0.7);
+const odulSesi = (toplamKat) => cal(toplamKat >= 25 ? 'powerUp8' : 'powerUp5', 0.9);
+const olumSesi = () => cal('lowDown', 0.9);
+const kristalSesi = () => cal('pepSound3', 0.8);
+const hizSesi = () => cal('threeTone1', 0.8);
+const gucSesi = () => cal('powerUp1', 0.8);
+const yaySesi = () => cal('phaserUp3', 0.8);
+const kirmaSesi = () => cal('lowRandom', 0.9);
+const basarimSesi = () => cal('kazanma.wav', 0.7);
+
+// Müzik: kısa döngülü bir parça; yalnız oyun sürerken çalar. Açık/kapalı ayardan (varsayılan kapalı), duraklatınca durur.
+let muzik = null;
+function muzikGuncelle(calsin) {
+  if (!ses_var()) return;
+  try {
+    if (!muzik) { muzik = new Audio(YOL + 'muzik.wav'); muzik.loop = true; }
+    muzik.volume = MUZIK_SES;
+    if (calsin && AYAR.muzikAcik) { const s = muzik.play(); if (s && s.catch) s.catch(() => {}); } else muzik.pause();
+  } catch { /* müzik yoksa oyun sessiz sürer */ }
+}
+const muzikCaliyor = () => !!muzik && !muzik.paused;
 
 // ---- gorsel ----
 // description: Buz Kule görsel katmanı: aurora gökyüzü, kristal siluetleri, taş duvarlar ve mesaleCizler, temaya göre detaylı basamaklar (buz, ametist, ahşap, yosunlu taş), kristal toplanabilirleri, parçacıklar (prosedürel vektör çizim; yüksek çözünürlükte keskin). sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
@@ -872,6 +886,7 @@ function hudCiz(c, o, en, hayalet = null) {
 
 
 
+
 const kimlik = (a) => document.getElementById(a);
 const tuval = kimlik('c'), c = tuval.getContext('2d'); const k = {};
 // Yüksek çözünürlük: tuval, ekrandaki gerçek boyut × cihaz piksel oranı kadar piksel kullanır; çizim 640×480 mantıksal koordinatta kalır.
@@ -904,7 +919,7 @@ function katmanGoster(ad) {
 }
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
-  durum = d; katmanGoster(durumKatman[d]);
+  durum = d; katmanGoster(durumKatman[d]); muzikGuncelle(d === 'oyun'); // müzik yalnız oyun sürerken çalar
   if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); modYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
@@ -1003,6 +1018,15 @@ IZLER.forEach((iz, i) => {
 });
 magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); basarimYaz();
 
+// ---- Ses ve müzik düğmeleri (aç/kapa) ----
+function sesDugmeleriYaz() {
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', 'Efektler'], ['muzikAcik', 'a-muzik', 'Müzik']]) {
+    const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? 'AÇIK' : 'KAPALI'); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
+  }
+}
+kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
+kimlik('a-muzik').addEventListener('click', () => { AYAR.muzikAcik = AYAR.muzikAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); muzikGuncelle(durum === 'oyun'); });
+sesDugmeleriYaz();
 // ---- Canlı ayar paneli ----
 const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses'];
 function ayarYaz() {
@@ -1011,7 +1035,7 @@ function ayarYaz() {
 for (const a of ayarAnahtarlari) {
   kimlik('a-' + a).addEventListener('input', (e) => { AYAR[a] = Number(e.target.value); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; ayarKaydet(); });
 }
-kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); });
+kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); sesDugmeleriYaz(); muzikGuncelle(false); });
 // Karakter seçici (Kenney CC0 beş karakter)
 const karakterAdlari = ['Yeşil', 'Kâşif', 'Kızıl', 'Asker', 'Zombi'], karakterDugmeleri = [];
 function karakterIsaretle() { karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.karakter === i)); b.className = 'karakter' + (AYAR.karakter === i ? ' secili' : ''); }); }

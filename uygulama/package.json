@@ -23,6 +23,7 @@
       "src/buz-kule.js",
       "src/varlik/kenney/LICENSE-Kenney-CC0.txt",
       "src/varlik/kenney/karakter/**/*",
+      "src/varlik/ses/**/*",
       "package.json"
     ],
     "directories": {

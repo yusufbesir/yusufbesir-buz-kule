@@ -4,6 +4,7 @@ import { hudCiz } from './hud.js';
 import { AYAR, KARAKTERLER, ayarYukle, ayarKaydet, ayarSifirla } from './ayar.js';
 import { SKORLAR, skorlariYukle, skorEkle } from './skorlar.js';
 import { yeniTohum, gunlukTohum, gunlukAnahtar, kayitBaslat, kayitEkle, kayitBitir, kayitCoz, kayitOku, kayitYaz, bitGiris, HAYALET_ANAHTAR } from './hayalet.js';
+import { muzikGuncelle } from './ses.js';
 import { BASARIMLAR, ACIK, basarimYukle, basarimKontrol, bildirimAdim } from './basarim.js';
 import { IZLER, CUZDAN, cuzdanYukle, kristalKazan, izAl, izSec } from './magaza.js';
 
@@ -39,7 +40,7 @@ function katmanGoster(ad) {
 }
 const durumKatman = { baslik: 'menu', duraklat: 'duraklat', bitti: 'sonuc', oyun: null };
 function durumDegistir(d) {
-  durum = d; katmanGoster(durumKatman[d]);
+  durum = d; katmanGoster(durumKatman[d]); muzikGuncelle(d === 'oyun'); // müzik yalnız oyun sürerken çalar
   if (d === 'baslik') { basarimYaz(); kimlik('m-en').textContent = String(en); kimlik('m-kristal').textContent = String(CUZDAN.kristal); magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); modYaz(); }
   if (d === 'bitti') {
     kimlik('s-skor').textContent = String(skor(o)); kimlik('s-kat').textContent = String(o.enYuksek); kimlik('s-en').textContent = String(en);
@@ -138,6 +139,15 @@ IZLER.forEach((iz, i) => {
 });
 magazaYaz(); listeYaz(kimlik('m-liste'), 3, 0); basarimYaz();
 
+// ---- Ses ve müzik düğmeleri (aç/kapa) ----
+function sesDugmeleriYaz() {
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', 'Efektler'], ['muzikAcik', 'a-muzik', 'Müzik']]) {
+    const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? 'AÇIK' : 'KAPALI'); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
+  }
+}
+kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
+kimlik('a-muzik').addEventListener('click', () => { AYAR.muzikAcik = AYAR.muzikAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); muzikGuncelle(durum === 'oyun'); });
+sesDugmeleriYaz();
 // ---- Canlı ayar paneli ----
 const ayarAnahtarlari = ['parilti', 'parcacik', 'sarsinti', 'hud', 'ses'];
 function ayarYaz() {
@@ -146,7 +156,7 @@ function ayarYaz() {
 for (const a of ayarAnahtarlari) {
   kimlik('a-' + a).addEventListener('input', (e) => { AYAR[a] = Number(e.target.value); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; ayarKaydet(); });
 }
-kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); });
+kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); sesDugmeleriYaz(); muzikGuncelle(false); });
 // Karakter seçici (Kenney CC0 beş karakter)
 const karakterAdlari = ['Yeşil', 'Kâşif', 'Kızıl', 'Asker', 'Zombi'], karakterDugmeleri = [];
 function karakterIsaretle() { karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.karakter === i)); b.className = 'karakter' + (AYAR.karakter === i ? ' secili' : ''); }); }
