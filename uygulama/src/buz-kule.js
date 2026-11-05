@@ -334,6 +334,8 @@ const CEKIRDEK_B64 = "AGFzbQEAAAABQgtgAAF/YAF8AXxgAnx8AGAIf3x8fHx/f38Bf2ACf38AYA
 
 
 let cekirdekIc = null;
+// Yükleme sınavı örnek sayıları (açılış süresi için ölçüldü: önceki 3000/20000/6000/300 ≈ 82 ms). Tam eşdeğerlik testleri test/altin-*.test.js içinde; burası yalnız hızlı bir güvenlik ağı.
+const SINAV = { fizik: 1000, puan: 2000, inis: 1000, kayit: 40 };
 const GUC_AD = [null, 'saat', 'miknatis'], TUR_AD = ['normal', 'kirilgan', 'yay'];
 const rustKat = (tohum, n) => {
   cekirdekIc.kat_uret(tohum >>> 0, n);
@@ -372,7 +374,7 @@ function puanKareC(p) {
 function puanSinav() {
   let s = 777; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
   const a = yeniPuan(), b = yeniPuan();
-  for (let i = 0; i < 20000; i++) {
+  for (let i = 0; i < SINAV.puan; i++) {
     const kareMi = r() < 0.5, fark = Math.floor(r() * 8) - 2;
     const ra = kareMi ? puanKareC(a) : puanInisC(a, fark), rb = kareMi ? kare(b) : inis(b, fark);
     if (!ayni(ra, rb) || !ayni(a, b)) return false;
@@ -402,7 +404,7 @@ function inisBulC(tohum, kirik, katFn, x, y, eskiX, eskiY) {
 }
 function inisSinav() {
   let s = 4242; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
-  for (let i = 0; i < 6000; i++) {
+  for (let i = 0; i < SINAV.inis; i++) {
     const tohum = (r() * 4294967296) >>> 0, katFn = (n) => katUret(n, katRnd(tohum, n));
     const eskiY = ZEMIN_Y - r() * (i % 3 === 0 ? 400 : 20000), y = eskiY + r() * 12.2, eskiX = 60 + r() * 520, x = eskiX + (r() - 0.5) * 24;
     const kirik = new Set(); for (let k = 0; k < 4; k++) if (r() < 0.3) kirik.add(Math.max(0, Math.floor((ZEMIN_Y - y) / KAT_ARALIK) - 1 + Math.floor(r() * 4)));
@@ -421,8 +423,8 @@ function kayitCozC(kayit) {
 }
 function kayitSinav() {
   let s = 99; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
-  for (let i = 0; i < 300; i++) {
-    const kosu = []; const adet = Math.floor(r() * 300);
+  for (let i = 0; i < SINAV.kayit; i++) {
+    const kosu = []; const adet = Math.floor(r() * 60);
     for (let k = 0; k < adet; k++) kosu.push(Math.floor(r() * 8), 1 + Math.floor(r() * 80));
     if (!ayni(kayitCozC({ kosu }), kayitCoz({ kosu }))) return false;
   }
@@ -431,7 +433,7 @@ function kayitSinav() {
 // Kendi kendine sınav (fizik): sabit tohumlu sahte rastgele girdilerle JS ile bit düzeyinde aynı olmalı.
 function fizikSinav() {
   let s = 12345; const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
-  for (let i = 0; i < 3000; i++) {
+  for (let i = 0; i < SINAV.fizik; i++) {
     const vx = (r() - 0.5) * 30, vy = (r() - 0.5) * 40, x = 60 + r() * 520, sol = r() < 0.4, sag = r() < 0.4;
     if (!Object.is(yatayGuncelleC(vx, sol, sag), yatayGuncelle(vx, sol, sag)) || !Object.is(ziplaC(vx), zipla(vx)) || !Object.is(dikeyGuncelleC(vy), dikeyGuncelle(vy))) return false;
     const a = duvarSekmesiC(x, vx), b = duvarSekmesi(x, vx);
