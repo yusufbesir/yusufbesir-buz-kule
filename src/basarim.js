@@ -1,4 +1,5 @@
 // description: Buz Kule başarımları (kalıcı); açılınca kristal ödülü verir. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+import { depoOku, depoYaz } from './depo.js';
 import { kristalKazan } from './magaza.js';
 import { basarimSesi } from './ses.js';
 export const BASARIMLAR = Object.freeze([
@@ -15,7 +16,8 @@ export const ACIK = new Set();
 export const BILDIRIM = []; // ekrandaki bildirimler: { ad, odul, guc }
 
 export function basarimYukle() {
-  try { const k = JSON.parse(localStorage.getItem(BASARIM_ANAHTAR) || '[]'); if (Array.isArray(k)) for (const id of k) if (BASARIMLAR.some(b => b.id === id)) ACIK.add(id); } catch { /* kayıt yoksa boş */ }
+  const k = depoOku(BASARIM_ANAHTAR, []); // kayıt yoksa boş
+  if (Array.isArray(k)) for (const id of k) if (BASARIMLAR.some(b => b.id === id)) ACIK.add(id);
 }
 // Her karede çağrılır; yalnız kilitli başarımlara bakar. Yeni açılanların kimliklerini döndürür.
 export function basarimKontrol(o) {
@@ -24,7 +26,7 @@ export function basarimKontrol(o) {
     if (ACIK.has(b.id) || !b.sart(o)) continue;
     ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, id: b.id, odul: b.odul, guc: 200 });
   }
-  if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
+  if (yeni.length) depoYaz(BASARIM_ANAHTAR, [...ACIK]);
   return yeni;
 }
 export const bildirimAdim = () => { for (let i = BILDIRIM.length - 1; i >= 0; i--) if (--BILDIRIM[i].guc <= 0) BILDIRIM.splice(i, 1); };
