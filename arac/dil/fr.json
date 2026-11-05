@@ -161,5 +161,6 @@
  "j_kule_basarim": "Succès : {ad}",
  "j_kule_fiyat": "Débloquer pour {n} ◆",
  "j_kule_kilidi": "Verrous des tours",
- "j_kule_ipucu": "Les tours changent seulement l'apparence ; chacune a son propre tableau des scores. Vous pouvez désactiver les verrous dans les Paramètres."
+ "j_kule_ipucu": "Les tours changent seulement l'apparence ; chacune a son propre tableau des scores. Vous pouvez désactiver les verrous dans les Paramètres.",
+ "j_kule_efekt": "Effets de la tour"
 }

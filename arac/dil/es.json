@@ -161,5 +161,6 @@
  "j_kule_basarim": "Logro: {ad}",
  "j_kule_fiyat": "Desbloquear por {n} ◆",
  "j_kule_kilidi": "Cerrojos de torres",
- "j_kule_ipucu": "Las torres solo cambian el aspecto; cada una tiene su propia tabla de puntuaciones. Puedes desactivar los cerrojos en Ajustes."
+ "j_kule_ipucu": "Las torres solo cambian el aspecto; cada una tiene su propia tabla de puntuaciones. Puedes desactivar los cerrojos en Ajustes.",
+ "j_kule_efekt": "Efectos de la torre"
 }

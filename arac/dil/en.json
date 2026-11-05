@@ -161,5 +161,6 @@
  "j_kule_basarim": "Achievement: {ad}",
  "j_kule_fiyat": "Unlock for {n} ◆",
  "j_kule_kilidi": "Tower locks",
- "j_kule_ipucu": "Towers only change the look; each tower has its own scoreboard. You can turn locks off in Settings."
+ "j_kule_ipucu": "Towers only change the look; each tower has its own scoreboard. You can turn locks off in Settings.",
+ "j_kule_efekt": "Tower effects"
 }

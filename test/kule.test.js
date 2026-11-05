@@ -41,3 +41,12 @@ test('kilit sistemi kapalıyken hepsi açık; seçim ve doğrulama', () => {
 test('skor ve hayalet anahtarı kuleye göre ayrılır; Buz kulesi eski anahtarları korur', () => {
   assert.equal(zSonek(1), ''); assert.equal(zSonek(1 + 100), '.z101'); assert.equal(zSonek(0 + 10 + 300), '.z310');
 });
+
+import { kuleEfektCiz } from '../src/gorsel.js';
+function sahteTuval() { const say = { fillRect: 0, stroke: 0 }; const c = new Proxy({}, { get: (_, k) => (k === 'fillRect' ? () => { say.fillRect++; } : k === 'stroke' ? () => { say.stroke++; } : () => {}), set: () => true }); return { c, say }; }
+test('kule efektleri: Buz Kulesi efektsiz; diğerleri çizim yapar; parçacık ayarı 0 ise hiçbiri çizmez', () => {
+  for (const id of ['kor', 'kum', 'yildiz', 'run']) { const { c, say } = sahteTuval(); kuleEfektCiz(c, 640, 480, id, 100); assert.ok(say.fillRect > 5, id + ' çizmedi'); }
+  { const { c, say } = sahteTuval(); kuleEfektCiz(c, 640, 480, 'buz', 100); assert.equal(say.fillRect + say.stroke, 0); }
+  const eski = AYAR.parcacik; AYAR.parcacik = 0; { const { c, say } = sahteTuval(); kuleEfektCiz(c, 640, 480, 'kor', 100); assert.equal(say.fillRect, 0); } AYAR.parcacik = eski;
+  assert.equal(VARSAYILAN.kuleEfekt, 1);
+});

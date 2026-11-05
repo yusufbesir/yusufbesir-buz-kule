@@ -8,7 +8,7 @@ import { katRnd } from './hayalet.js';
 import { th } from './dil.js';
 import { katUretTohum, yatayGuncelleC, ziplaC, duvarSekmesiC, dikeyGuncelleC, puanInisC, puanKareC, inisBulC } from './cekirdek.js';
 import { pikselYaz } from './piksel.js';
-import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz, kuleTint } from './gorsel.js';
+import { arkaPlan, duvarlar, platform, kristalCiz, gucCiz, parcacikEkle, parcacikCiz, kuleTint, kuleEfektCiz } from './gorsel.js';
 import { KULELER } from './kule.js';
 
 export const W = 640, H = 480, SAAT = 1500; // 30 sn @ 50 kare/sn
@@ -196,6 +196,7 @@ export function ciz(c, o, hayalet = null) {
     if (f.guc && !o.alinanGuc.has(n)) { const p = gucKonum(f); gucCiz(c, p.x, p.y - o.kamY, f.guc, n); }
   }
   if (KULELER[AYAR.kule]) kuleTint(c, W, H, KULELER[AYAR.kule].tint); // kule konsepti tonu (karakterin altında kalır)
+  if (AYAR.kuleEfekt && KULELER[AYAR.kule]) kuleEfektCiz(c, W, H, KULELER[AYAR.kule].id); // kule konseptine özel süs efektleri (kapatılabilir)
   if (AYAR.golge) inisGolgesi(c, o); // düşerken altındaki basamağa ince soluk gölge (yalnız görünüm)
   if (hayalet && !hayalet.bitti && AYAR.hayaletGoster) { c.save(); c.globalAlpha = 0.42; karakterCiz(c, hayalet, true); c.restore(); }
   karakterCiz(c, o); parcacikCiz(c, o.kamY);

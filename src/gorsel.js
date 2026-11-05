@@ -45,6 +45,32 @@ export function kuleTint(c, W, H, tint) {
   if (tint.karart) { c.globalCompositeOperation = 'multiply'; c.globalAlpha = tint.karart; c.fillStyle = '#14102a'; c.fillRect(0, 0, W, H); }
   c.restore();
 }
+// Kule konseptine özel arka plan efektleri (yalnız görünüm, kapatılabilir): Kor'da yükselen kıvılcımlar, Kum'da savrulan taneler,
+// Yıldız'da parlayan yıldızlar ve ara sıra kayan yıldız, Rün'de süzülen parlak elmaslar. Buz Kulesi'nde efekt yoktur.
+const kh = (i, k) => { const s = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return s - Math.floor(s); }; // 0..1 sahte rastgele (deterministik)
+export function kuleEfektCiz(c, W, H, id, kare = zaman) {
+  const yog = Math.min(1, Math.max(0, AYAR.parcacik)); if (!yog || id === 'buz') return;
+  c.save();
+  if (id === 'kor') {
+    const n = Math.round(26 * yog); c.fillStyle = '#ffb347';
+    for (let i = 0; i < n; i++) { const y = H - ((kare * (0.35 + kh(i, 2) * 0.9) + kh(i, 3) * H) % H), x = kh(i, 1) * W + Math.sin(kare * 0.02 + i) * 10, b = 1 + Math.floor(kh(i, 4) * 3); c.globalAlpha = 0.25 + 0.5 * (y / H); c.fillRect(x, y, b, b); }
+  } else if (id === 'kum') {
+    const n = Math.round(30 * yog); c.fillStyle = '#ffe8aa';
+    for (let i = 0; i < n; i++) { const gen = W * 1.3, x = ((kare * (1.4 + kh(i, 2) * 2.2) + kh(i, 3) * gen) % gen) - W * 0.15, y = kh(i, 1) * H + Math.sin(kare * 0.03 + i) * 3; c.globalAlpha = 0.18 + kh(i, 5) * 0.25; c.fillRect(x, y, 5 + kh(i, 4) * 10, 1); }
+  } else if (id === 'yildiz') {
+    const n = Math.round(34 * yog); c.fillStyle = '#ffffff';
+    for (let i = 0; i < n; i++) { c.globalAlpha = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(kare * 0.05 * (0.5 + kh(i, 3)) + i * 3)); const b = kh(i, 4) > 0.8 ? 2 : 1; c.fillRect(kh(i, 1) * W, kh(i, 2) * H, b, b); }
+    const t = (kare % 420) / 60; // her ~8 sn bir kayan yıldız (1 sn sürer)
+    if (t < 1) { const x = W * 0.92 - t * W * 0.55, y = H * 0.06 + t * H * 0.32; c.globalAlpha = 0.9 * (1 - t); c.strokeStyle = '#ffffff'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 46, y - 17); c.stroke(); }
+  } else if (id === 'run') {
+    const n = Math.round(16 * yog); c.strokeStyle = '#d2aaff'; c.fillStyle = '#e9d4ff'; c.lineWidth = 1;
+    for (let i = 0; i < n; i++) {
+      const y = H - ((kare * (0.2 + kh(i, 2) * 0.35) + kh(i, 3) * H) % H), x = kh(i, 1) * W, s = 4 + kh(i, 4) * 5; c.globalAlpha = Math.max(0, 0.22 + 0.3 * Math.sin(kare * 0.04 + i));
+      c.beginPath(); c.moveTo(x, y - s); c.lineTo(x + s, y); c.lineTo(x, y + s); c.lineTo(x - s, y); c.closePath(); c.stroke(); c.fillRect(x - 1, y - 1, 2, 2);
+    }
+  }
+  c.restore();
+}
 export function arkaPlan(c, W, H, kamY, kat, akisHedef = 0) {
   if (!AYAR.azaltilmisHareket) zaman++; // azaltılmış harekette aurora ve yıldız titremesi donar
   akis += (akisHedef - akis) * (akisHedef > akis ? 0.04 : 0.025); // giriş biraz hızlı, çıkış daha yumuşak
