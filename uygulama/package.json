@@ -23,7 +23,7 @@
       "src/index.html",
       "src/buz-kule.js",
       "src/varlik/kenney/LICENSE-Kenney-CC0.txt",
-      "src/varlik/kenney/karakter/**/*",
+      "src/varlik/buzkule/karakter/**/*",
       "src/varlik/ses/**/*",
       "package.json"
     ],

@@ -203,13 +203,13 @@ export function ciz(c, o, hayalet = null) {
   c.restore();
 }
 
-// Kenney "Platformer Characters" (CC0) pozları; kaynak varlik/kenney/LICENSE-Kenney-CC0.txt. Karakter ayar panelinden seçilir.
+// Buz Kule'nin özgün karakter pozları (arac/karakter_ciz.py üretir). Karakter ayar panelinden seçilir.
 const POZLAR = ['stand', 'walk1', 'walk2', 'jump', 'fall', 'skid', 'cheer1', 'hurt'];
 const RESIMLER = {};
 function resimler(ad) {
   if (!RESIMLER[ad] && typeof Image !== 'undefined') {
     RESIMLER[ad] = {};
-    for (const p of POZLAR) { const r = new Image(); r.src = './varlik/kenney/karakter/' + ad + '/' + p + '.png'; RESIMLER[ad][p] = r; }
+    for (const p of POZLAR) { const r = new Image(); r.src = './varlik/buzkule/karakter/' + ad + '/' + p + '.png'; RESIMLER[ad][p] = r; }
   }
   return RESIMLER[ad];
 }

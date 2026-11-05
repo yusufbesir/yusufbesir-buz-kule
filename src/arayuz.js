@@ -227,13 +227,13 @@ for (const a of ayarAnahtarlari) {
   kimlik('a-' + a).addEventListener('input', (e) => { AYAR[a] = Number(e.target.value); kimlik('o-' + a).textContent = Math.round(AYAR[a] * 100) + '%'; ayarKaydet(); });
 }
 kimlik('a-sifirla').addEventListener('click', () => { ayarSifirla(); ayarYaz(); karakterIsaretle(); sesDugmeleriYaz(); muzikGuncelle(false); });
-// Karakter seçici (Kenney CC0 beş karakter)
+// Karakter seçici (Buz Kule'nin özgün beş karakteri)
 const karakterDugmeleri = [];
 function karakterIsaretle() { karakterDugmeleri.forEach((b, i) => { b.setAttribute('aria-pressed', String(AYAR.karakter === i)); b.className = 'karakter' + (AYAR.karakter === i ? ' secili' : ''); }); }
 KARAKTERLER.forEach((ad, i) => {
   const b = document.createElement('button'), im = document.createElement('img');
   b.type = 'button'; b.setAttribute('aria-label', t('j_karakter', { ad: t('kar_' + i) })); b.title = t('kar_' + i);
-  im.src = './varlik/kenney/karakter/' + ad + '/stand.png'; im.alt = ''; b.appendChild(im);
+  im.src = './varlik/buzkule/karakter/' + ad + '/stand.png'; im.alt = ''; b.appendChild(im);
   b.addEventListener('click', () => { AYAR.karakter = i; ayarKaydet(); karakterIsaretle(); });
   kimlik('karakterler').appendChild(b); karakterDugmeleri.push(b);
 });
