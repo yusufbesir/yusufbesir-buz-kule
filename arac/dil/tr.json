@@ -162,5 +162,6 @@
  "j_kule_fiyat": "{n} ◆ ile aç",
  "j_kule_kilidi": "Kule kilitleri",
  "j_kule_ipucu": "Kuleler yalnız görünümü değiştirir; her kulenin skor tablosu ayrıdır. Kilitleri Ayarlar'dan kapatabilirsin.",
- "j_kule_efekt": "Kule efektleri"
+ "j_kule_efekt": "Kule efektleri",
+ "j_yerel_yazi": "Yerel yazı tipi"
 }

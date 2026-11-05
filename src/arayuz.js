@@ -206,12 +206,12 @@ magazaYaz(); listeYaz(kimlik('m-liste'), 5, 0); basarimYaz();
 
 // ---- Ses ve müzik düğmeleri (aç/kapa) ----
 function sesDugmeleriYaz() {
-  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')], ['golge', 'a-golge', t('j_golge')], ['perde', 'a-perde', t('j_perde')], ['kaygan', 'a-kaygan', t('j_kaygan')], ['hayaletGoster', 'a-hayaletGoster', t('j_hayalet_goster')], ['kontrast', 'a-kontrast', t('j_kontrast')], ['mukemmel', 'a-mukemmel', t('j_mukemmel')], ['kuleKilidi', 'a-kuleKilidi', t('j_kule_kilidi')], ['kuleEfekt', 'a-kuleEfekt', t('j_kule_efekt')]]) {
+  for (const [a, id, ad] of [['efektAcik', 'a-efekt', t('j_efektler')], ['muzikAcik', 'a-muzik', t('j_muzik')], ['golge', 'a-golge', t('j_golge')], ['perde', 'a-perde', t('j_perde')], ['kaygan', 'a-kaygan', t('j_kaygan')], ['hayaletGoster', 'a-hayaletGoster', t('j_hayalet_goster')], ['kontrast', 'a-kontrast', t('j_kontrast')], ['mukemmel', 'a-mukemmel', t('j_mukemmel')], ['kuleKilidi', 'a-kuleKilidi', t('j_kule_kilidi')], ['kuleEfekt', 'a-kuleEfekt', t('j_kule_efekt')], ['yerelYazi', 'a-yerelYazi', t('j_yerel_yazi')]]) {
     const b = kimlik(id), ac = !!AYAR[a]; b.setAttribute('aria-pressed', String(ac)); b.textContent = ad + ': ' + (ac ? t('j_acik') : t('j_kapali')); b.className = 'dugme ikincil ac' + (ac ? ' secili' : '');
   }
 }
 kimlik('a-efekt').addEventListener('click', () => { AYAR.efektAcik = AYAR.efektAcik ? 0 : 1; ayarKaydet(); sesDugmeleriYaz(); });
-for (const [ayar, id] of [['golge', 'a-golge'], ['perde', 'a-perde'], ['kaygan', 'a-kaygan'], ['hayaletGoster', 'a-hayaletGoster'], ['kontrast', 'a-kontrast'], ['mukemmel', 'a-mukemmel'], ['kuleKilidi', 'a-kuleKilidi'], ['kuleEfekt', 'a-kuleEfekt']]) kimlik(id).addEventListener('click', () => {
+for (const [ayar, id] of [['golge', 'a-golge'], ['perde', 'a-perde'], ['kaygan', 'a-kaygan'], ['hayaletGoster', 'a-hayaletGoster'], ['kontrast', 'a-kontrast'], ['mukemmel', 'a-mukemmel'], ['kuleKilidi', 'a-kuleKilidi'], ['kuleEfekt', 'a-kuleEfekt'], ['yerelYazi', 'a-yerelYazi']]) kimlik(id).addEventListener('click', () => {
   AYAR[ayar] = AYAR[ayar] ? 0 : 1; ayarKaydet(); sesDugmeleriYaz();
   if (ayar === 'kuleKilidi') { kuleYaz(); modYaz(); listeYaz(kimlik('m-liste'), 5, 0); }
   if (ayar === 'kaygan') { modYaz(); listeYaz(kimlik('m-liste'), 5, 0); } // kaygan buz skor ve hayalet kayıtlarını ayırır

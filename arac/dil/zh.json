@@ -162,5 +162,6 @@
  "j_kule_fiyat": "以 {n} ◆ 解锁",
  "j_kule_kilidi": "塔楼锁定",
  "j_kule_ipucu": "塔楼只改变外观；每座塔都有独立的排行榜。可在设置中关闭锁定。",
- "j_kule_efekt": "塔楼特效"
+ "j_kule_efekt": "塔楼特效",
+ "j_yerel_yazi": "本地字体"
 }

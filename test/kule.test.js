@@ -58,3 +58,12 @@ test('Latin dışı yazılar sistem yazı tipiyle çizilir (genişlik > 0, fillT
   fillText = 0; fillRect = 0; pikselYaz(c, 'KAT 12', 10, 10, 2, '#fff'); assert.equal(fillText, 0); assert.ok(fillRect > 0);
   assert.ok(pikselGenislik('楼层', 4) > pikselGenislik('楼层', 2), 'ölçekle büyür');
 });
+
+import { th } from '../src/dil.js';
+test('yerel yazı tipi ayarı: açıkken Latin dışı dilde oyun içi yazı kendi dilinde, kapalıyken İngilizce', () => {
+  const eski = [AYAR.dil, AYAR.yerelYazi];
+  AYAR.dil = 2; AYAR.yerelYazi = 1; const yerel = th('hud_kat'); AYAR.yerelYazi = 0; const ing = th('hud_kat');
+  AYAR.dil = 1; AYAR.yerelYazi = 1; const en = th('hud_kat');
+  [AYAR.dil, AYAR.yerelYazi] = eski;
+  assert.notEqual(yerel, ing, 'Çincede yerel yazı açıkken farklı olmalı'); assert.equal(ing, en, 'kapalıyken İngilizce metin'); assert.equal(VARSAYILAN.yerelYazi, 1);
+});

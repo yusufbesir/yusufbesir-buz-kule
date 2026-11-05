@@ -19,7 +19,7 @@ export function t(anahtar, degerler) {
 }
 // Oyun içi kısa yazılar: seçili dilde (Latin dışı dillerde piksel.js sistem yazı tipiyle çizer), eksikse Türkçe.
 export function th(anahtar, degerler) {
-  const kod = DILLER[dilNo()].kod;
+  const d = DILLER[dilNo()], kod = d.latin || AYAR.yerelYazi ? d.kod : 'en'; // yerel yazı tipi kapalıysa Latin dışı dillerde İngilizce (piksel yazı)
   return doldur((DILVERI[kod] && DILVERI[kod][anahtar]) ?? (DILVERI.tr && DILVERI.tr[anahtar]) ?? anahtar, degerler);
 }
 // HTML'deki işaretli öğeleri seçili dile çevirir; sayfa dilini ve yönünü ayarlar.
