@@ -1,4 +1,5 @@
 // description: Buz Kule kule konseptleri (Buz, Kor, Rün, Kum, Yıldız): yalnız görünüm (renk tonu); açılış kuralları: başlangıç kulesi açık, bazıları başarımla, bazıları kristalle açılır. Kilit sistemi ayardan kapatılabilir (AYAR.kuleKilidi = 0 → hepsi açık). Fizik ve kat üretimi değişmez. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı).
+import { depoOku, depoYaz } from './depo.js';
 import { AYAR } from './ayar.js';
 import { CUZDAN, cuzdanKaydet } from './magaza.js';
 import { ACIK } from './basarim.js';
@@ -16,12 +17,10 @@ export const KULE = { satin: [] }; // kristalla satın alınan kule numaraları
 
 export function kuleYukle() {
   KULE.satin = [];
-  try {
-    const k = JSON.parse(localStorage.getItem(KULE_ANAHTAR) || 'null');
-    if (k && Array.isArray(k.satin)) KULE.satin = [...new Set(k.satin.filter((i) => Number.isInteger(i) && i > 0 && i < KULELER.length))];
-  } catch { /* kayıt yoksa ya da bozuksa sıfırdan */ }
+  const k = depoOku(KULE_ANAHTAR); // kayıt yoksa ya da bozuksa sıfırdan
+  if (k && Array.isArray(k.satin)) KULE.satin = [...new Set(k.satin.filter((i) => Number.isInteger(i) && i > 0 && i < KULELER.length))];
 }
-const kuleKaydet = () => { try { localStorage.setItem(KULE_ANAHTAR, JSON.stringify(KULE)); } catch { /* sessiz */ } };
+const kuleKaydet = () => { depoYaz(KULE_ANAHTAR, KULE); };
 
 // Kule seçilebilir mi? Kilit sistemi kapalıysa hepsi açık.
 export function kuleAcikMi(i) {

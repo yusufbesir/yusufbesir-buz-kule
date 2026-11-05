@@ -1,4 +1,5 @@
 // description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+import { depoOku, depoYaz } from './depo.js';
 import { zSonek, haftaKimlik } from './ayar.js';
 export const SOL = 1, SAG = 2, ZIPLA = 4;
 
@@ -40,8 +41,8 @@ export function kayitGecerli(k) {
     && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
 export function kayitOku(anahtar) {
-  try { const k = JSON.parse(localStorage.getItem(anahtar) || 'null'); return kayitGecerli(k) ? k : null; } catch { return null; }
+  const k = depoOku(anahtar); return kayitGecerli(k) ? k : null;
 }
-export function kayitYaz(anahtar, kayit) { try { localStorage.setItem(anahtar, JSON.stringify(kayit)); } catch { /* sessiz */ } }
+export function kayitYaz(anahtar, kayit) { depoYaz(anahtar, kayit); }
 export const HAYALET_ANAHTAR = 'buzkule.hayalet';
 export const hayaletAnahtar = (z = 1) => HAYALET_ANAHTAR + zSonek(z);

@@ -1,9 +1,21 @@
 (() => {
 "use strict";
+// ---- depo ----
+// description: Buz Kule yerel depolama (localStorage) yardımcıları: güvenli JSON okuma/yazma. Depolama kapalıysa ya da kayıt bozuksa oyun çalışmaya devam eder (okuma varsayılanı döner, yazma false döner). Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı).
+// Okur: kayıt yoksa ya da bozuksa varsayilan döner (doğrulama çağıranın işi).
+function depoOku(anahtar, varsayilan = null) {
+  try { const s = localStorage.getItem(anahtar); return s === null ? varsayilan : JSON.parse(s); } catch { return varsayilan; }
+}
+// Yazar: başarılıysa true, depolama kapalı ya da kota doluysa false (oyun sessizce sürer).
+function depoYaz(anahtar, deger) {
+  try { localStorage.setItem(anahtar, JSON.stringify(deger)); return true; } catch { return false; }
+}
+
 // ---- ayar ----
 // description: Buz Kule kullanıcı ayarları (parıltı, parçacık, sarsıntı, ses, karakter) ve azaltılmış hareket desteği. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 // Fizik ve oyun kuralları bu ayarlardan etkilenmez; yalnız görünüm ve ses.
 const AZ = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const VARSAYILAN = Object.freeze({ parilti: 1, parcacik: AZ ? 0.25 : 1, sarsinti: AZ ? 0 : 1, ses: 0.8, karakter: 0, hud: 1, efektAcik: 1, muzikAcik: 0, zorluk: 1, dil: 0, golge: 1, perde: 1, kaygan: 0, hayaletGoster: 1, kontrast: 0, mukemmel: 1, muzikSes: 0.8, kule: 0, kuleKilidi: 1, kuleEfekt: 1, yerelYazi: 1 }); // yerelYazi: 1 = Latin dışı dillerde oyun içi yazılar kendi dilinde (sistem yazı tipi), 0 = İngilizce piksel yazı // kule: seçili kule konsepti (0 Buz); kuleKilidi: 1 = başarım/kristal kilitleri açık, 0 = hepsi serbest // golge/perde/kaygan: ek özellikler; kaygan buz yeni fizik olduğu için varsayılan kapalı // efektler açık, müzik kapalı başlar
 const ARALIK = Object.freeze({ parilti: [0, 2], parcacik: [0, 2], sarsinti: [0, 2], ses: [0, 1], karakter: [0, 4], hud: [0, 1.5], efektAcik: [0, 1], muzikAcik: [0, 1], zorluk: [0, 3], dil: [0, 10], golge: [0, 1], perde: [0, 1], kaygan: [0, 1], hayaletGoster: [0, 1], kontrast: [0, 1], mukemmel: [0, 1], muzikSes: [0, 1], kule: [0, 4], kuleKilidi: [0, 1], kuleEfekt: [0, 1], yerelYazi: [0, 1] });
 const KARAKTERLER = Object.freeze(['player', 'adventurer', 'female', 'soldier', 'zombie']);
@@ -19,13 +31,11 @@ const AYAR = { ...VARSAYILAN, azaltilmisHareket: AZ };
 const ANAHTAR = 'buzkule.ayar';
 
 function ayarYukle() {
-  try {
-    const k = JSON.parse(localStorage.getItem(ANAHTAR) || 'null');
-    if (k) for (const a of Object.keys(VARSAYILAN)) if (typeof k[a] === 'number' && k[a] >= ARALIK[a][0] && k[a] <= ARALIK[a][1]) AYAR[a] = k[a];
-  } catch { /* kayıt yoksa varsayılanlar */ }
+  const k = depoOku(ANAHTAR); // kayıt yoksa ya da bozuksa varsayılanlar
+  if (k && typeof k === 'object') for (const a of Object.keys(VARSAYILAN)) if (typeof k[a] === 'number' && k[a] >= ARALIK[a][0] && k[a] <= ARALIK[a][1]) AYAR[a] = k[a];
 }
 function ayarKaydet() {
-  try { localStorage.setItem(ANAHTAR, JSON.stringify(Object.fromEntries(Object.keys(VARSAYILAN).map(a => [a, AYAR[a]])))); } catch { /* sessiz */ }
+  depoYaz(ANAHTAR, Object.fromEntries(Object.keys(VARSAYILAN).map(a => [a, AYAR[a]])));
 }
 function ayarSifirla() { Object.assign(AYAR, VARSAYILAN); ayarKaydet(); }
 
@@ -69,6 +79,7 @@ function dilUygula(kok = document) {
 
 // ---- magaza ----
 // description: Buz Kule kristal cüzdanı ve mağaza (iz renkleri); kalıcı kayıt. Oyun kurallarını etkilemez, yalnız görünüm. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 const IZLER = Object.freeze([
   { ad: 'Buz mavisi', renk: 'rgba(120,220,255,0.8)', fiyat: 0 },
   { ad: 'Altın', renk: 'rgba(255,210,120,0.9)', fiyat: 40 },
@@ -80,17 +91,15 @@ const CUZDAN_ANAHTAR = 'buzkule.cuzdan';
 const CUZDAN = { kristal: 0, acik: [0], secili: 0, toplam: 0 };
 
 function cuzdanYukle() {
-  try {
-    const k = JSON.parse(localStorage.getItem(CUZDAN_ANAHTAR) || 'null');
-    if (k && Number.isFinite(k.kristal) && k.kristal >= 0) {
-      CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Number.isFinite(k.toplam) ? Math.max(0, Math.floor(k.toplam)) : 0;
-      CUZDAN.acik = Array.isArray(k.acik) ? k.acik.filter(i => Number.isInteger(i) && i >= 0 && i < IZLER.length) : [0];
-      if (!CUZDAN.acik.includes(0)) CUZDAN.acik.push(0);
-      CUZDAN.secili = CUZDAN.acik.includes(k.secili) ? k.secili : 0;
-    }
-  } catch { /* kayıt yoksa boş cüzdan */ }
+  const k = depoOku(CUZDAN_ANAHTAR); // kayıt yoksa boş cüzdan
+  if (k && Number.isFinite(k.kristal) && k.kristal >= 0) {
+    CUZDAN.kristal = Math.floor(k.kristal); CUZDAN.toplam = Number.isFinite(k.toplam) ? Math.max(0, Math.floor(k.toplam)) : 0;
+    CUZDAN.acik = Array.isArray(k.acik) ? k.acik.filter(i => Number.isInteger(i) && i >= 0 && i < IZLER.length) : [0];
+    if (!CUZDAN.acik.includes(0)) CUZDAN.acik.push(0);
+    CUZDAN.secili = CUZDAN.acik.includes(k.secili) ? k.secili : 0;
+  }
 }
-function cuzdanKaydet() { try { localStorage.setItem(CUZDAN_ANAHTAR, JSON.stringify(CUZDAN)); } catch { /* sessiz */ } }
+function cuzdanKaydet() { depoYaz(CUZDAN_ANAHTAR, CUZDAN); }
 function kristalKazan(n) { if (n > 0) { CUZDAN.kristal += n; CUZDAN.toplam += n; cuzdanKaydet(); } }
 // Satın alma: yeterli kristal varsa düşer ve açar; sonucu döndürür ('acik' zaten açıksa, 'yetersiz', 'alindi').
 function izAl(i) {
@@ -108,6 +117,7 @@ function izRengi(zaman) {
 // ---- skorlar ----
 // description: Buz Kule yerel skor tabloları: her oyun kipi (yeni, hayalet, günün kulesi) için ayrı ilk 5, kalıcı. Eski tek tablo "yeni" kipine devredilir. Oyun kurallarını etkilemez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
 
+
 const SKOR_SAYISI = 5;
 const SKOR_ESKI_ANAHTAR = 'buzkule.skorlar'; // 0.10-0.14: tek tablo; artık "yeni" kipinin tablosu
 const bugun = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); };
@@ -116,10 +126,8 @@ const skorAnahtari = (mod, z = 1) => (mod === 'hayalet' ? 'buzkule.skorlar.hayal
 const gecerli = (x) => x && Number.isFinite(x.skor) && x.skor > 0 && Number.isFinite(x.kat) && Number.isFinite(x.t);
 // Kipin tablosunu okur (sıralı, en çok 5, geçersiz satırlar atılır); bozuk kayıtta boş tablo döner.
 function skorListesi(mod, z = 1) {
-  try {
-    const k = JSON.parse(localStorage.getItem(skorAnahtari(mod, z)) || '[]');
-    return Array.isArray(k) ? k.filter(gecerli).sort((a, b) => b.skor - a.skor || a.t - b.t).slice(0, SKOR_SAYISI) : [];
-  } catch { return []; }
+  const k = depoOku(skorAnahtari(mod, z), []);
+  return Array.isArray(k) ? k.filter(gecerli).sort((a, b) => b.skor - a.skor || a.t - b.t).slice(0, SKOR_SAYISI) : [];
 }
 // Skoru kipin tablosuna ekler; sırasını (1'den başlar) döndürür, ilk 5'e giremediyse 0. Sıfır skor eklenmez.
 function skorEkle(mod, skor, kat, z = 1) {
@@ -127,31 +135,31 @@ function skorEkle(mod, skor, kat, z = 1) {
   const kayit = { skor, kat, t: Date.now() }, liste = skorListesi(mod, z);
   liste.push(kayit); liste.sort((a, b) => b.skor - a.skor || a.t - b.t);
   const kesik = liste.slice(0, SKOR_SAYISI);
-  try { localStorage.setItem(skorAnahtari(mod, z), JSON.stringify(kesik)); } catch { /* sessiz */ }
+  depoYaz(skorAnahtari(mod, z), kesik);
   return kesik.indexOf(kayit) + 1;
 }
 
 // ---- profil ----
 // description: Buz Kule oyuncu profili (yerel, kalıcı): oynanan oyun sayısı, en yüksek kat, en büyük kombo. Yalnız görüntü; oyun kurallarını etkilemez. Bozuk kayıt varsayılana döner. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı).
+
 const PROFIL_ANAHTAR = 'buzkule.profil';
 const PROFIL = { oyun: 0, enKat: 0, enKombo: 0 };
 const profilDegeriGecerli = (x) => Number.isInteger(x) && x >= 0 && x <= 1e9;
 
 function profilYukle() {
   PROFIL.oyun = PROFIL.enKat = PROFIL.enKombo = 0;
-  try {
-    const k = JSON.parse(localStorage.getItem(PROFIL_ANAHTAR) || 'null');
-    if (k) for (const a of Object.keys(PROFIL)) if (profilDegeriGecerli(k[a])) PROFIL[a] = k[a];
-  } catch { /* kayıt yoksa ya da bozuksa sıfırdan başlar */ }
+  const k = depoOku(PROFIL_ANAHTAR); // kayıt yoksa ya da bozuksa sıfırdan başlar
+  if (k && typeof k === 'object') for (const a of Object.keys(PROFIL)) if (profilDegeriGecerli(k[a])) PROFIL[a] = k[a];
 }
 // Oyun bittiğinde çağrılır: o = bitmiş oyun durumu (enYuksek, enIyiKombo).
 function profilGuncelle(o) {
   PROFIL.oyun++; PROFIL.enKat = Math.max(PROFIL.enKat, o.enYuksek | 0); PROFIL.enKombo = Math.max(PROFIL.enKombo, o.enIyiKombo | 0);
-  try { localStorage.setItem(PROFIL_ANAHTAR, JSON.stringify(PROFIL)); } catch { /* sessiz */ }
+  depoYaz(PROFIL_ANAHTAR, PROFIL);
 }
 
 // ---- basarim ----
 // description: Buz Kule başarımları (kalıcı); açılınca kristal ödülü verir. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 
 
 const BASARIMLAR = Object.freeze([
@@ -168,7 +176,8 @@ const ACIK = new Set();
 const BILDIRIM = []; // ekrandaki bildirimler: { ad, odul, guc }
 
 function basarimYukle() {
-  try { const k = JSON.parse(localStorage.getItem(BASARIM_ANAHTAR) || '[]'); if (Array.isArray(k)) for (const id of k) if (BASARIMLAR.some(b => b.id === id)) ACIK.add(id); } catch { /* kayıt yoksa boş */ }
+  const k = depoOku(BASARIM_ANAHTAR, []); // kayıt yoksa boş
+  if (Array.isArray(k)) for (const id of k) if (BASARIMLAR.some(b => b.id === id)) ACIK.add(id);
 }
 // Her karede çağrılır; yalnız kilitli başarımlara bakar. Yeni açılanların kimliklerini döndürür.
 function basarimKontrol(o) {
@@ -177,13 +186,14 @@ function basarimKontrol(o) {
     if (ACIK.has(b.id) || !b.sart(o)) continue;
     ACIK.add(b.id); yeni.push(b.id); kristalKazan(b.odul); basarimSesi(); BILDIRIM.push({ ad: b.ad, id: b.id, odul: b.odul, guc: 200 });
   }
-  if (yeni.length) { try { localStorage.setItem(BASARIM_ANAHTAR, JSON.stringify([...ACIK])); } catch { /* sessiz */ } }
+  if (yeni.length) depoYaz(BASARIM_ANAHTAR, [...ACIK]);
   return yeni;
 }
 const bildirimAdim = () => { for (let i = BILDIRIM.length - 1; i >= 0; i--) if (--BILDIRIM[i].guc <= 0) BILDIRIM.splice(i, 1); };
 
 // ---- kule ----
 // description: Buz Kule kule konseptleri (Buz, Kor, Rün, Kum, Yıldız): yalnız görünüm (renk tonu); açılış kuralları: başlangıç kulesi açık, bazıları başarımla, bazıları kristalle açılır. Kilit sistemi ayardan kapatılabilir (AYAR.kuleKilidi = 0 → hepsi açık). Fizik ve kat üretimi değişmez. Sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı).
+
 
 
 
@@ -200,12 +210,10 @@ const KULE = { satin: [] }; // kristalla satın alınan kule numaraları
 
 function kuleYukle() {
   KULE.satin = [];
-  try {
-    const k = JSON.parse(localStorage.getItem(KULE_ANAHTAR) || 'null');
-    if (k && Array.isArray(k.satin)) KULE.satin = [...new Set(k.satin.filter((i) => Number.isInteger(i) && i > 0 && i < KULELER.length))];
-  } catch { /* kayıt yoksa ya da bozuksa sıfırdan */ }
+  const k = depoOku(KULE_ANAHTAR); // kayıt yoksa ya da bozuksa sıfırdan
+  if (k && Array.isArray(k.satin)) KULE.satin = [...new Set(k.satin.filter((i) => Number.isInteger(i) && i > 0 && i < KULELER.length))];
 }
-const kuleKaydet = () => { try { localStorage.setItem(KULE_ANAHTAR, JSON.stringify(KULE)); } catch { /* sessiz */ } };
+const kuleKaydet = () => { depoYaz(KULE_ANAHTAR, KULE); };
 
 // Kule seçilebilir mi? Kilit sistemi kapalıysa hepsi açık.
 function kuleAcikMi(i) {
@@ -226,6 +234,7 @@ const kuleDogrula = () => { if (!kuleAcikMi(AYAR.kule)) AYAR.kule = 0; };
 
 // ---- hayalet ----
 // description: Buz Kule hayalet kaydı: tohumlu rastgelelik, giriş kaydı (kosu uzunluğu kodlu) ve kalıcı en iyi oyun kayıtları. Oyun kurallarını değiştirmez. sahip: Yusuf; yazan: Claude (Buz Kule iş parçacığı)
+
 
 const SOL = 1, SAG = 2, ZIPLA = 4;
 
@@ -267,9 +276,9 @@ function kayitGecerli(k) {
     && k.kosu.reduce((t, v, i) => (i % 2 ? t + v : t), 0) <= 1000000; // toplam kare üst sınırı (bozuk kayıt belleği tüketmesin)
 }
 function kayitOku(anahtar) {
-  try { const k = JSON.parse(localStorage.getItem(anahtar) || 'null'); return kayitGecerli(k) ? k : null; } catch { return null; }
+  const k = depoOku(anahtar); return kayitGecerli(k) ? k : null;
 }
-function kayitYaz(anahtar, kayit) { try { localStorage.setItem(anahtar, JSON.stringify(kayit)); } catch { /* sessiz */ } }
+function kayitYaz(anahtar, kayit) { depoYaz(anahtar, kayit); }
 const HAYALET_ANAHTAR = 'buzkule.hayalet';
 const hayaletAnahtar = (z = 1) => HAYALET_ANAHTAR + zSonek(z);
 
