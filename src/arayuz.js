@@ -130,7 +130,9 @@ kimlik('kod-oyna').addEventListener('click', () => {
 kimlik('ozet-kopyala').addEventListener('click', () => {
   const b = kimlik('ozet-kopyala'), metin = t('j_ozet_metin', { k: o.enYuksek, s: skor(o), c: o.enIyiKombo, kod: o.tohum == null ? '-' : o.tohum.toString(16) });
   const bitti = () => { b.textContent = t('j_kopyalandi'); setTimeout(() => { b.textContent = t('j_ozet_kopyala'); }, 1600); };
-  try { if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(metin).then(bitti, () => {}); } catch { /* pano yoksa sessiz */ }
+  // Electron kabuğu tüm izin isteklerini reddeder (navigator.clipboard reddedilebilir): reddedilirse kullanıcı tıklamasıyla eski yöntem (geçici metin alanı + execCommand) denenir.
+  const eskiYontem = () => { try { const ta = document.createElement('textarea'); ta.value = metin; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); document.body.removeChild(ta); if (ok) bitti(); } catch { /* pano yoksa sessiz */ } };
+  try { if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(metin).then(bitti, eskiYontem); else eskiYontem(); } catch { eskiYontem(); }
 });
 // ---- Zorluk seçici (kolay / orta / zor / çok zor) ----
 const zorlukDugmeleri = [0, 1, 2, 3].map((i) => kimlik('zorluk-' + i));

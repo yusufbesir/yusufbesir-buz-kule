@@ -50,3 +50,11 @@ test('kule efektleri: Buz Kulesi efektsiz; diğerleri çizim yapar; parçacık a
   const eski = AYAR.parcacik; AYAR.parcacik = 0; { const { c, say } = sahteTuval(); kuleEfektCiz(c, 640, 480, 'kor', 100); assert.equal(say.fillRect, 0); } AYAR.parcacik = eski;
   assert.equal(VARSAYILAN.kuleEfekt, 1);
 });
+
+import { pikselGenislik, pikselYaz } from '../src/piksel.js';
+test('Latin dışı yazılar sistem yazı tipiyle çizilir (genişlik > 0, fillText çağrılır); Latin yazı pikselle çizilir', () => {
+  let fillText = 0, fillRect = 0; const c = new Proxy({}, { get: (_, k) => (k === 'fillText' ? () => { fillText++; } : k === 'fillRect' ? () => { fillRect++; } : k === 'measureText' ? () => ({ width: 40 }) : () => {}), set: () => true, has: () => true });
+  for (const m of ['楼层', 'रिकॉर्ड', 'الطابق', 'রেকর্ড', 'РЕКОРД']) { assert.ok(pikselGenislik(m, 2) > 0, m); fillText = 0; pikselYaz(c, m, 10, 10, 2, '#fff', { golge: '#000', cizgi: '#111' }); assert.ok(fillText >= 1, m + ' sistem yazı tipiyle çizilmedi'); }
+  fillText = 0; fillRect = 0; pikselYaz(c, 'KAT 12', 10, 10, 2, '#fff'); assert.equal(fillText, 0); assert.ok(fillRect > 0);
+  assert.ok(pikselGenislik('楼层', 4) > pikselGenislik('楼层', 2), 'ölçekle büyür');
+});

@@ -17,9 +17,9 @@ export function t(anahtar, degerler) {
   const kod = DILLER[dilNo()].kod;
   return doldur((DILVERI[kod] && DILVERI[kod][anahtar]) ?? (DILVERI.en && DILVERI.en[anahtar]) ?? (DILVERI.tr && DILVERI.tr[anahtar]) ?? anahtar, degerler);
 }
-// Oyun içi piksel yazı metni: Latin harfli dillerde seçili dil, diğerlerinde İngilizce.
+// Oyun içi kısa yazılar: seçili dilde (Latin dışı dillerde piksel.js sistem yazı tipiyle çizer), eksikse Türkçe.
 export function th(anahtar, degerler) {
-  const kod = DILLER[dilNo()].latin ? DILLER[dilNo()].kod : 'en';
+  const kod = DILLER[dilNo()].kod;
   return doldur((DILVERI[kod] && DILVERI[kod][anahtar]) ?? (DILVERI.tr && DILVERI.tr[anahtar]) ?? anahtar, degerler);
 }
 // HTML'deki işaretli öğeleri seçili dile çevirir; sayfa dilini ve yönünü ayarlar.

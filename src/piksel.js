@@ -25,7 +25,35 @@ const G = {
 };
 const TR = { İ: 'I', I: 'I', Ğ: 'G', Ü: 'U', Ş: 'S', Ö: 'O', Ç: 'C' };
 const harf = (ch) => { const b = ch.toLocaleUpperCase('tr'); return G[TR[b] || b] || G[b.normalize('NFD').charAt(0)] || G[' ']; };
-export const pikselGenislik = (metin, olcek) => Math.max(0, [...metin].length * 6 * olcek - olcek);
+// Latin dışı yazılar (Kiril, Arapça, Devanagari, Bengalce, Çince): 5x7 piksel yazı bu harfleri çizemez; sistem yazı tipiyle, oyunun neon
+// kontur ve gölge diliyle çizilir. Yazı tipleri Windows'ta hazır gelen yazı tipleridir (indirme/ekleme yok).
+const LATIN_DISI = /[Ѐ-ӿ؀-ۿݐ-ݿऀ-৿　-鿿ﭐ-﷿ﹰ-﻿]/;
+const AILELER = [
+  [/[　-鿿]/, '"Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC",sans-serif'],
+  [/[ऀ-ॿ]/, '"Nirmala UI","Mangal","Noto Sans Devanagari",sans-serif'],
+  [/[ঀ-৿]/, '"Nirmala UI","Vrinda","Noto Sans Bengali",sans-serif'],
+  [/[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/, '"Segoe UI","Tahoma","Arial",sans-serif'],
+  [/[Ѐ-ӿ]/, '"Lucida Console","Consolas","Courier New",monospace'],
+];
+const sistemYaziMi = (metin) => LATIN_DISI.test(metin);
+const sistemAile = (metin) => (AILELER.find(([re]) => re.test(metin)) || [0, 'sans-serif'])[1];
+const sistemBoyut = (olcek) => Math.max(8, Math.round(olcek * 8.5));
+let olcerBaglam; // genişlik ölçümü için küçük bir tuval bağlamı (yoksa tahmin)
+function sistemGenislik(metin, olcek) {
+  try {
+    if (olcerBaglam === undefined) { const tv = tuvalYap(1, 1); olcerBaglam = tv && tv.getContext ? tv.getContext('2d') : null; }
+    if (olcerBaglam && olcerBaglam.measureText) { olcerBaglam.font = 'bold ' + sistemBoyut(olcek) + 'px ' + sistemAile(metin); const w = olcerBaglam.measureText(metin).width; if (w > 0) return Math.ceil(w); }
+  } catch { /* ölçülemezse tahmin */ }
+  return Math.ceil([...metin].length * sistemBoyut(olcek) * 0.9);
+}
+export const pikselGenislik = (metin, olcek) => (sistemYaziMi(metin) ? sistemGenislik(metin, olcek) : Math.max(0, [...metin].length * 6 * olcek - olcek));
+function sistemYaz(c, metin, x, y, olcek, renk, secenek) {
+  const w = sistemGenislik(metin, olcek), x0 = Math.round(secenek.hiza === 'orta' ? x - w / 2 : secenek.hiza === 'sag' ? x - w : x), boyut = sistemBoyut(olcek);
+  c.save(); c.font = 'bold ' + boyut + 'px ' + sistemAile(metin); c.textBaseline = 'top'; c.textAlign = 'left'; if ('direction' in c) c.direction = /[؀-ۿ]/.test(metin) ? 'rtl' : 'ltr';
+  if (secenek.golge) { c.fillStyle = secenek.golge; c.fillText(metin, x0 + Math.max(1, olcek * 0.7), y + Math.max(1, olcek * 0.7)); }
+  if (secenek.cizgi) { c.lineJoin = 'round'; c.lineWidth = Math.max(2, olcek * 1.4); c.strokeStyle = secenek.cizgi; c.strokeText(metin, x0, y); }
+  c.fillStyle = renk; c.fillText(metin, x0, y); c.restore(); return w;
+}
 
 // Önbellek: metin+ölçek+renk+kontur+gölge anahtarıyla bir kez çizilip drawImage ile basılır (en çok PBOY giriş, LRU). Düzgün ölçekli olmayan dönüşümde (döndürme/eğme), yarı saydamlık kat çakışması varsa veya tuval yoksa eski yola düşer.
 const PBOY = 64, onbellek = new Map();
@@ -71,6 +99,7 @@ function uygun(c, renk, secenek) {
 
 // Piksel yazı çizer. secenek: { hiza: 'sol'|'orta'|'sag', golge: renk, cizgi: renk }. Her harf 5x7 hücre, hücre = olcek piksel.
 export function pikselYaz(c, metin, x, y, olcek, renk, secenek = {}) {
+  if (sistemYaziMi(metin)) return sistemYaz(c, metin, x, y, olcek, renk, secenek);
   const w = pikselGenislik(metin, olcek), x0 = Math.round(secenek.hiza === 'orta' ? x - w / 2 : secenek.hiza === 'sag' ? x - w : x), y0 = Math.round(y);
   const m = w > 0 && typeof renk === 'string' ? uygun(c, renk, secenek) : null;
   if (m) {
