@@ -180,7 +180,29 @@ function inisGolgesi(c, o) {
     return;
   }
 }
+// Yalnız görünüm: çizilen kamera gerçek kameraya zamana bağlı üstel yaklaşır (simülasyon, hayalet kaydı ve skor etkilenmez).
+// Gecikme sınırlıdır; oyuncu hiçbir zaman ekran dışında kalmaz. Yeni oyunda ya da büyük sıçramada doğrudan oturur.
+const GOR_KAM = { o: null, y: 0, t: 0, havada: false, inis: 0 };
+const GOR_KAM_ORAN = 0.2, GOR_KAM_AZAMI = 56; // 60 Hz'de kare başına yaklaşma oranı; en çok kaç px geride kalabilir
+function gorKamGuncelle(o) {
+  const simdi = typeof performance !== 'undefined' ? performance.now() : 0;
+  const dt = Math.max(0, Math.min(100, simdi - GOR_KAM.t)); GOR_KAM.t = simdi;
+  const yeni = GOR_KAM.o !== o || Math.abs(GOR_KAM.y - o.kamY) > 400 || !Number.isFinite(GOR_KAM.y);
+  if (yeni) { GOR_KAM.o = o; GOR_KAM.y = o.kamY; GOR_KAM.havada = o.havada; GOR_KAM.inis = 0; return o.kamY; }
+  const k = 1 - Math.pow(1 - GOR_KAM_ORAN, dt / 16.667);
+  let y = GOR_KAM.y + (o.kamY - GOR_KAM.y) * k;
+  y = Math.max(o.kamY - GOR_KAM_AZAMI, Math.min(o.kamY + GOR_KAM_AZAMI, y));
+  GOR_KAM.y = y;
+  if (GOR_KAM.havada && !o.havada && !o.bitti) GOR_KAM.inis = 1; // iniş sıkışması başlar
+  GOR_KAM.havada = o.havada; GOR_KAM.inis = Math.max(0, GOR_KAM.inis - dt / 160);
+  return y;
+}
 export function ciz(c, o, hayalet = null) {
+  const gercek = o.kamY, hGercek = hayalet ? hayalet.kamY : 0, y = gorKamGuncelle(o);
+  o.kamY = y; if (hayalet) hayalet.kamY = hGercek + (y - gercek); // hayalet kendi kamerasından aynı farkla kayar
+  try { cizIc(c, o, hayalet); } finally { o.kamY = gercek; if (hayalet) hayalet.kamY = hGercek; }
+}
+function cizIc(c, o, hayalet = null) {
   const titre = Math.max(o.mesaj && o.mesaj.guc > 48 ? (o.mesaj.guc - 48) * 0.35 : 0, o.sars * 0.45) * AYAR.sarsinti; // büyük kombo ödülünde ve 100/200/500. katta kısa ekran sarsıntısı (azaltılmış harekette 0)
   c.save(); if (titre) c.translate((Math.random() - 0.5) * titre, (Math.random() - 0.5) * titre);
   arkaPlan(c, W, H, o.kamY, o.enYuksek, o.puan.kombo && o.puan.kombo.zip >= 5 ? 1 : 0); duvarlar(c, W, H, o.kamY, o.enYuksek); // akış hali: kombo x5+ (yalnız görünüm)
@@ -203,13 +225,13 @@ export function ciz(c, o, hayalet = null) {
   c.restore();
 }
 
-// Kenney "Platformer Characters" (CC0) pozları; kaynak varlik/kenney/LICENSE-Kenney-CC0.txt. Karakter ayar panelinden seçilir.
+// Buz Kule'nin özgün karakter pozları (arac/karakter_ciz.py üretir). Karakter ayar panelinden seçilir.
 const POZLAR = ['stand', 'walk1', 'walk2', 'jump', 'fall', 'skid', 'cheer1', 'hurt'];
 const RESIMLER = {};
 function resimler(ad) {
   if (!RESIMLER[ad] && typeof Image !== 'undefined') {
     RESIMLER[ad] = {};
-    for (const p of POZLAR) { const r = new Image(); r.src = './varlik/kenney/karakter/' + ad + '/' + p + '.png'; RESIMLER[ad][p] = r; }
+    for (const p of POZLAR) { const r = new Image(); r.src = './varlik/buzkule/karakter/' + ad + '/' + p + '.png'; RESIMLER[ad][p] = r; }
   }
   return RESIMLER[ad];
 }
@@ -227,7 +249,8 @@ function karakterCiz(c, o, hayaletMi = false) {
   }
   // squash & stretch: havada hıza göre uzar; hızlı koşuda hafif eğilir ve iz bırakır (iz rengi mağazadan); takla zıplamasında gövde döner
   const uzama = o.havada && !o.donuyor ? Math.max(-0.12, Math.min(0.14, -o.vy * 0.006)) : 0;
-  const g = 48 * (1 - uzama * 0.6), y = 66 * (1 + uzama);
+  const sik = hayaletMi ? 0 : GOR_KAM.inis; // iniş sıkışması (yalnız görünüm)
+  const g = 48 * (1 - uzama * 0.6) * (1 + sik * 0.16), y = 66 * (1 + uzama) * (1 - sik * 0.12);
   if (!hayaletMi && (Math.abs(o.vx) > 8 || (o.havada && Math.abs(o.vy) > 14))) parcacikEkle(o.x, o.y - 24, 1, o.donuyor ? 'rgba(255,210,120,0.9)' : izRengi(o.kare), 0.6);
   c.fillStyle = 'rgba(0,0,0,' + (o.havada ? 0.12 : 0.3) + ')'; c.beginPath(); c.ellipse(o.x, ayakY + 2, o.havada ? 11 : 17, 4, 0, 0, 7); c.fill();
   c.save();
